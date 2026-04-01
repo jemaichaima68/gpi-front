@@ -1,0 +1,150 @@
+<p-dialog
+  [(visible)]="visible"
+  [header]="isEdit ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  [closable]="true"
+  (onHide)="onCancel()">
+
+  <div class="form-container">
+
+    @if (errorMessage) {
+      <p-message severity="error" [text]="errorMessage" />
+    }
+
+    <!-- SECTION 1 : COMPTE -->
+    <div class="form-section">
+      <p class="form-section-title">
+        <i class="pi pi-user"></i> Informations du compte
+      </p>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Nom d'utilisateur <span class="required">*</span></label>
+          <input pInputText [(ngModel)]="formData.username" placeholder="username"/>
+        </div>
+        <div class="form-field">
+          <label>Email <span class="required">*</span></label>
+          <input pInputText [(ngModel)]="formData.email" placeholder="email@exemple.com"/>
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-top: 0.875rem;">
+        <div class="form-field">
+          <label>Rôle <span class="required">*</span></label>
+          <p-select
+            [options]="roles"
+            [(ngModel)]="formData.role"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner un rôle"
+            styleClass="w-full"/>
+        </div>
+        <div class="form-field">
+          <label>Statut</label>
+          <p-select
+            [options]="statusOptions"
+            [(ngModel)]="formData.actif"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Statut du compte"
+            styleClass="w-full"/>
+        </div>
+      </div>
+
+      @if (!isEdit) {
+        <div class="form-field" style="margin-top: 0.875rem;">
+          <label>Mot de passe temporaire <span class="required">*</span></label>
+          <p-password
+            [(ngModel)]="formData.password"
+            placeholder="Mot de passe temporaire"
+            [feedback]="true"
+            styleClass="w-full"
+            [toggleMask]="true"/>
+          <small class="hint">
+            <i class="pi pi-info-circle"></i>
+            Le client recevra ce mot de passe par email et devra le changer à la première connexion.
+          </small>
+        </div>
+      }
+    </div>
+
+    <!-- SECTION 2 : IDENTITÉ -->
+    <div class="form-section">
+      <p class="form-section-title">
+        <i class="pi pi-id-card"></i> Identité
+      </p>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Prénom</label>
+          <input pInputText [(ngModel)]="formData.firstName" placeholder="Prénom"/>
+        </div>
+        <div class="form-field">
+          <label>Nom</label>
+          <input pInputText [(ngModel)]="formData.lastName" placeholder="Nom de famille"/>
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-top: 0.875rem;">
+        <div class="form-field">
+          <label>Date de naissance</label>
+          <input pInputText type="date" [(ngModel)]="formData.birthDate"/>
+        </div>
+        <div class="form-field">
+          <label>Téléphone</label>
+          <input pInputText [(ngModel)]="formData.phone" placeholder="+216 XX XXX XXX"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3 : ADRESSE -->
+    <div class="form-section">
+      <p class="form-section-title">
+        <i class="pi pi-map-marker"></i> Adresse
+      </p>
+
+      <div class="form-field">
+        <label>Rue / Adresse</label>
+        <input pInputText [(ngModel)]="formData.address" placeholder="N° et nom de rue"/>
+      </div>
+
+      <div class="form-row" style="margin-top: 0.875rem;">
+        <div class="form-field">
+          <label>Ville</label>
+          <input pInputText [(ngModel)]="formData.city" placeholder="Ville"/>
+        </div>
+        <div class="form-field">
+          <label>Code postal</label>
+          <input pInputText [(ngModel)]="formData.postalCode" placeholder="1000"/>
+        </div>
+      </div>
+
+      <div class="form-field" style="margin-top: 0.875rem;">
+        <label>Pays</label>
+        <p-select
+          [options]="countries"
+          [(ngModel)]="formData.country"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un pays"
+          styleClass="w-full"/>
+      </div>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      severity="secondary"
+      (onClick)="onCancel()"/>
+    <p-button
+      [label]="isEdit ? 'Enregistrer' : 'Ajouter'"
+      icon="pi pi-check"
+      [loading]="loading"
+      (onClick)="onSave()"/>
+  </ng-template>
+
+</p-dialog>

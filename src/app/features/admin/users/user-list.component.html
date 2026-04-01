@@ -1,0 +1,244 @@
+<p-toast />
+<p-confirmDialog />
+
+<div class="user-list-container">
+
+  <!-- HEADER ─────────────────────────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h2>Gestion des utilisateurs</h2>
+      <p>Gérez tous les comptes de la plateforme </p>
+    </div>
+    <div class="header-actions">
+      <p-button
+        label="Exporter CSV"
+        icon="pi pi-download"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="exportCsv()"
+        pTooltip="Exporter la liste filtrée"
+        tooltipPosition="bottom"/>
+      <p-button
+        label="Ajouter un utilisateur"
+        icon="pi pi-plus"
+        (onClick)="openAddForm()"/>
+    </div>
+  </div>
+
+  <!-- BARRE DE FILTRES ─────────────────────────────────────────────── -->
+  <div class="filter-bar">
+    <div class="filter-search">
+      <p-iconfield>
+        <p-inputicon styleClass="pi pi-search" />
+        <input
+          pInputText
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="applyFilters()"
+          placeholder="Rechercher par nom, email, username..."
+          class="search-input"/>
+      </p-iconfield>
+    </div>
+
+    <div class="filter-selects">
+      <p-select
+        [options]="roleOptions"
+        [(ngModel)]="selectedRole"
+        (ngModelChange)="applyFilters()"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="filter-select"/>
+
+      <p-select
+        [options]="statusOptions"
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="applyFilters()"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="filter-select"/>
+
+      @if (hasActiveFilters) {
+        <p-button
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          [text]="true"
+          (onClick)="resetFilters()"
+          pTooltip="Réinitialiser les filtres"
+          tooltipPosition="top"/>
+      }
+    </div>
+
+    <div class="filter-count">
+      <span class="count-badge">{{ filteredUsers.length }} résultat(s)</span>
+    </div>
+  </div>
+
+  <!-- TABLEAU ─────────────────────────────────────────────────────── -->
+  <p-table
+    [value]="filteredUsers"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="{first} – {last} sur {totalRecords} utilisateurs"
+    styleClass="p-datatable-gridlines p-datatable-sm">
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Utilisateur</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+        <th>Créé le</th>
+        <th style="width:120px; text-align:center">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="mini-avatar">
+              {{ user.firstName?.charAt(0) || user.username.charAt(0) | uppercase }}
+            </div>
+            <div>
+              <div class="user-fullname">{{ user.firstName }} {{ user.lastName }}</div>
+              <div class="user-username">{{ user.username }}</div>
+            </div>
+          </div>
+        </td>
+
+        <td class="email-cell">{{ user.email }}</td>
+
+        <td>
+          <p-tag [value]="getRoleLabel(user.role)" [severity]="getRoleSeverity(user.role)"/>
+        </td>
+
+        <td>
+          <p-tag
+            [value]="user.actif === 1 ? 'Actif' : 'Inactif'"
+            [severity]="user.actif === 1 ? 'success' : 'danger'"/>
+        </td>
+
+        <td class="date-cell">
+          {{ user.dateCreation ? (user.dateCreation | date:'dd/MM/yyyy') : '—' }}
+        </td>
+
+        <td>
+          <div class="action-buttons">
+            <p-button
+              icon="pi pi-eye"
+              severity="secondary"
+              [rounded]="true" [text]="true"
+              (onClick)="openViewForm(user)"
+              pTooltip="Voir détails" tooltipPosition="top"/>
+
+            <p-button
+              icon="pi pi-pencil"
+              severity="info"
+              [rounded]="true" [text]="true"
+              (onClick)="openEditForm(user)"
+              pTooltip="Modifier" tooltipPosition="top"/>
+
+            <p-button
+              [icon]="user.actif === 1 ? 'pi pi-ban' : 'pi pi-check-circle'"
+              [severity]="user.actif === 1 ? 'warn' : 'success'"
+              [rounded]="true" [text]="true"
+              (onClick)="toggleStatus(user)"
+              [pTooltip]="user.actif === 1 ? 'Désactiver' : 'Activer'"
+              tooltipPosition="top"/>
+
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              [rounded]="true" [text]="true"
+              (onClick)="confirmDelete(user)"
+              pTooltip="Supprimer" tooltipPosition="top"/>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="6" style="text-align:center; padding: 2rem; color: #bbb;">
+          <i class="pi pi-search" style="font-size:2rem; display:block; margin-bottom:8px;"></i>
+          @if (hasActiveFilters) {
+            Aucun utilisateur ne correspond aux filtres
+          } @else {
+            Aucun utilisateur trouvé
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+  </p-table>
+
+</div>
+
+<!-- FORMULAIRE ───────────────────────────────────────────────────── -->
+@if (showForm) {
+  <app-user-form
+    [user]="selectedUser"
+    (saved)="onFormSaved()"
+    (cancelled)="onFormCancelled()"/>
+}
+
+<!-- MODAL VOIR UTILISATEUR -->
+@if (showViewModal && viewUser) {
+  <div class="view-modal-overlay" (click)="closeViewModal()">
+    <div class="view-modal" (click)="$event.stopPropagation()">
+      <div class="view-modal-header">
+        <div class="view-modal-avatar">
+{{ (viewUser.firstName.charAt(0) || viewUser.username.charAt(0)) | uppercase }}
+</div>
+        <div>
+          <h3 class="view-modal-name">{{ viewUser.firstName }} {{ viewUser.lastName }}</h3>
+          <span class="view-modal-username">@{{ viewUser.username }}</span>
+        </div>
+        <button class="view-modal-close" (click)="closeViewModal()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      <div class="view-modal-body">
+        <div class="view-modal-row">
+          <span class="view-modal-label"><i class="pi pi-envelope"></i> Email</span>
+          <span class="view-modal-value">{{ viewUser.email }}</span>
+        </div>
+        <div class="view-modal-row">
+          <span class="view-modal-label"><i class="pi pi-shield"></i> Rôle</span>
+          <span class="view-modal-value">
+            <p-tag [value]="getRoleLabel(viewUser.role)" [severity]="getRoleSeverity(viewUser.role)"/>
+          </span>
+        </div>
+        <div class="view-modal-row">
+          <span class="view-modal-label"><i class="pi pi-circle-fill"></i> Statut</span>
+          <span class="view-modal-value">
+            <p-tag
+              [value]="viewUser.actif === 1 ? 'Actif' : 'Inactif'"
+              [severity]="viewUser.actif === 1 ? 'success' : 'danger'"/>
+          </span>
+        </div>
+        <div class="view-modal-row">
+          <span class="view-modal-label"><i class="pi pi-calendar"></i> Créé le</span>
+          <span class="view-modal-value">
+            {{ viewUser.dateCreation ? (viewUser.dateCreation | date:'dd/MM/yyyy') : '—' }}
+          </span>
+        </div>
+      </div>
+      <div class="view-modal-footer">
+        <p-button
+          label="Modifier"
+          icon="pi pi-pencil"
+          severity="info"
+          [outlined]="true"
+          (onClick)="closeViewModal(); openEditForm(viewUser!)"/>
+        <p-button
+          label="Fermer"
+          icon="pi pi-times"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="closeViewModal()"/>
+      </div>
+    </div>
+  </div>
+}

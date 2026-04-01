@@ -1,0 +1,115 @@
+:host {
+  display: block;
+  padding: 24px;
+}
+
+.logs-container { padding: 0; }
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a237e;
+  margin: 0;
+}
+
+.page-sub {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 4px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid #e8e8f0;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.total-badge {
+  font-size: 12px;
+  background: #EEEDFE;
+  color: #3C3489;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-create     { color: #0F6E56; }
+.icon-update     { color: #185FA5; }
+.icon-activate   { color: #0F6E56; }
+.icon-deactivate { color: #854F0B; }
+.icon-delete     { color: #A32D2D; }
+
+.entity-badge {
+  font-size: 11px;
+  background: #f0f2f8;
+  color: #555;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.performer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.performer-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #EEEDFE;
+  color: #3C3489;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.date-cell {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #333;
+}
+
+.time {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+.empty-msg {
+  text-align: center;
+  padding: 2rem;
+  color: #aaa;
+}
+
+.empty-msg i {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 8px;
+}

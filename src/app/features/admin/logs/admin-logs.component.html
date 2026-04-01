@@ -1,0 +1,101 @@
+<div class="logs-container">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Logs d'activité</h2>
+      <p class="page-sub">Historique de toutes les actions effectuées</p>
+    </div>
+    <p-button
+      icon="pi pi-refresh"
+      label="Actualiser"
+      severity="secondary"
+      (onClick)="loadLogs()"/>
+  </div>
+
+  <div class="card">
+    <p-table
+      [value]="logs"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="15"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} à {last} sur {totalRecords}"
+      [globalFilterFields]="['action','description','performedBy']"
+      styleClass="p-datatable-gridlines"
+      #dt>
+
+      <ng-template pTemplate="caption">
+        <div class="table-header">
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              placeholder="Rechercher..."
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')"/>
+          </span>
+          <span class="total-badge">{{ logs.length }} entrées</span>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:160px">Action</th>
+          <th>Description</th>
+          <th style="width:120px">Type</th>
+          <th style="width:140px">Effectué par</th>
+          <th style="width:160px">Date</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-log>
+        <tr>
+          <td>
+            <div class="action-cell">
+              <i [class]="getActionIcon(log.action)"
+                 [ngClass]="{
+                   'icon-create':     log.action === 'CREATE',
+                   'icon-update':     log.action === 'UPDATE',
+                   'icon-activate':   log.action === 'ACTIVATE',
+                   'icon-deactivate': log.action === 'DEACTIVATE',
+                   'icon-delete':     log.action === 'DELETE'
+                 }"></i>
+              <p-tag
+                [value]="getActionLabel(log.action)"
+                [severity]="getActionSeverity(log.action)"/>
+            </div>
+          </td>
+          <td>{{ log.description }}</td>
+          <td>
+            <span class="entity-badge">{{ log.entityType }}</span>
+          </td>
+          <td>
+            <div class="performer">
+              <div class="performer-avatar">
+                {{ log.performedBy?.charAt(0)?.toUpperCase() }}
+              </div>
+              {{ log.performedBy }}
+            </div>
+          </td>
+          <td>
+            <div class="date-cell">
+              {{ log.dateAction | date:'dd/MM/yyyy' }}
+              <span class="time">{{ log.dateAction | date:'HH:mm:ss' }}</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="empty-msg">
+            <i class="pi pi-inbox"></i>
+            <p>Aucun log disponible</p>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>
