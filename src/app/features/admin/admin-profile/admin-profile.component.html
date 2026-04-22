@@ -1,256 +1,182 @@
 <p-toast position="top-right" />
 
-<!-- Ambient background orbs -->
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
+<div class="profile-shell">
 
-<div class="profile-shell" [attr.data-theme]="profile.theme">
-
-  <!-- ══════════ HEADER ══════════ -->
+  <!-- HEADER -->
   <div class="top-bar">
     <div class="breadcrumb">
       <i class="pi pi-home"></i>
       <span>Dashboard</span>
-      <i class="pi pi-chevron-right sep"></i>
-      <span class="crumb-active">Profil</span>
+      <i class="pi pi-chevron-right"></i>
+      <span>Profil</span>
     </div>
-    <p-button
-      label="Retour"
-      icon="pi pi-arrow-left"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="onCancel()"
-      styleClass="back-btn" />
   </div>
 
-  <!-- ══════════ HERO BANNER ══════════ -->
+  <!-- HERO BANNER -->
   <div class="hero-card">
-    <div class="hero-shimmer"></div>
     <div class="hero-body">
-
-      <div class="avatar-stack">
-        <div class="avatar-glow"></div>
-        <div class="avatar-circle" [style.background]="getAvatarGradient()">
-          {{ initials }}
-        </div>
-        <div class="avatar-online"></div>
+      <div class="avatar-circle">
+        {{ initials }}
       </div>
-
       <div class="hero-info">
-        <h2 class="hero-name">{{ profile.firstName || 'Admin' }} {{ profile.lastName }}</h2>
-        <div class="hero-badges">
-          <span class="badge-admin"><i class="pi pi-shield"></i> Super Admin</span>
-          <span class="badge-online"><span class="pulse-dot"></span> En ligne</span>
+        <h2>{{ profile.firstName || 'Admin' }} {{ profile.lastName }}</h2>
+        <div>
+          <span class="badge-admin">Super Admin</span>
+          <span class="badge-online">En ligne</span>
         </div>
-        <p class="hero-email"><i class="pi pi-envelope"></i> {{ profile.email }}</p>
+        <p><i class="pi pi-envelope"></i> {{ profile.email }}</p>
       </div>
-
     </div>
   </div>
 
-  <!-- ══════════ TWO-COLUMN GRID ══════════ -->
-  <div class="content-grid">
+  <!-- GRILLE 2 COLONNES -->
+  <div class="two-columns">
 
-    <!-- LEFT ──────────────────────── -->
+    <!-- COLONNE GAUCHE -->
     <div class="col-left">
 
-      <!-- Personal info -->
-      <div class="card fade-up" style="--d:0s">
-        <div class="card-head">
-          <span class="card-icon" style="--c:#6C63FF;--bg:#EEEDFE"><i class="pi pi-user"></i></span>
+      <!-- Informations personnelles -->
+      <div class="card">
+        <div class="card-header">
+          <i class="pi pi-user"></i>
           <div>
-            <div class="card-title">Informations personnelles</div>
-            <div class="card-sub">Identité et coordonnées</div>
+            <h3>Informations personnelles</h3>
+            <p>Identité et coordonnées</p>
           </div>
         </div>
 
         <div class="form-grid">
           <div class="field">
             <label>Prénom</label>
-            <div class="inp-wrap">
-              <i class="pi pi-user inp-ico"></i>
-              <input pInputText [(ngModel)]="profile.firstName" placeholder="Votre prénom"
-                (ngModelChange)="refreshInitials()" />
-            </div>
+            <input pInputText [(ngModel)]="profile.firstName" (ngModelChange)="refreshInitials()" />
           </div>
           <div class="field">
             <label>Nom</label>
-            <div class="inp-wrap">
-              <i class="pi pi-user inp-ico"></i>
-              <input pInputText [(ngModel)]="profile.lastName" placeholder="Votre nom"
-                (ngModelChange)="refreshInitials()" />
-            </div>
+            <input pInputText [(ngModel)]="profile.lastName" (ngModelChange)="refreshInitials()" />
           </div>
           <div class="field">
-            <label>Nom d'utilisateur <span class="ro-tag">lecture seule</span></label>
-            <div class="inp-wrap inp-locked">
-              <i class="pi pi-at inp-ico"></i>
-              <input pInputText [(ngModel)]="profile.username" [disabled]="true" />
-              <i class="pi pi-lock lock-ico"></i>
-            </div>
+            <label>Nom d'utilisateur</label>
+            <input pInputText [(ngModel)]="profile.username" disabled />
           </div>
           <div class="field">
-            <label>Email <span class="ro-tag">lecture seule</span></label>
-            <div class="inp-wrap inp-locked">
-              <i class="pi pi-envelope inp-ico"></i>
-              <input pInputText [(ngModel)]="profile.email" [disabled]="true" />
-              <i class="pi pi-lock lock-ico"></i>
-            </div>
+            <label>Email</label>
+            <input pInputText [(ngModel)]="profile.email" disabled />
           </div>
         </div>
       </div>
 
-      <!-- Preferences -->
-      <div class="card fade-up" style="--d:.1s">
-        <div class="card-head">
-          <span class="card-icon" style="--c:#06B6D4;--bg:#ECFEFF"><i class="pi pi-sliders-h"></i></span>
+      <!-- Sessions actives (NOUVEAU - sous informations pers) -->
+      <div class="card">
+        <div class="card-header">
+          <i class="pi pi-desktop"></i>
           <div>
-            <div class="card-title">Préférences de l'interface</div>
-            <div class="card-sub">Langue, thème et format de date</div>
+            <h3>Sessions actives</h3>
+            <p>Appareils connectés à votre compte</p>
           </div>
         </div>
 
-        <div class="form-grid">
-          <div class="field">
-            <label><i class="pi pi-globe"></i> Langue</label>
-            <p-select
-              [options]="languages"
-              [(ngModel)]="profile.language"
-              optionLabel="label"
-              optionValue="value"
-              (ngModelChange)="onLanguageChange($event)"
-              styleClass="w-full fancy-select" />
+        <div class="session-item">
+          <i class="pi pi-desktop"></i>
+          <div>
+            <strong>Windows - Chrome</strong>
           </div>
-          <div class="field">
-            <label><i class="pi pi-clock"></i> Fuseau horaire</label>
-            <p-select
-              [options]="timezones"
-              [(ngModel)]="profile.timezone"
-              optionLabel="label"
-              optionValue="value"
-              styleClass="w-full fancy-select" />
-          </div>
-          <div class="field full-col">
-            <label><i class="pi pi-palette"></i> Thème</label>
-            <div class="theme-pills">
-              <button *ngFor="let t of themes"
-                class="theme-pill"
-                [class.active]="profile.theme === t.value"
-                (click)="onThemeChange(t.value)">
-                <i [class]="'pi ' + t.icon"></i>
-                <span>{{ t.label }}</span>
-                <span class="pill-check" *ngIf="profile.theme === t.value">
-                  <i class="pi pi-check"></i>
-                </span>
-              </button>
-            </div>
-          </div>
-          <div class="field">
-            <label><i class="pi pi-calendar"></i> Format de date</label>
-            <p-select
-              [options]="dateFormats"
-              [(ngModel)]="profile.dateFormat"
-              optionLabel="label"
-              optionValue="value"
-              styleClass="w-full fancy-select" />
-          </div>
+          <span class="session-badge active">Actif</span>
         </div>
       </div>
 
-    </div><!-- /col-left -->
+      <!-- Boutons d'action -->
+      <div class="card-actions">
+        <p-button label="Annuler" icon="pi pi-times" severity="secondary" [outlined]="true" (onClick)="onCancel()" />
+        <p-button label="Enregistrer" icon="pi pi-check" [loading]="saving" (onClick)="onSave()" />
+      </div>
 
-    <!-- RIGHT ──────────────────────── -->
+    </div>
+
+    <!-- COLONNE DROITE -->
     <div class="col-right">
 
-      <!-- Security -->
-      <div class="card fade-up" style="--d:.05s">
-        <div class="card-head">
-          <span class="card-icon" style="--c:#667eea;--bg:#FFFBEB"><i class="pi pi-shield"></i></span>
+      <!-- Sécurité -->
+      <div class="card">
+        <div class="card-header">
+          <i class="pi pi-shield"></i>
           <div>
-            <div class="card-title">Sécurité</div>
-            <div class="card-sub">Mot de passe & 2FA</div>
+            <h3>Sécurité</h3>
+            <p>Gestion des accès</p>
           </div>
         </div>
 
         <div class="kc-banner">
-          <div class="kc-logo-wrap"><i class="pi pi-lock"></i></div>
+          <i class="pi pi-lock"></i>
           <div>
-            <div class="kc-ttl">Authentification Keycloak</div>
-            <div class="kc-desc">Les paramètres de sécurité sont gérés dans votre espace Keycloak sécurisé.</div>
+            <strong>Authentification Keycloak</strong>
+            <span>Géré dans votre espace sécurisé</span>
           </div>
         </div>
 
-        <div class="sec-actions">
-          <button class="sec-card" (click)="openKeycloakPassword()">
-            <span class="sec-ic" style="--c:#6C63FF;--bg:#EEEDFE"><i class="pi pi-key"></i></span>
-            <div class="sec-txt">
-              <div class="sec-ttl">Changer le mot de passe</div>
-              <div class="sec-desc">Redirige vers Keycloak</div>
-            </div>
-            <i class="pi pi-external-link sec-arrow"></i>
-          </button>
+        <button class="sec-btn" (click)="openKeycloakPassword()">
+          <i class="pi pi-key"></i>
+          <div>
+            <strong>Changer le mot de passe</strong>
+            <span>Redirige vers Keycloak</span>
+          </div>
+          <i class="pi pi-external-link"></i>
+        </button>
 
-          <button class="sec-card" (click)="openKeycloak2FA()">
-            <span class="sec-ic" style="--c:#10B981;--bg:#ECFDF5"><i class="pi pi-mobile"></i></span>
-            <div class="sec-txt">
-              <div class="sec-ttl">Authentification 2FA</div>
-              <div class="sec-desc">Configurer via Keycloak</div>
-            </div>
-            <i class="pi pi-external-link sec-arrow"></i>
-          </button>
-        </div>
+        <button class="sec-btn" (click)="openKeycloak2FA()">
+          <i class="pi pi-mobile"></i>
+          <div>
+            <strong>Authentification 2FA</strong>
+            <span>Configurer via Keycloak</span>
+          </div>
+          <i class="pi pi-external-link"></i>
+        </button>
       </div>
 
       <!-- Notifications -->
-      <div class="card fade-up" style="--d:.15s">
-        <div class="card-head">
-          <span class="card-icon" style="--c:#EC4899;--bg:#FDF2F8"><i class="pi pi-bell"></i></span>
+      <div class="card">
+        <div class="card-header">
+          <i class="pi pi-bell"></i>
           <div>
-            <div class="card-title">Notifications</div>
-            <div class="card-sub">Choisissez vos alertes</div>
+            <h3>Notifications</h3>
+            <p>Choisissez vos alertes</p>
           </div>
         </div>
 
-        <div class="notif-list">
-          <div class="notif-row" *ngFor="let n of notifItems">
-            <div class="notif-left">
-              <span class="notif-dot" [style.background]="n.color"></span>
-              <div>
-                <div class="notif-ttl">{{ n.label }}</div>
-                <div class="notif-desc">{{ n.sub }}</div>
-              </div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" [(ngModel)]="notifPrefs[n.key]" />
-              <span class="track"><span class="thumb"></span></span>
-            </label>
+        <div class="notif-item">
+          <div>
+            <strong>Ajout d'utilisateur</strong>
+            <span>Notifier à chaque nouveau compte créé</span>
           </div>
+          <p-toggleSwitch [(ngModel)]="notifPrefs.onUserAdd" />
+        </div>
+
+        <div class="notif-item">
+          <div>
+            <strong>Suppression d'utilisateur</strong>
+            <span>Notifier à chaque suppression</span>
+          </div>
+          <p-toggleSwitch [(ngModel)]="notifPrefs.onUserDelete" />
+        </div>
+
+        <div class="notif-item">
+          <div>
+            <strong>Changement de statut</strong>
+            <span>Activation / désactivation de compte</span>
+          </div>
+          <p-toggleSwitch [(ngModel)]="notifPrefs.onStatusChange" />
+        </div>
+
+        <div class="notif-item">
+          <div>
+            <strong>Alertes système</strong>
+            <span>Erreurs et événements critiques</span>
+          </div>
+          <p-toggleSwitch [(ngModel)]="notifPrefs.onSystemAlert" />
         </div>
       </div>
 
-    </div><!-- /col-right -->
-  </div><!-- /content-grid -->
-
-  <!-- ══════════ SAVE BAR ══════════ -->
-  <div class="save-bar">
-    <div class="save-bar-inner">
-      <span class="save-hint"><i class="pi pi-info-circle"></i> Les modifications seront sauvegardées en base de données</span>
-      <div class="save-actions">
-        <p-button
-          label="Annuler"
-          icon="pi pi-times"
-          severity="secondary"
-          [outlined]="true"
-          (onClick)="onCancel()"
-          styleClass="cancel-btn" />
-        <p-button
-          label="Enregistrer"
-          icon="pi pi-check"
-          [loading]="saving"
-          (onClick)="onSave()"
-          styleClass="save-btn" />
-      </div>
     </div>
+
   </div>
 
 </div>

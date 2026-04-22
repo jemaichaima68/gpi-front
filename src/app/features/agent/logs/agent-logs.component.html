@@ -1,0 +1,72 @@
+<p-toast position="top-right" />
+
+<div class="logs-shell">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- HEADER -->
+  <div class="page-header">
+  <div>
+    <h2 class="page-title-unified">Logs d'activité</h2>
+    <p class="page-sub-unified">Historique des actions effectuées sur la plateforme</p>
+  </div>
+  </div>
+
+  <!-- RECHERCHE -->
+  <div class="search-bar">
+    <div class="search-container">
+      <i class="pi pi-search search-icon"></i>
+      <input 
+        type="text" 
+        pInputText 
+        [(ngModel)]="searchTerm" 
+        (input)="filterLogs()"
+        placeholder="Rechercher par action, utilisateur, description..."
+        class="search-input" />
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+ <div class="card">
+    <p-table
+      [value]="filteredLogs"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 20, 50]"
+      styleClass="p-datatable-sm">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Date</th>
+          <th>Action</th>
+          <th>Type d'entité</th>
+          <th>Description</th>
+          <th>Utilisateur</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-log>
+        <tr>
+          <td>{{ formatDate(log.dateAction) }}</td>
+          <td>
+            <p-tag 
+              [value]="getActionLabel(log.action)" 
+              [severity]="getActionSeverity(log.action)" />
+          </td>
+          <td>{{ log.entityType || '-' }}</td>
+          <td>{{ log.description || '-' }}</td>
+          <td><strong>{{ log.performedBy || '-' }}</strong></td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="empty-message">
+            Aucun log d'activité trouvé.
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>

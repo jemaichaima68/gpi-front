@@ -5,118 +5,78 @@
 
     <!-- SIDEBAR -->
     <ion-menu contentId="main-content" menuId="main-menu">
-
-      <!-- HEADER SIDEBAR -->
       <ion-header>
         <ion-toolbar>
-          <ion-title>
-            <ion-icon name="send-outline" style="margin-right: 8px;"></ion-icon>
+          <ion-title class="logo-title">
+            <i class="pi pi-send" style="font-size: 1.3rem; margin-right: 8px;"></i>
             GPI Tracker
           </ion-title>
         </ion-toolbar>
       </ion-header>
 
-      <!-- MENU ITEMS -->
       <ion-content>
         <ion-list lines="none">
-          <ion-menu-toggle auto-hide="false" *ngFor="let item of menuItems">
+          <ion-menu-toggle auto-hide="false" *ngFor="let item of menuItems; let i = index">
             <ion-item
               [routerLink]="item.route"
               routerLinkActive="active-item"
-              [routerLinkActiveOptions]="{ exact: true }"
               button
               detail="false">
               <ion-icon [name]="item.icon" slot="start"></ion-icon>
-              <ion-label>{{ item.label }}</ion-label>
+              <ion-label class="menu-label">{{ item.label }}</ion-label>
             </ion-item>
           </ion-menu-toggle>
         </ion-list>
       </ion-content>
 
-      <!-- FOOTER SIDEBAR -->
       <ion-footer>
         <ion-toolbar>
-          <ion-item lines="none" button detail="false" (click)="goToProfile()" style="cursor: pointer;">
-            <ion-icon name="person-circle-outline" slot="start"></ion-icon>
-            <ion-label>
-              <h3>{{ username }}</h3>
-              <p>Super Admin</p>
-            </ion-label>
-            <ion-icon
-              name="log-out-outline"
-              slot="end"
-              style="cursor: pointer; font-size: 1.4rem;"
-              (click)="onLogout($event)">
-            </ion-icon>
+          <ion-item
+            *ngFor="let item of bottomItems"
+            [routerLink]="item.route"
+            routerLinkActive="active-item"
+            button
+            detail="false">
+            <ion-icon [name]="item.icon" slot="start"></ion-icon>
+            <ion-label class="menu-label">{{ item.label }}</ion-label>
+          </ion-item>
+
+          <ion-item
+            lines="none"
+            button
+            detail="false"
+            (click)="onLogout($event)"
+            class="logout-item">
+            <ion-icon name="log-out-outline" slot="start"></ion-icon>
+            <ion-label class="menu-label">Déconnexion</ion-label>
           </ion-item>
         </ion-toolbar>
       </ion-footer>
-
     </ion-menu>
 
     <!-- MAIN CONTENT -->
     <div class="ion-page" id="main-content">
-
-      <!-- NAVBAR -->
       <ion-header>
         <ion-toolbar class="main-navbar-toolbar">
           <ion-buttons slot="start">
             <ion-menu-button></ion-menu-button>
           </ion-buttons>
-          <ion-title>Espace Administration</ion-title>
+
+          <div class="toolbar-center">
+            <span class="page-title-text">Espace Administration</span>
+          </div>
+
           <ion-buttons slot="end">
-
-            <!-- NOTIFICATION BUTTON -->
-            <div class="navbar-notification-btn" (click)="toggleNotifications()">
-              <ion-icon name="notifications-outline"></ion-icon>
-              <span class="notif-badge" *ngIf="unreadCount > 0"></span>
-            </div>
-
-            <!-- AVATAR / PROFILE -->
             <div class="navbar-avatar-btn" (click)="goToProfile()">
               {{ avatarInitials }}
             </div>
-
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
 
-      <!-- NOTIFICATION PANEL DROPDOWN -->
-      <div class="notif-panel" *ngIf="showNotifications">
-        <div class="notif-header">
-          <h4>Notifications <span *ngIf="unreadCount > 0" style="color:#667eea">({{ unreadCount }})</span></h4>
-          <button class="notif-mark-all" (click)="markAllRead()">Tout marquer lu</button>
-        </div>
-        <div class="notif-list">
-          <ng-container *ngIf="notifications.length > 0; else emptyNotif">
-            <div
-              class="notif-item"
-              [class.unread]="!n.read"
-              *ngFor="let n of notifications">
-              <div class="notif-icon" [ngClass]="'type-' + n.type">
-                <i [class]="getNotifIcon(n.type)"></i>
-              </div>
-              <div class="notif-body">
-                <div class="notif-text">{{ n.message }}</div>
-                <div class="notif-time">{{ n.time }}</div>
-              </div>
-              <div class="notif-unread-dot" *ngIf="!n.read"></div>
-            </div>
-          </ng-container>
-          <ng-template #emptyNotif>
-            <div class="notif-empty">
-              <i class="pi pi-bell"></i>
-              <div>Aucune notification</div>
-            </div>
-          </ng-template>
-        </div>
-      </div>
-
-      <!-- PAGE CONTENT -->
       <ion-content class="ion-padding">
         <router-outlet></router-outlet>
       </ion-content>
-
     </div>
 
   </ion-split-pane>

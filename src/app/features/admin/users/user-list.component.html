@@ -3,21 +3,21 @@
 
 <div class="user-list-container">
 
-  <!-- HEADER ─────────────────────────────────────────────────────── -->
+  <!-- HEADER -->
   <div class="page-header">
     <div>
-      <h2>Gestion des utilisateurs</h2>
-      <p>Gérez tous les comptes de la plateforme </p>
+      <h2 class="page-title-unified">Gestion des utilisateurs</h2>
+      <p class="page-sub-unified">Gérez tous les comptes de la plateforme</p>
     </div>
     <div class="header-actions">
-      <p-button
-        label="Exporter CSV"
+      <p-splitButton
+        label="Exporter"
         icon="pi pi-download"
+        [model]="exportOptions"
         severity="secondary"
         [outlined]="true"
-        (onClick)="exportCsv()"
-        pTooltip="Exporter la liste filtrée"
-        tooltipPosition="bottom"/>
+        (onClick)="exportCsv()">
+      </p-splitButton>
       <p-button
         label="Ajouter un utilisateur"
         icon="pi pi-plus"
@@ -25,7 +25,7 @@
     </div>
   </div>
 
-  <!-- BARRE DE FILTRES ─────────────────────────────────────────────── -->
+  <!-- BARRE DE FILTRES -->
   <div class="filter-bar">
     <div class="filter-search">
       <p-iconfield>
@@ -40,21 +40,57 @@
     </div>
 
     <div class="filter-selects">
-      <p-select
-        [options]="roleOptions"
-        [(ngModel)]="selectedRole"
-        (ngModelChange)="applyFilters()"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="filter-select"/>
+      <!-- Filtre Rôle avec icône de filtre -->
+      <div class="filter-select-wrapper">
+        <i class="pi pi-filter filter-icon"></i>
+        <p-select
+          [options]="roleOptions"
+          [(ngModel)]="selectedRole"
+          (ngModelChange)="applyFilters()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Filtrer par rôle"
+          styleClass="filter-select">
+          <ng-template pTemplate="selectedItem">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-shield" style="font-size:0.8rem;"></i>
+              <span>{{ selectedRole ? getRoleLabel(selectedRole) : 'Filtrer par rôle' }}</span>
+            </div>
+          </ng-template>
+          <ng-template let-option pTemplate="option">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-shield" style="font-size:0.8rem;"></i>
+              <span>{{ option.label }}</span>
+            </div>
+          </ng-template>
+        </p-select>
+      </div>
 
-      <p-select
-        [options]="statusOptions"
-        [(ngModel)]="selectedStatus"
-        (ngModelChange)="applyFilters()"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="filter-select"/>
+      <!-- Filtre Statut avec icône de filtre -->
+      <div class="filter-select-wrapper">
+        <i class="pi pi-filter filter-icon"></i>
+        <p-select
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          (ngModelChange)="applyFilters()"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Filtrer par statut"
+          styleClass="filter-select">
+          <ng-template pTemplate="selectedItem">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-circle-fill" style="font-size:0.7rem;"></i>
+              <span>{{ selectedStatus === '1' ? 'Actif' : selectedStatus === '0' ? 'Inactif' : 'Filtrer par statut' }}</span>
+            </div>
+          </ng-template>
+          <ng-template let-option pTemplate="option">
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-circle-fill" [style.color]="option.value === '1' ? '#10b981' : option.value === '0' ? '#ef4444' : '#94a3b8'" style="font-size:0.7rem;"></i>
+              <span>{{ option.label }}</span>
+            </div>
+          </ng-template>
+        </p-select>
+      </div>
 
       @if (hasActiveFilters) {
         <p-button
@@ -72,7 +108,7 @@
     </div>
   </div>
 
-  <!-- TABLEAU ─────────────────────────────────────────────────────── -->
+  <!-- TABLEAU -->
   <p-table
     [value]="filteredUsers"
     [loading]="loading"
@@ -98,7 +134,7 @@
         <td>
           <div class="user-cell">
             <div class="mini-avatar">
-              {{ user.firstName?.charAt(0) || user.username.charAt(0) | uppercase }}
+              {{ (user.firstName || user.username || '?').charAt(0) | uppercase }}
             </div>
             <div>
               <div class="user-fullname">{{ user.firstName }} {{ user.lastName }}</div>
@@ -106,53 +142,30 @@
             </div>
           </div>
         </td>
-
         <td class="email-cell">{{ user.email }}</td>
-
         <td>
           <p-tag [value]="getRoleLabel(user.role)" [severity]="getRoleSeverity(user.role)"/>
         </td>
-
         <td>
           <p-tag
             [value]="user.actif === 1 ? 'Actif' : 'Inactif'"
             [severity]="user.actif === 1 ? 'success' : 'danger'"/>
         </td>
-
         <td class="date-cell">
           {{ user.dateCreation ? (user.dateCreation | date:'dd/MM/yyyy') : '—' }}
         </td>
-
         <td>
           <div class="action-buttons">
-            <p-button
-              icon="pi pi-eye"
-              severity="secondary"
-              [rounded]="true" [text]="true"
-              (onClick)="openViewForm(user)"
-              pTooltip="Voir détails" tooltipPosition="top"/>
-
-            <p-button
-              icon="pi pi-pencil"
-              severity="info"
-              [rounded]="true" [text]="true"
-              (onClick)="openEditForm(user)"
-              pTooltip="Modifier" tooltipPosition="top"/>
-
-            <p-button
-              [icon]="user.actif === 1 ? 'pi pi-ban' : 'pi pi-check-circle'"
-              [severity]="user.actif === 1 ? 'warn' : 'success'"
-              [rounded]="true" [text]="true"
+            <p-button icon="pi pi-eye" severity="secondary" [rounded]="true" [text]="true"
+              (onClick)="openViewForm(user)" pTooltip="Voir détails" tooltipPosition="top"/>
+            <p-button icon="pi pi-pencil" severity="info" [rounded]="true" [text]="true"
+              (onClick)="openEditForm(user)" pTooltip="Modifier" tooltipPosition="top"/>
+            <p-button [icon]="user.actif === 1 ? 'pi pi-ban' : 'pi pi-check-circle'"
+              [severity]="user.actif === 1 ? 'warn' : 'success'" [rounded]="true" [text]="true"
               (onClick)="toggleStatus(user)"
-              [pTooltip]="user.actif === 1 ? 'Désactiver' : 'Activer'"
-              tooltipPosition="top"/>
-
-            <p-button
-              icon="pi pi-trash"
-              severity="danger"
-              [rounded]="true" [text]="true"
-              (onClick)="confirmDelete(user)"
-              pTooltip="Supprimer" tooltipPosition="top"/>
+              [pTooltip]="user.actif === 1 ? 'Désactiver' : 'Activer'" tooltipPosition="top"/>
+            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+              (onClick)="confirmDelete(user)" pTooltip="Supprimer" tooltipPosition="top"/>
           </div>
         </td>
       </tr>
@@ -170,12 +183,10 @@
         </td>
       </tr>
     </ng-template>
-
   </p-table>
-
 </div>
 
-<!-- FORMULAIRE ───────────────────────────────────────────────────── -->
+<!-- FORMULAIRE -->
 @if (showForm) {
   <app-user-form
     [user]="selectedUser"
@@ -183,14 +194,14 @@
     (cancelled)="onFormCancelled()"/>
 }
 
-<!-- MODAL VOIR UTILISATEUR -->
+<!-- MODAL VOIR -->
 @if (showViewModal && viewUser) {
   <div class="view-modal-overlay" (click)="closeViewModal()">
     <div class="view-modal" (click)="$event.stopPropagation()">
       <div class="view-modal-header">
         <div class="view-modal-avatar">
-{{ (viewUser.firstName.charAt(0) || viewUser.username.charAt(0)) | uppercase }}
-</div>
+          {{ (viewUser.firstName || viewUser.username || '?').charAt(0) | uppercase }}
+        </div>
         <div>
           <h3 class="view-modal-name">{{ viewUser.firstName }} {{ viewUser.lastName }}</h3>
           <span class="view-modal-username">@{{ viewUser.username }}</span>
@@ -226,17 +237,9 @@
         </div>
       </div>
       <div class="view-modal-footer">
-        <p-button
-          label="Modifier"
-          icon="pi pi-pencil"
-          severity="info"
-          [outlined]="true"
+        <p-button label="Modifier" icon="pi pi-pencil" severity="info" [outlined]="true"
           (onClick)="closeViewModal(); openEditForm(viewUser!)"/>
-        <p-button
-          label="Fermer"
-          icon="pi pi-times"
-          severity="secondary"
-          [outlined]="true"
+        <p-button label="Fermer" icon="pi pi-times" severity="secondary" [outlined]="true"
           (onClick)="closeViewModal()"/>
       </div>
     </div>

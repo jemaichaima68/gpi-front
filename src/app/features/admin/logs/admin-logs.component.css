@@ -1,6 +1,8 @@
 :host {
   display: block;
   padding: 24px;
+  min-height: 100vh;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .logs-container { padding: 0; }
@@ -10,106 +12,217 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.page-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #1a237e;
-  margin: 0;
+.page-title-unified {
+ font-family: Georgia, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800 !important;  /* Changé de 700 à 800 */
+  color: #0f172a !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
 }
 
-.page-sub {
+.page-sub-unified {
   font-size: 0.85rem;
-  color: #888;
+  color: #6b7280;
   margin-top: 4px;
 }
 
 .card {
-  background: #fff;
-  border-radius: 16px;
-  border: 0.5px solid #e8e8f0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  border: 1px solid rgba(139, 92, 246, 0.15);
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
 }
 
 .total-badge {
   font-size: 12px;
-  background: #EEEDFE;
-  color: #3C3489;
+  background: rgba(139, 92, 246, 0.1);
+  color: #6366f1;
   padding: 4px 12px;
   border-radius: 20px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
+/* TABLE STYLES */
+:host ::ng-deep .p-datatable {
+  background: transparent !important;
+}
+
+:host ::ng-deep .p-datatable-wrapper {
+  background: transparent !important;
+}
+
+:host ::ng-deep .p-datatable-thead > tr > th {
+  background: rgba(248, 250, 252, 0.8) !important;
+  color: #4c1d95 !important;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-color: #f0e7fe !important;
+  padding: 14px 16px;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr {
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .p-datatable-tbody > tr:hover {
+  background: rgba(139, 92, 246, 0.04) !important;
+  transform: scale(1.01);
+}
+
+:host ::ng-deep .p-datatable-tbody > tr > td {
+  color: #374151 !important;
+  border-color: #f0e7fe !important;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+}
+
+/* ACTION CELL */
 .action-cell {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
-.icon-create     { color: #0F6E56; }
-.icon-update     { color: #185FA5; }
-.icon-activate   { color: #0F6E56; }
-.icon-deactivate { color: #854F0B; }
-.icon-delete     { color: #A32D2D; }
+.icon-create     { color: #10b981; font-size: 1rem; }
+.icon-update     { color: #3b82f6; font-size: 1rem; }
+.icon-activate   { color: #10b981; font-size: 1rem; }
+.icon-deactivate { color: #f59e0b; font-size: 1rem; }
+.icon-delete     { color: #ef4444; font-size: 1rem; }
 
+/* ENTITY BADGE */
 .entity-badge {
   font-size: 11px;
-  background: #f0f2f8;
-  color: #555;
-  padding: 3px 10px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  padding: 4px 12px;
   border-radius: 20px;
-  font-weight: 500;
+  font-weight: 700;
+  display: inline-block;
 }
 
+/* PERFORMER */
 .performer {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .performer-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #EEEDFE;
-  color: #3C3489;
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
+/* DATE CELL */
 .date-cell {
   display: flex;
   flex-direction: column;
   font-size: 12px;
-  color: #333;
+  color: #374151;
 }
 
 .time {
   font-size: 11px;
-  color: #aaa;
+  color: #9ca3af;
   margin-top: 2px;
 }
 
+/* EMPTY MESSAGE */
 .empty-msg {
   text-align: center;
   padding: 2rem;
-  color: #aaa;
+  color: #9ca3af;
 }
 
 .empty-msg i {
   font-size: 2rem;
   display: block;
   margin-bottom: 8px;
+}
+
+/* SEARCH INPUT */
+:host ::ng-deep .p-inputtext {
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 10px 14px !important;
+  font-size: 0.85rem;
+}
+
+:host ::ng-deep .p-inputtext:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1) !important;
+}
+
+/* PAGINATOR */
+:host ::ng-deep .p-paginator {
+  background: transparent !important;
+  padding: 16px 20px;
+  border-top: 1px solid #f0e7fe;
+}
+
+:host ::ng-deep .p-paginator .p-paginator-page,
+:host ::ng-deep .p-paginator .p-paginator-prev,
+:host ::ng-deep .p-paginator .p-paginator-next {
+  border-radius: 10px !important;
+  transition: all 0.2s;
+}
+
+:host ::ng-deep .p-paginator .p-paginator-page:hover,
+:host ::ng-deep .p-paginator .p-paginator-prev:hover,
+:host ::ng-deep .p-paginator .p-paginator-next:hover {
+  background: rgba(139, 92, 246, 0.1) !important;
+  color: #8b5cf6 !important;
+}
+
+:host ::ng-deep .p-paginator .p-paginator-page.p-highlight {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+  color: white !important;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+tr {
+  animation: fadeIn 0.3s ease-out forwards;
+  animation-delay: calc(var(--index, 0) * 0.03s);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  :host { padding: 16px; }
+  .page-title-unified { font-size: 1.4rem; }
+  .table-header { flex-direction: column; gap: 12px; align-items: stretch; }
 }

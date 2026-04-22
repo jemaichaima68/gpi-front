@@ -1,0 +1,332 @@
+<p-toast position="top-right" />
+
+<div class="settings-shell">
+
+  <!-- Orbes décoratifs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <!-- ══ HEADER ══════════════════════════════════════════════════ -->
+  <div class="top-bar">
+    <div class="breadcrumb">
+      <i class="pi pi-home"></i>
+      <span>Dashboard</span>
+      <i class="pi pi-chevron-right sep"></i>
+      <span class="crumb-active">Règles métier</span>
+    </div>
+    <p-button
+      label="Retour"
+      icon="pi pi-arrow-left"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="onCancel()"
+      styleClass="back-btn" />
+  </div>
+
+  <!-- ══ PAGE TITLE ══════════════════════════════════════════════ -->
+ <div class="page-header">
+  <div>
+    <h2 class="page-title-unified">Paramètres de la plateforme</h2>
+    <p class="page-sub-unified">Configurez les règles métier appliquées aux transactions SWIFT</p>
+  </div>
+  </div>
+
+  <!-- ══ LOADING ═════════════════════════════════════════════════ -->
+  <div *ngIf="loading" class="loading-state">
+    <i class="pi pi-spin pi-spinner"></i>
+    <p>Chargement des paramètres...</p>
+  </div>
+
+  <!-- ══ CONTENT ═════════════════════════════════════════════════ -->
+  <div *ngIf="!loading" class="content-grid">
+
+    <!-- ── COLONNE GAUCHE ────────────────────────────────────── -->
+    <div class="col-left">
+
+      <!-- Plafond montant -->
+      <div class="card fade-up">
+        <div class="card-head">
+          <span class="card-icon" style="--c:#6366f1;--bg:#eef2ff">
+            <i class="pi pi-dollar"></i>
+          </span>
+          <div>
+            <div class="card-title">Plafonds de montant</div>
+            <div class="card-sub">Limites appliquées à chaque transaction</div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+
+          <div class="field">
+            <label><i class="pi pi-arrow-up"></i> Montant maximum (EUR)</label>
+            <div class="inp-wrap">
+              <!-- ❌ ICÔNE EURO SUPPRIMÉE -->
+              <p-inputNumber
+                [(ngModel)]="settings.montantMax"
+                [min]="1"
+                [max]="10000000"
+                [useGrouping]="true"
+                suffix=" EUR"
+                styleClass="w-full inp-num" />
+            </div>
+            <span class="field-hint">
+              Tout virement dépassant ce montant sera signalé à l'agent
+            </span>
+          </div>
+
+          <div class="field">
+            <label><i class="pi pi-arrow-down"></i> Montant minimum (EUR)</label>
+            <div class="inp-wrap">
+              <!-- ❌ ICÔNE EURO SUPPRIMÉE -->
+              <p-inputNumber
+                [(ngModel)]="settings.montantMin"
+                [min]="0.01"
+                [max]="settings.montantMax"
+                [useGrouping]="true"
+                suffix=" EUR"
+                styleClass="w-full inp-num" />
+            </div>
+            <span class="field-hint">
+              Les virements inférieurs à ce montant seront rejetés automatiquement
+            </span>
+          </div>
+
+          <div class="field full-col">
+            <label><i class="pi pi-clock"></i> Délai de traitement maximum (heures)</label>
+            <div class="inp-wrap">
+              <i class="pi pi-hourglass inp-ico"></i>
+              <p-inputNumber
+                [(ngModel)]="settings.delaiTraitementH"
+                [min]="1"
+                [max]="168"
+                suffix=" h"
+                styleClass="w-full inp-num" />
+            </div>
+            <span class="field-hint">
+              Délai maximum avant qu'une transaction en attente soit considérée en retard
+            </span>
+          </div>
+
+        </div>
+
+        <!-- Résumé visuel -->
+        <div class="limits-preview">
+          <div class="limit-chip chip-min">
+            <i class="pi pi-arrow-down"></i>
+            Min : {{ settings.montantMin | number:'1.0-0' }} EUR
+          </div>
+          <div class="limit-bar">
+            <div class="limit-bar-fill"></div>
+          </div>
+          <div class="limit-chip chip-max">
+            <i class="pi pi-arrow-up"></i>
+            Max : {{ settings.montantMax | number:'1.0-0' }} EUR
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Devises autorisées -->
+      <div class="card fade-up">
+        <div class="card-head">
+          <span class="card-icon" style="--c:#10b981;--bg:#ecfdf5">
+            <i class="pi pi-money-bill"></i>
+          </span>
+          <div>
+            <div class="card-title">Devises autorisées</div>
+            <div class="card-sub">Seules ces devises seront acceptées</div>
+          </div>
+          <span class="card-badge">{{ settings.devisesAutorisees.length }} devises</span>
+        </div>
+
+        <!-- Chips actives - ❌ SANS L'ICÔNE ✖ -->
+        <div class="tags-area">
+          <span
+            *ngFor="let d of settings.devisesAutorisees"
+            class="tag tag-devise"
+            (click)="removeDevise(d)">
+            {{ d }}
+          </span>
+          <span *ngIf="settings.devisesAutorisees.length === 0" class="empty-tags">
+            Aucune devise configurée
+          </span>
+        </div>
+
+        <!-- Sélection rapide - ❌ SANS L'ICÔNE ✓ -->
+        <div class="quick-label">Sélection rapide :</div>
+        <div class="quick-pills">
+          <button
+            *ngFor="let d of allDevises"
+            class="pill"
+            [class.pill-active]="settings.devisesAutorisees.includes(d)"
+            (click)="toggleDevise(d)">
+            {{ d }}
+          </button>
+        </div>
+
+        <!-- Ajout manuel - ✅ GARDE L'ICÔNE + -->
+        <div class="add-row">
+          <div class="inp-wrap flex-1">
+            <i class="pi pi-plus inp-ico"></i>
+            <input
+              pInputText
+              [(ngModel)]="newDevise"
+              placeholder="Autre devise (ex: NOK)"
+              (keydown)="onKeyDevise($event)"
+              maxlength="5" />
+          </div>
+          <p-button
+            icon="pi pi-plus"
+            label="Ajouter"
+            (onClick)="addDevise()"
+            styleClass="add-btn" />
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ── COLONNE DROITE ─────────────────────────────────────── -->
+    <div class="col-right">
+
+      <!-- Pays sanctionnés -->
+      <div class="card fade-up">
+        <div class="card-head">
+          <span class="card-icon" style="--c:#ef4444;--bg:#fef2f2">
+            <i class="pi pi-ban"></i>
+          </span>
+          <div>
+            <div class="card-title">Pays sanctionnés</div>
+            <div class="card-sub">Transactions bloquées pour ces pays</div>
+          </div>
+          <span class="card-badge card-badge-red">{{ settings.paysSanctionnes.length }} pays</span>
+        </div>
+
+        <!-- Liste des pays bloqués - ✅ GARDE L'ICÔNE TRASH -->
+        <div class="country-list">
+          <div
+            *ngFor="let p of settings.paysSanctionnes"
+            class="country-row">
+            <div class="country-left">
+              <span class="country-code">{{ p }}</span>
+              <span class="country-name">{{ getCountryName(p) }}</span>
+            </div>
+            <button class="remove-btn" (click)="removePays(p)">
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+          <div *ngIf="settings.paysSanctionnes.length === 0" class="empty-tags">
+            Aucun pays sanctionné configuré
+          </div>
+        </div>
+
+        <!-- Ajout d'un pays - ✅ GARDE L'ICÔNE FLAG -->
+        <div class="add-row" style="margin-top: 16px;">
+          <div class="inp-wrap flex-1">
+            <i class="pi pi-flag inp-ico"></i>
+            <input
+              pInputText
+              [(ngModel)]="newPays"
+              placeholder="Code ISO pays (ex: RU, IR, KP)"
+              (keydown)="onKeyPays($event)"
+              maxlength="2" />
+          </div>
+          <p-button
+            icon="pi pi-plus"
+            label="Ajouter"
+            severity="danger"
+            (onClick)="addPays()"
+            styleClass="add-btn-red" />
+        </div>
+
+        <!-- Info -->
+        <div class="info-banner">
+          <i class="pi pi-info-circle"></i>
+          <span>
+            Utilisez les codes ISO 3166-1 alpha-2 (2 lettres).
+            Ex : <strong>IR</strong> (Iran), <strong>KP</strong> (Corée du Nord),
+            <strong>SY</strong> (Syrie), <strong>RU</strong> (Russie).
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Résumé des règles actives -->
+      <div class="card fade-up">
+        <div class="card-head">
+          <span class="card-icon" style="--c:#f59e0b;--bg:#fffbeb">
+            <i class="pi pi-list-check"></i>
+          </span>
+          <div>
+            <div class="card-title">Résumé des règles actives</div>
+            <div class="card-sub">Aperçu de la configuration actuelle</div>
+          </div>
+        </div>
+
+        <div class="summary-list">
+          <div class="summary-row">
+            <span class="sum-icon sum-green"><i class="pi pi-check-circle"></i></span>
+            <span class="sum-txt">
+              Montant entre
+              <strong>{{ settings.montantMin | number:'1.0-0' }} EUR</strong>
+              et
+              <strong>{{ settings.montantMax | number:'1.0-0' }} EUR</strong>
+            </span>
+          </div>
+          <div class="summary-row">
+            <span class="sum-icon sum-blue"><i class="pi pi-money-bill"></i></span>
+            <span class="sum-txt">
+              <strong>{{ settings.devisesAutorisees.length }}</strong>
+              devise(s) autorisée(s) :
+              {{ settings.devisesAutorisees.join(', ') || '—' }}
+            </span>
+          </div>
+          <div class="summary-row">
+            <span class="sum-icon sum-red"><i class="pi pi-ban"></i></span>
+            <span class="sum-txt">
+              <strong>{{ settings.paysSanctionnes.length }}</strong>
+              pays sanctionné(s) :
+              {{ settings.paysSanctionnes.join(', ') || '—' }}
+            </span>
+          </div>
+          <div class="summary-row">
+            <span class="sum-icon sum-orange"><i class="pi pi-clock"></i></span>
+            <span class="sum-txt">
+              Délai de traitement max :
+              <strong>{{ settings.delaiTraitementH }}h</strong>
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ══ SAVE BAR ═════════════════════════════════════════════════ -->
+  <div class="save-bar" *ngIf="!loading">
+    <div class="save-bar-inner">
+      <span class="save-hint">
+        <i class="pi pi-info-circle"></i>
+        Les modifications s'appliquent immédiatement à toutes les transactions
+      </span>
+      <div class="save-actions">
+        <p-button
+          label="Annuler"
+          icon="pi pi-times"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="onCancel()"
+          styleClass="cancel-btn" />
+        <p-button
+          label="Enregistrer"
+          icon="pi pi-check"
+          [loading]="saving"
+          (onClick)="onSave()"
+          styleClass="save-btn" />
+      </div>
+    </div>
+  </div>
+
+</div>

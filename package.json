@@ -27,6 +27,8 @@
     "chart.js": "^4.5.1",
     "express": "^5.1.0",
     "ionicons": "^8.0.13",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "keycloak": "^1.2.0",
     "keycloak-angular": "^21.0.0",
     "keycloak-js": "^26.2.3",

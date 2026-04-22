@@ -1,0 +1,373 @@
+<p-toast position="top-right" />
+<p-confirmDialog />
+
+<div class="transactions-shell">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">{{ pageTitle }}</h2>
+      <p class="page-sub">Consultez et gérez les messages MX</p>
+    </div>
+    <div class="header-actions">
+      <p-splitButton
+        label="Exporter"
+        icon="pi pi-download"
+        [model]="exportOptions"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="exportCsv()">
+      </p-splitButton>
+    </div>
+  </div>
+
+  <!-- BARRE DE FILTRES -->
+  <div class="filters-card">
+    <div class="filters-header">
+      <i class="pi pi-filter"></i>
+      <span>Filtres</span>
+    </div>
+
+    <!-- Recherche -->
+    <div class="filter-row">
+      <div class="filter-search">
+        <p-iconfield>
+          <p-inputicon styleClass="pi pi-search" />
+          <input
+            pInputText
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="refreshCurrentView()"
+            placeholder="Rechercher par MsgId, UETR, débiteur, créditeur..."
+            class="search-input"/>
+        </p-iconfield>
+      </div>
+
+      <div class="filter-selects">
+        <!-- Filtre Type -->
+        <div class="filter-select-wrapper">
+          <i class="pi pi-tag filter-icon"></i>
+          <p-select
+            [options]="typeFilterOptions"
+            [(ngModel)]="selectedType"
+            (ngModelChange)="refreshCurrentView()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Type de message"
+            styleClass="filter-select">
+          </p-select>
+        </div>
+
+        <!-- Filtre Statut -->
+        <div class="filter-select-wrapper">
+          <i class="pi pi-chart-line filter-icon"></i>
+          <p-select
+            [options]="statusFilterOptions"
+            [(ngModel)]="selectedStatusFilter"
+            (ngModelChange)="refreshCurrentView()"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Statut"
+            styleClass="filter-select">
+          </p-select>
+        </div>
+
+        @if (hasActiveFilters) {
+          <p-button
+            icon="pi pi-filter-slash"
+            severity="secondary"
+            [text]="true"
+            (onClick)="resetFilters()"
+            pTooltip="Réinitialiser les filtres"
+            tooltipPosition="top"/>
+        }
+      </div>
+    </div>
+
+    <!-- Filtres par date -->
+    <div class="filter-date-buttons">
+      <p-button 
+        [label]="'📅 Toutes'" 
+        [severity]="selectedPeriod === 'all' ? 'primary' : 'secondary'"
+        [text]="selectedPeriod !== 'all'"
+        (onClick)="onPeriodChange('all')" />
+      <p-button 
+        label="Aujourd'hui" 
+        [severity]="selectedPeriod === 'today' ? 'primary' : 'secondary'"
+        [text]="selectedPeriod !== 'today'"
+        (onClick)="onPeriodChange('today')" />
+      <p-button 
+        label="Hier" 
+        [severity]="selectedPeriod === 'yesterday' ? 'primary' : 'secondary'"
+        [text]="selectedPeriod !== 'yesterday'"
+        (onClick)="onPeriodChange('yesterday')" />
+      <p-button 
+        label="Cette semaine" 
+        [severity]="selectedPeriod === 'thisWeek' ? 'primary' : 'secondary'"
+        [text]="selectedPeriod !== 'thisWeek'"
+        (onClick)="onPeriodChange('thisWeek')" />
+      <p-button 
+        label="Ce mois" 
+        [severity]="selectedPeriod === 'thisMonth' ? 'primary' : 'secondary'"
+        [text]="selectedPeriod !== 'thisMonth'"
+        (onClick)="onPeriodChange('thisMonth')" />
+      <p-button 
+        label="Personnalisé" 
+        [severity]="selectedPeriod === 'custom' ? 'primary' : 'secondary'"
+        [text]="selectedPeriod !== 'custom'"
+        (onClick)="onPeriodChange('custom')" />
+    </div>
+
+    <!-- Période personnalisée -->
+    <div *ngIf="showCustomDatePicker" class="custom-date-range">
+      <div class="date-picker-group">
+        <label>Du :</label>
+        <input 
+          type="date" 
+          [(ngModel)]="customStartDate"
+          class="date-input" />
+      </div>
+      <div class="date-picker-group">
+        <label>Au :</label>
+        <input 
+          type="date" 
+          [(ngModel)]="customEndDate"
+          class="date-input" />
+      </div>
+      <p-button 
+        label="Appliquer" 
+        icon="pi pi-check" 
+        severity="success" 
+        (onClick)="applyCustomDateFilter()" />
+    </div>
+
+    <!-- Info filtre actif -->
+    <div *ngIf="selectedPeriod !== 'all'" class="filter-info">
+      <i class="pi pi-calendar"></i>
+      <span>Filtre date : {{ dateFilterInfo }}</span>
+      <i class="pi pi-times-circle clear-filter" (click)="resetFilters()" pTooltip="Supprimer le filtre"></i>
+    </div>
+  </div>
+
+  <!-- TABLEAU DES TRANSACTIONS -->
+  <div class="card">
+    <div class="table-header">
+      <span class="count-badge">{{ transactions.length }} transaction(s)</span>
+    </div>
+
+    <p-table
+      [value]="transactions"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 20, 50]"
+      [loading]="loading"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} – {last} sur {totalRecords} transactions"
+      styleClass="p-datatable-sm">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Type</th>
+          <th>MsgId</th>
+          <th>UETR</th>
+          <th>Montant</th>
+          <th>Débiteur</th>
+          <th>Créditeur</th>
+          <th>Pays</th>
+          <th>Date</th>
+          <th>Statut</th>
+          <th>Alerte</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-tx>
+        <tr>
+          <td><p-tag [value]="tx.messageType" severity="info" size="small" /></td>
+          <td>{{ tx.msgId }}</td>
+          <td class="uetr-cell">{{ tx.uetr }}</td>
+          <td><strong>{{ tx.amount | number:'1.2-2' }}</strong> {{ tx.currency }}</td>
+          <td>{{ tx.debtorName }}</td>
+          <td>{{ tx.creditorName }}</td>
+          <td><span class="country-badge">{{ tx.creditorCountry }}</span></td>
+          <td>{{ tx.receivedAt | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <p-tag 
+              [value]="getStatusLabel(tx.status)" 
+              [severity]="getStatusSeverity(tx.status)"
+              [pTooltip]="getStatusTooltip(tx.status)"
+              tooltipPosition="top" />
+          </td>
+          <td>
+            <div *ngIf="tx.alerte" class="alerte-cell">
+              <p-tag
+                [value]="getAlerteLabel(tx.alerte)"
+                [severity]="getAlerteSeverity(tx.alerte)" />
+              <i *ngIf="tx.motifAlerte"
+                 class="pi pi-info-circle"
+                 pTooltip="{{ tx.motifAlerte }}"
+                 tooltipPosition="top"></i>
+            </div>
+            <span *ngIf="!tx.alerte">—</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <p-button
+                icon="pi pi-eye"
+                severity="secondary"
+                [rounded]="true"
+                [text]="true"
+                (onClick)="showDetail(tx)"
+                pTooltip="Voir détails" />
+              
+              <div *ngIf="needsAgentAction(tx.status)" class="status-actions">
+                <p-select
+                  [options]="statusOptions"
+                  [(ngModel)]="selectedStatus[tx.id]"
+                  placeholder="Statut"
+                  optionLabel="label"
+                  optionValue="value"
+                  (onChange)="onStatusChange(tx.id, selectedStatus[tx.id])"
+                  styleClass="status-select-sm"
+                  appendTo="body" />
+                
+                <input 
+                  *ngIf="showMotifInput[tx.id]"
+                  type="text" 
+                  pInputText 
+                  [(ngModel)]="rejectionReason[tx.id]"
+                  placeholder="Motif"
+                  class="motif-input-sm" />
+                
+                <p-button
+                  icon="pi pi-send"
+                  severity="success"
+                  [rounded]="true"
+                  [disabled]="!selectedStatus[tx.id]"
+                  (onClick)="sendConfirmation(tx.id, tx.msgId)"
+                  pTooltip="Envoyer" />
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="11" class="empty-message">
+            <i class="pi pi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p>Aucune transaction trouvée.</p>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>
+
+<!-- Dialog motif rejet -->
+<p-dialog 
+  header="Motif du rejet" 
+  [(visible)]="showRejectDialog" 
+  [modal]="true" 
+  [style]="{ width: '450px' }">
+  <div class="reject-dialog-content">
+    <p>Veuillez indiquer le motif du rejet :</p>
+    <textarea 
+      pInputText
+      [(ngModel)]="rejectMotif" 
+      rows="4" 
+      placeholder="Ex: Bénéficiaire non vérifié, montant suspect, etc."
+      style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px;">
+    </textarea>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Annuler" (onClick)="showRejectDialog = false" severity="secondary" />
+    <p-button label="Confirmer" icon="pi pi-check" severity="danger" (onClick)="confirmReject()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog détail -->
+<p-dialog 
+  header="Détail de la transaction"
+  [(visible)]="showDetailDialog" 
+  [modal]="true" 
+  [style]="{ width: '550px' }">
+  
+  <div *ngIf="selectedTransaction" class="detail-dialog-content">
+    
+    <div *ngIf="selectedTransaction.alerte && selectedTransaction.alerte !== 'OK'" 
+         class="alert-card" 
+         [class.alert-grave]="selectedTransaction.alerte === 'GRAVE'"
+         [class.alert-attention]="selectedTransaction.alerte === 'ATTENTION'">
+      <div class="alert-header">
+        <i [class]="'pi ' + getAlerteIcon(selectedTransaction.alerte)"></i>
+        <span class="alert-title">{{ getAlerteLabel(selectedTransaction.alerte) }}</span>
+      </div>
+      <div class="alert-message">{{ selectedTransaction.motifAlerte }}</div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-row">
+        <span class="detail-label">MsgId :</span>
+        <span class="detail-value">{{ selectedTransaction.msgId }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Type :</span>
+        <span class="detail-value">{{ selectedTransaction.messageType }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">UETR :</span>
+        <span class="detail-value">{{ selectedTransaction.uetr }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Montant :</span>
+        <span class="detail-value"><strong>{{ selectedTransaction.amount | number:'1.2-2' }} {{ selectedTransaction.currency }}</strong></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Débiteur :</span>
+        <span class="detail-value">{{ selectedTransaction.debtorName }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Créditeur :</span>
+        <span class="detail-value">{{ selectedTransaction.creditorName }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Pays bénéficiaire :</span>
+        <span class="detail-value">{{ selectedTransaction.creditorCountry }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Date réception :</span>
+        <span class="detail-value">{{ selectedTransaction.receivedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Statut :</span>
+        <span class="detail-value">
+          <p-tag 
+            [value]="getStatusLabel(selectedTransaction.status)" 
+            [severity]="getStatusSeverity(selectedTransaction.status)"
+            pTooltip="{{ getStatusTooltip(selectedTransaction.status) }}" />
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Fermer" (onClick)="closeDetailDialog()" severity="secondary" />
+    <div *ngIf="selectedTransaction?.status === 'EN_ATTENTE' || selectedTransaction?.status === 'SIGNALE'" class="dialog-actions">
+      <p-select
+        [options]="statusOptions"
+        [(ngModel)]="selectedStatus[selectedTransaction!.id]"
+        placeholder="Choisir statut"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="status-select">
+      </p-select>
+      <p-button 
+        label="Envoyer" 
+        icon="pi pi-send" 
+        severity="success" 
+        [disabled]="!selectedStatus[selectedTransaction!.id]"
+        (onClick)="sendConfirmation(selectedTransaction!.id, selectedTransaction!.msgId); closeDetailDialog()" />
+    </div>
+  </ng-template>
+</p-dialog>

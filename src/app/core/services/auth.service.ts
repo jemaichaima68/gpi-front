@@ -8,12 +8,10 @@ export class AuthService {
   private keycloak = inject(Keycloak);
   private router   = inject(Router);
 
-  // ── Statut de connexion ──────────────────────────────────────────────────
   isLoggedIn(): boolean {
     return !!this.keycloak.authenticated;
   }
 
-  // ── Infos utilisateur ────────────────────────────────────────────────────
   getUsername(): string {
     return (this.keycloak.tokenParsed as any)?.['preferred_username'] ?? '';
   }
@@ -21,7 +19,6 @@ export class AuthService {
   getEmail(): string {
     return (this.keycloak.tokenParsed as any)?.['email'] ?? '';
   }
-  
 
   getFullName(): string {
     const p = this.keycloak.tokenParsed as any;
@@ -30,7 +27,6 @@ export class AuthService {
     return `${first} ${last}`.trim() || this.getUsername();
   }
 
-  // ── Rôles (realm_access) ─────────────────────────────────────────────────
   getRoles(): string[] {
     const p = this.keycloak.tokenParsed as any;
     return p?.['realm_access']?.['roles'] ?? [];
@@ -40,23 +36,24 @@ export class AuthService {
     return this.getRoles().includes(role);
   }
 
-  // ── Navigation post-login ────────────────────────────────────────────────
   redirectByRole(): void {
     const roles = this.getRoles();
-    if (roles.includes('Admin'))        { this.router.navigate(['/admin/dashboard']);     return; }
-    if (roles.includes('BACK_OFFICE'))  { this.router.navigate(['/backoffice/dashboard']); return; }
-    if (roles.includes('CLIENT'))       { this.router.navigate(['/client/dashboard']);    return; }
+    
+    // ✅ Changer l'ordre : d'abord Admin, puis BACK_OFFICE, puis CLIENT
+    if (roles.includes('Admin'))       { this.router.navigate(['/admin/dashboard']);  return; }
+    if (roles.includes('BACK_OFFICE')) { this.router.navigate(['/agent/dashboard']);  return; }
+    if (roles.includes('CLIENT'))      { this.router.navigate(['/client/dashboard']); return; }
+    
     this.router.navigate(['/access-denied']);
   }
 
-  // ── Connexion / Déconnexion ──────────────────────────────────────────────
- login(): Promise<void> {
-  return this.keycloak.login();  // Utilise redirectUri de initOptions
-}
+  login(): Promise<void> {
+    return this.keycloak.login();
+  }
 
-logout(): void {
-  this.keycloak.logout({
-    redirectUri: window.location.origin
-  });
-}
+  logout(): void {
+    this.keycloak.logout({
+      redirectUri: window.location.origin
+    });
+  }
 }

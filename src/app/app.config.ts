@@ -34,10 +34,6 @@ export const appConfig: ApplicationConfig = {
           urlPattern:  /^(http:\/\/localhost:8081)(\/.*)?$/,
           httpMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
         },
-        {
-          urlPattern:  /^(http:\/\/192\.168\.1\.14:8081)(\/.*)?$/,
-          httpMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-        }
       ]
     },
 
@@ -52,31 +48,31 @@ export const appConfig: ApplicationConfig = {
       }
     }),
 
-provideKeycloak({
-  config: {
-    url:      environment.keycloakUrl,
-    realm:    'gpi-tracker-realm',
-    clientId: 'gpi-tracker-frontend'
-  },
-  initOptions: {
-  redirectUri: window.location.origin + '/admin/dashboard',
-   onLoad: 'login-required',     
-    checkLoginIframe: false,
-    pkceMethod:       'S256',
-    responseMode:     'fragment',       
-    flow:             'standard',
-    silentCheckSsoFallback: false,
-    enableLogging:    true,
-    
-  },
-  // ✅ Supprimer le redirectUri d'ici — le mettre uniquement dans login()
-  features: [
-    withAutoRefreshToken({
-      onInactivityTimeout: 'logout',
-      sessionTimeout:      300000
-    })
-  ]
-}),
+    provideKeycloak({
+      config: {
+        url:      environment.keycloakUrl,
+        realm:    'gpi-tracker-realm',
+        clientId: 'gpi-tracker-frontend'
+      },
+      initOptions: {
+        // ❌ redirectUri supprimé — la redirection est gérée par rootRedirectGuard
+        // selon le rôle Keycloak de l'utilisateur connecté
+        onLoad:                 'login-required',
+        checkLoginIframe:       false,
+        pkceMethod:             'S256',
+        responseMode:           'fragment',
+        flow:                   'standard',
+        silentCheckSsoFallback: false,
+        enableLogging:          true,
+      },
+      features: [
+        withAutoRefreshToken({
+          onInactivityTimeout: 'logout',
+          sessionTimeout:      300000
+        })
+      ]
+    }),
+
     AutoRefreshTokenService,
     UserActivityService,
     MessageService,

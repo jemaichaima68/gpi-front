@@ -2,35 +2,42 @@
   [(visible)]="visible"
   [header]="isEdit ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'"
   [modal]="true"
-  [style]="{ width: '640px' }"
+  [style]="{ width: '700px' }"
   [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
   (onHide)="onCancel()">
 
   <div class="form-container">
 
     @if (errorMessage) {
-      <p-message severity="error" [text]="errorMessage" />
+      <p-message severity="error" [text]="errorMessage" styleClass="mb-3" />
     }
 
     <!-- SECTION 1 : COMPTE -->
     <div class="form-section">
-      <p class="form-section-title">
-        <i class="pi pi-user"></i> Informations du compte
-      </p>
-
+      <div class="form-section-header">
+        <i class="pi pi-user-circle"></i>
+        <span>Informations du compte</span>
+      </div>
       <div class="form-row">
-        <div class="form-field">
+        <div class="form-field" [class.has-error]="hasError('username')">
           <label>Nom d'utilisateur <span class="required">*</span></label>
-          <input pInputText [(ngModel)]="formData.username" placeholder="username"/>
+          <input pInputText [(ngModel)]="formData.username" placeholder="ex: jean.dupont" maxlength="50" />
+          <small class="error-message" *ngIf="hasError('username')">
+            <i class="pi pi-exclamation-triangle"></i> {{ getError('username') }}
+          </small>
         </div>
-        <div class="form-field">
+        <div class="form-field" [class.has-error]="hasError('email')">
           <label>Email <span class="required">*</span></label>
-          <input pInputText [(ngModel)]="formData.email" placeholder="email@exemple.com"/>
+          <input pInputText [(ngModel)]="formData.email" placeholder="ex: jean@exemple.com" maxlength="100" />
+          <small class="error-message" *ngIf="hasError('email')">
+            <i class="pi pi-exclamation-triangle"></i> {{ getError('email') }}
+          </small>
         </div>
       </div>
-
-      <div class="form-row" style="margin-top: 0.875rem;">
-        <div class="form-field">
+      <div class="form-row">
+        <div class="form-field" [class.has-error]="hasError('role')">
           <label>Rôle <span class="required">*</span></label>
           <p-select
             [options]="roles"
@@ -38,7 +45,10 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Sélectionner un rôle"
-            styleClass="w-full"/>
+            styleClass="w-full" />
+          <small class="error-message" *ngIf="hasError('role')">
+            <i class="pi pi-exclamation-triangle"></i> {{ getError('role') }}
+          </small>
         </div>
         <div class="form-field">
           <label>Statut</label>
@@ -48,19 +58,21 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Statut du compte"
-            styleClass="w-full"/>
+            styleClass="w-full" />
         </div>
       </div>
-
       @if (!isEdit) {
-        <div class="form-field" style="margin-top: 0.875rem;">
+        <div class="form-field" [class.has-error]="hasError('password')">
           <label>Mot de passe temporaire <span class="required">*</span></label>
           <p-password
             [(ngModel)]="formData.password"
             placeholder="Mot de passe temporaire"
             [feedback]="true"
-            styleClass="w-full"
-            [toggleMask]="true"/>
+            [toggleMask]="true"
+            styleClass="w-full" />
+          <small class="error-message" *ngIf="hasError('password')">
+            <i class="pi pi-exclamation-triangle"></i> {{ getError('password') }}
+          </small>
           <small class="hint">
             <i class="pi pi-info-circle"></i>
             Le client recevra ce mot de passe par email et devra le changer à la première connexion.
@@ -71,67 +83,84 @@
 
     <!-- SECTION 2 : IDENTITÉ -->
     <div class="form-section">
-      <p class="form-section-title">
-        <i class="pi pi-id-card"></i> Identité
-      </p>
-
+      <div class="form-section-header">
+        <i class="pi pi-id-card"></i>
+        <span>Identité</span>
+      </div>
       <div class="form-row">
-        <div class="form-field">
+        <div class="form-field" [class.has-error]="hasError('firstName')">
           <label>Prénom</label>
-          <input pInputText [(ngModel)]="formData.firstName" placeholder="Prénom"/>
+          <input pInputText [(ngModel)]="formData.firstName" placeholder="Prénom" maxlength="50" />
+          <small class="error-message" *ngIf="hasError('firstName')">
+            <i class="pi pi-exclamation-triangle"></i> {{ getError('firstName') }}
+          </small>
         </div>
         <div class="form-field">
           <label>Nom</label>
-          <input pInputText [(ngModel)]="formData.lastName" placeholder="Nom de famille"/>
+          <input pInputText [(ngModel)]="formData.lastName" placeholder="Nom de famille" maxlength="50" />
         </div>
       </div>
-
-      <div class="form-row" style="margin-top: 0.875rem;">
+      <div class="form-row">
         <div class="form-field">
           <label>Date de naissance</label>
-          <input pInputText type="date" [(ngModel)]="formData.birthDate"/>
+          <input pInputText type="date" [(ngModel)]="formData.birthDate" />
         </div>
-        <div class="form-field">
+        <div class="form-field" [class.has-error]="hasError('phone')">
           <label>Téléphone</label>
-          <input pInputText [(ngModel)]="formData.phone" placeholder="+216 XX XXX XXX"/>
+          <input pInputText [(ngModel)]="formData.phone" placeholder="+216 XX XXX XXX" maxlength="20" />
+          <small class="error-message" *ngIf="hasError('phone')">
+            <i class="pi pi-exclamation-triangle"></i> {{ getError('phone') }}
+          </small>
         </div>
       </div>
     </div>
 
     <!-- SECTION 3 : ADRESSE -->
     <div class="form-section">
-      <p class="form-section-title">
-        <i class="pi pi-map-marker"></i> Adresse
-      </p>
-
+      <div class="form-section-header">
+        <i class="pi pi-map-marker"></i>
+        <span>Adresse</span>
+      </div>
       <div class="form-field">
         <label>Rue / Adresse</label>
-        <input pInputText [(ngModel)]="formData.address" placeholder="N° et nom de rue"/>
+        <input pInputText [(ngModel)]="formData.address" placeholder="N° et nom de rue" maxlength="255" />
       </div>
-
-      <div class="form-row" style="margin-top: 0.875rem;">
+      <div class="form-row">
         <div class="form-field">
           <label>Ville</label>
-          <input pInputText [(ngModel)]="formData.city" placeholder="Ville"/>
+          <input pInputText [(ngModel)]="formData.city" placeholder="Ville" maxlength="100" />
         </div>
         <div class="form-field">
           <label>Code postal</label>
-          <input pInputText [(ngModel)]="formData.postalCode" placeholder="1000"/>
+          <input pInputText [(ngModel)]="formData.postalCode" placeholder="1000" maxlength="20" />
         </div>
       </div>
-
-      <div class="form-field" style="margin-top: 0.875rem;">
+      <div class="form-field">
         <label>Pays</label>
         <p-select
           [options]="countries"
           [(ngModel)]="formData.country"
+          (ngModelChange)="onCountryChange($event)"
           optionLabel="label"
           optionValue="value"
           placeholder="Sélectionner un pays"
-          styleClass="w-full"/>
+          styleClass="w-full" />
       </div>
+      <!-- Champ supplémentaire pour "Autre" pays -->
+      @if (showOtherCountryInput) {
+        <div class="form-field" style="margin-top: 0.75rem;">
+          <label>Précisez le pays</label>
+          <input 
+            pInputText 
+            [(ngModel)]="formData.otherCountry" 
+            placeholder="Ex: Allemagne, Italie, etc." 
+            maxlength="50" />
+          <small class="error-message" *ngIf="hasError('otherCountry')">
+            <i class="pi pi-exclamation-triangle"></i> {{ getError('otherCountry') }}
+          </small>
+        </div>
+      }
     </div>
-
   </div>
 
   <ng-template pTemplate="footer">
@@ -139,12 +168,12 @@
       label="Annuler"
       icon="pi pi-times"
       severity="secondary"
-      (onClick)="onCancel()"/>
+      [outlined]="true"
+      (onClick)="onCancel()" />
     <p-button
       [label]="isEdit ? 'Enregistrer' : 'Ajouter'"
       icon="pi pi-check"
       [loading]="loading"
-      (onClick)="onSave()"/>
+      (onClick)="onSave()" />
   </ng-template>
-
 </p-dialog>

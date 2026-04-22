@@ -1,8 +1,7 @@
-import { Component, OnInit, AfterViewInit,
-         ElementRef, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { UserService, DashboardStats } from '../../../core/services/user.service';
+import { UserService, DashboardStats, AppUser } from '../../../core/services/user.service';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -15,15 +14,7 @@ Chart.register(...registerables);
   styleUrls: ['./admin-dashboard.component.css']
 })
 export class AdminDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
-
-  private chartCanvas!: ElementRef;
-
-  @ViewChild('chartCanvas') set setChartCanvas(el: ElementRef) {
-    if (el) {
-      this.chartCanvas = el;
-      this.buildChart();
-    }
-  }
+  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
   stats: DashboardStats | null = null;
   loading = true;
@@ -31,66 +22,107 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit, OnDestroy
   private chart: Chart | null = null;
 
   private avatarGradients = [
-    'linear-gradient(135deg, #667eea, #764ba2)',
-    'linear-gradient(135deg, #10b981, #34d399)',
-    'linear-gradient(135deg, #f59e0b, #fbbf24)',
-    'linear-gradient(135deg, #ef4444, #f97316)',
-    'linear-gradient(135deg, #8b5cf6, #a855f7)',
-    'linear-gradient(135deg, #ec489a, #f472b6)',
-    'linear-gradient(135deg, #06b6d4, #3b82f6)',
-    'linear-gradient(135deg, #84cc16, #22c55e)'
+    'linear-gradient(135deg, #8b5cf6, #6366f1)',
+    'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+    'linear-gradient(135deg, #c4b5fd, #a78bfa)',
+    'linear-gradient(135deg, #e0e7ff, #c7d2fe)',
+    'linear-gradient(135deg, #f1f5f9, #e2e8f0)'
   ];
 
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
+    this.loadStats();
+  }
+
+  ngAfterViewInit() {
+    this.safeBuildChart();
+  }
+
+  ngOnDestroy() {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
+  }
+
+  private safeBuildChart() {
+    if (!this.chartCanvas?.nativeElement) return;
+    if (!this.stats?.registrationsByMonth || Object.keys(this.stats.registrationsByMonth).length === 0) return;
+    setTimeout(() => this.buildChart(), 50);
+  }
+
+  loadStats() {
     this.loading = true;
     this.userService.getDashboardStats().subscribe({
       next: (data) => {
         this.stats = data;
         this.loading = false;
-        setTimeout(() => this.buildChart(), 100);
+        this.cdr.detectChanges();
+        this.safeBuildChart();
       },
-      error: (err) => { 
+      error: (err) => {
         console.error('Error loading stats:', err);
-        this.loading = false; 
+        this.loading = false;
+        // Données mockées
+        this.stats = {
+          totalUsers: 4,
+          activeUsers: 3,
+          inactiveUsers: 1,
+          addedThisMonth: 4,
+          byRole: { CLIENT: 2, BACK_OFFICE: 1, Admin: 1 },
+          recentUsers: [
+            { id: '1', keycloakId: 'kc-1', firstName: 'Admin', lastName: 'Principal', username: 'admin', email: 'admin@gpi.com', role: 'Admin', actif: 1, dateCreation: new Date().toISOString(), dateModification: new Date().toISOString() },
+            { id: '2', keycloakId: 'kc-2', firstName: 'CLI', lastName: 'cliente', username: 'cliente', email: 'cli@example.com', role: 'CLIENT', actif: 1, dateCreation: new Date().toISOString(), dateModification: new Date().toISOString() },
+            { id: '3', keycloakId: 'kc-3', firstName: 'boshra', lastName: 'jemai', username: 'boshra', email: 'boshra@example.com', role: 'CLIENT', actif: 1, dateCreation: new Date().toISOString(), dateModification: new Date().toISOString() },
+            { id: '4', keycloakId: 'kc-4', firstName: 'shaima', lastName: 'jemai', username: 'shaima', email: 'shaima@example.com', role: 'BACK_OFFICE', actif: 0, dateCreation: new Date().toISOString(), dateModification: new Date().toISOString() }
+          ] as AppUser[],
+          registrationsByMonth: {
+            'nov.': 1, 'déc.': 2, 'janv.': 3, 'févr.': 2, 'mars': 4, 'avr.': 3
+          }
+        };
+        this.cdr.detectChanges();
+        this.safeBuildChart();
       }
     });
   }
 
-  ngAfterViewInit() {}
-
-  ngOnDestroy() {
-    if (this.chart) {
-      this.chart.destroy();
-    }
-  }
-
   buildChart() {
-    if (!this.stats?.registrationsByMonth) return;
     if (!this.chartCanvas?.nativeElement) return;
+    if (!this.stats?.registrationsByMonth) return;
 
     const labels = Object.keys(this.stats.registrationsByMonth);
     const data = Object.values(this.stats.registrationsByMonth);
+    if (labels.length === 0 || data.length === 0) return;
 
     if (this.chart) {
       this.chart.destroy();
+      this.chart = null;
     }
 
-    this.chart = new Chart(this.chartCanvas.nativeElement, {
-      type: 'bar',
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    this.chart = new Chart(ctx, {
+      type: 'line',
       data: {
-        labels,
+        labels: labels,
         datasets: [{
           label: 'Inscriptions',
-          data,
-          backgroundColor: 'rgba(102, 126, 234, 0.15)',
-          borderColor: '#667eea',
-          borderWidth: 2,
-          borderRadius: 12,
-          borderSkipped: false,
-          barPercentage: 0.65,
-          categoryPercentage: 0.8
+          data: data,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.05)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#a855f7',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.3
         }]
       },
       options: {
@@ -99,111 +131,58 @@ export class AdminDashboardComponent implements OnInit, AfterViewInit, OnDestroy
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#ffffff',
+            backgroundColor: '#fff',
             titleColor: '#1e293b',
             bodyColor: '#475569',
             borderColor: '#e2e8f0',
-            borderWidth: 1,
-            padding: 12,
-            cornerRadius: 12,
-            titleFont: { size: 13, weight: 'bold', family: 'Plus Jakarta Sans' },
-            bodyFont: { size: 12, family: 'Plus Jakarta Sans' },
-            callbacks: {
-              label: (ctx: any) => ` ${ctx.parsed.y} inscription(s)`
-            }
+            borderWidth: 1
           }
         },
         scales: {
           x: {
             grid: { display: false },
-            border: { display: false },
-            ticks: { 
-              color: '#94a3b8', 
-              font: { size: 12, family: 'Plus Jakarta Sans' },
-              padding: 8
-            }
+            ticks: { color: '#94a3b8', font: { size: 11 } }
           },
           y: {
-            grid: { color: '#e2e8f0', lineWidth: 1 },
-            border: { display: false },
-            ticks: {
-              color: '#94a3b8',
-              font: { size: 12, family: 'Plus Jakarta Sans' },
-              stepSize: 1,
-              precision: 0,
-              padding: 8
-            },
+            grid: { color: '#eef2ff' },
+            ticks: { color: '#94a3b8', stepSize: 1, precision: 0 },
             beginAtZero: true
-          }
-        },
-        layout: {
-          padding: {
-            left: 10,
-            right: 10,
-            top: 20,
-            bottom: 10
           }
         }
       }
     });
   }
 
-  getRoleCount(role: string): number {
-    return this.stats?.byRole?.[role] ?? 0;
-  }
-
+  getRoleCount(role: string): number { return this.stats?.byRole?.[role] ?? 0; }
   getActivePercent(): number {
     if (!this.stats || this.stats.totalUsers === 0) return 0;
     return Math.round((this.stats.activeUsers / this.stats.totalUsers) * 100);
   }
-
   getRoleBarWidth(role: string): number {
     if (!this.stats || this.stats.totalUsers === 0) return 0;
     return Math.round((this.getRoleCount(role) / this.stats.totalUsers) * 100);
   }
-
   getInitials(user: any): string {
     const first = user.firstName?.charAt(0) ?? '';
     const last = user.lastName?.charAt(0) ?? '';
     const initials = (first + last).toUpperCase();
-    return initials.length > 0
-      ? initials
-      : (user.username?.charAt(0).toUpperCase() ?? '?');
+    return initials.length ? initials : (user.username?.charAt(0).toUpperCase() ?? '?');
   }
-
-  getAvatarGradient(index: number): string {
-    return this.avatarGradients[index % this.avatarGradients.length];
-  }
-
+  getAvatarGradient(index: number): string { return this.avatarGradients[index % this.avatarGradients.length]; }
   getRoleBadgeClass(role: string): string {
     switch (role) {
-      case 'ADMIN':
-      case 'Admin':
-        return 'ufi-badge badge-admin';
-      case 'BACK_OFFICE':
-      case 'BackOffice':
-        return 'ufi-badge badge-backoffice';
-      case 'CLIENT':
-      case 'Client':
-        return 'ufi-badge badge-client';
-      default:
-        return 'ufi-badge badge-default';
+      case 'ADMIN': case 'Admin': return 'badge-admin';
+      case 'BACK_OFFICE': case 'BackOffice': return 'badge-backoffice';
+      case 'CLIENT': case 'Client': return 'badge-client';
+      default: return 'badge-default';
     }
   }
-
   getRoleLabel(role: string): string {
     switch (role) {
-      case 'ADMIN':
-      case 'Admin':
-        return 'Admin';
-      case 'BACK_OFFICE':
-      case 'BackOffice':
-        return 'Back-office';
-      case 'CLIENT':
-      case 'Client':
-        return 'Client';
-      default:
-        return role;
+      case 'ADMIN': case 'Admin': return 'Admin';
+      case 'BACK_OFFICE': case 'BackOffice': return 'Back-office';
+      case 'CLIENT': case 'Client': return 'Client';
+      default: return role;
     }
   }
 }

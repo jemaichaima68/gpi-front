@@ -1,0 +1,437 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
+ion-app {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: linear-gradient(160deg, #f5f3ff 0%, #ede9fe 30%, #f0fdf4 60%, #fefce8 100%);
+}
+
+/* ============================================================
+   SPLIT PANE
+   ============================================================ */
+ion-split-pane {
+  --side-max-width: 280px;
+  --side-min-width: 280px;
+  --border: none;
+  --background: transparent;
+}
+
+/* ============================================================
+   SIDEBAR — Violet raffiné avec texture subtile
+   ============================================================ */
+ion-menu {
+  --background: linear-gradient(160deg, #6366f1 0%, #7c3aed 60%, #8b5cf6 100%) !important;
+  --width: 280px;
+  --border: none;
+  box-shadow: 6px 0 32px rgba(99, 102, 241, 0.2);
+  position: relative;
+}
+
+/* Orbe décoratif dans la sidebar */
+ion-menu::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -60px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+ion-menu::after {
+  content: '';
+  position: absolute;
+  bottom: 60px;
+  left: -40px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+ion-menu ion-content {
+  --background: transparent !important;
+  --padding-bottom: 20px;
+}
+
+/* ─── Sidebar Header ─── */
+ion-menu ion-header ion-toolbar {
+  --background: transparent !important;
+  --color: white !important;
+  --border-width: 0;
+  padding: 18px 0 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+ion-menu ion-header ion-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: white !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 22px;
+  padding-inline-start: 22px;
+}
+
+ion-menu ion-header ion-icon {
+  color: white;
+  font-size: 1.3rem;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
+}
+
+/* ─── Menu Items ─── */
+ion-menu ion-content ion-list {
+  background: transparent;
+  padding: 20px 14px;
+  position: relative;
+  z-index: 1;
+}
+
+ion-menu ion-content ion-item {
+  --background: rgba(255, 255, 255, 0.08);
+  --color: rgba(255, 255, 255, 0.82);
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --inner-padding-end: 0;
+  --border-radius: 14px;
+  --min-height: 50px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 14px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+ion-menu ion-content ion-item:hover {
+  --background: rgba(255, 255, 255, 0.2);
+  --color: white;
+  transform: translateX(5px);
+  border-color: rgba(255,255,255,0.15);
+}
+
+ion-menu ion-content ion-item ion-icon {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 1.15rem;
+  margin-right: 14px;
+  transition: all 0.3s ease;
+}
+
+ion-menu ion-content ion-item:hover ion-icon {
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Active item */
+ion-item.active-item {
+  --background: rgba(255, 255, 255, 0.22) !important;
+  --color: white !important;
+  border: 1px solid rgba(255,255,255,0.25) !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+ion-item.active-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  background: white;
+  border-radius: 0 6px 6px 0;
+  box-shadow: 0 0 12px rgba(255,255,255,0.7);
+}
+
+ion-item.active-item ion-icon { color: white !important; }
+
+/* ─── Sidebar Footer ─── */
+ion-menu ion-footer {
+  background: transparent;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+ion-menu ion-footer ion-toolbar {
+  --background: transparent !important;
+  --border-width: 0;
+  padding: 10px 0;
+}
+
+ion-menu ion-footer ion-item {
+  --background: rgba(255, 255, 255, 0.1);
+  --color: white;
+  --padding-start: 16px;
+  --min-height: 70px;
+  transition: all 0.3s ease;
+  border-radius: 14px;
+  margin: 0 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(8px);
+}
+
+ion-menu ion-footer ion-item:hover {
+  --background: rgba(255, 255, 255, 0.22);
+  transform: translateX(4px);
+}
+
+ion-menu ion-footer ion-item h3 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: white !important;
+  margin: 0 0 3px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+ion-menu ion-footer ion-item p {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.75) !important;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+ion-menu ion-footer ion-icon[name="person-circle-outline"] {
+  color: white;
+  font-size: 2.2rem;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+}
+
+ion-menu ion-footer ion-icon[name="log-out-outline"] {
+  color: rgba(255, 255, 255, 0.65);
+  transition: all 0.3s ease;
+  font-size: 1.4rem;
+}
+
+ion-menu ion-footer ion-icon[name="log-out-outline"]:hover {
+  color: #fca5a5;
+  transform: scale(1.15);
+}
+
+/* ============================================================
+   MAIN NAVBAR — Glassmorphism premium
+   ============================================================ */
+.ion-page > ion-header {
+  position: relative;
+  z-index: 100;
+}
+
+.ion-page > ion-header ion-toolbar {
+  --background: rgba(255, 255, 255, 0.88) !important;
+  --color: #1e1b4b !important;
+  --border-width: 0;
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(199, 210, 254, 0.5);
+  box-shadow: 0 2px 16px rgba(99, 102, 241, 0.06);
+}
+
+.ion-page > ion-header ion-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.01em;
+  padding-inline-start: 8px;
+  text-align: left;
+}
+
+ion-menu-button {
+  --color: #6366f1 !important;
+  --background: rgba(99, 102, 241, 0.1);
+  --border-radius: 12px;
+}
+
+/* Avatar Button */
+.navbar-avatar-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: white !important;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  box-shadow: 0 3px 12px rgba(99, 102, 241, 0.35);
+  margin-right: 16px;
+}
+
+.navbar-avatar-btn:hover {
+  transform: scale(1.06) translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+:host ::ng-deep .p-toast {
+  z-index: 99999 !important;
+  top: 80px !important;
+  right: 24px !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message {
+  background: rgba(255, 255, 255, 0.97) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(199, 210, 254, 0.5) !important;
+  color: #1e1b4b !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message.p-toast-message-success {
+  border-left: 4px solid #10b981 !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message.p-toast-message-error {
+  border-left: 4px solid #f43f5e !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message.p-toast-message-info {
+  border-left: 4px solid #6366f1 !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message .p-toast-summary {
+  color: #1e1b4b !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+}
+
+:host ::ng-deep .p-toast .p-toast-message .p-toast-detail {
+  color: #6b7280 !important;
+  font-size: 0.8rem !important;
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+ion-content.ion-padding {
+  --background: transparent;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+.main-navbar-toolbar {
+  --background: rgba(255, 255, 255, 0.88) !important;
+  --color: #1e1b4b !important;
+  --border-width: 0;
+  border-bottom: 1px solid rgba(199, 210, 254, 0.5);
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.05);
+}
+
+.ion-page#main-content {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 992px) {
+  ion-split-pane { --side-max-width: 240px; --side-min-width: 240px; }
+  ion-menu       { --width: 240px; }
+}
+
+@media (max-width: 768px) {
+  ion-split-pane { --side-max-width: 0px !important; --side-min-width: 0px !important; }
+  ion-menu       { display: none !important; }
+  .ion-page#main-content { width: 100% !important; max-width: 100% !important; left: 0 !important; }
+  .ion-page > ion-header ion-title { font-size: 0.9rem; }
+  .navbar-avatar-btn { width: 36px; height: 36px; font-size: 0.78rem; margin-right: 8px; }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Styles pour le menu parent */
+.menu-parent {
+  --background: rgba(255, 255, 255, 0.08);
+  --color: rgba(255, 255, 255, 0.9);
+  --padding-start: 16px;
+  --min-height: 48px;
+  cursor: pointer;
+}
+
+.menu-parent:hover {
+  --background: rgba(255, 255, 255, 0.18);
+  --color: white;
+}
+
+/* Styles pour le menu parent */
+.menu-parent {
+  --background: rgba(255, 255, 255, 0.08);
+  --color: rgba(255, 255, 255, 0.9);
+  --padding-start: 16px;
+  --min-height: 48px;
+  cursor: pointer;
+}
+
+.menu-parent:hover {
+  --background: rgba(255, 255, 255, 0.18);
+  --color: white;
+}
+
+/* Styles pour le sous-menu */
+.submenu {
+  background: rgba(255, 255, 255, 0.05);
+  padding-left: 32px;
+  margin: 0;
+}
+
+.submenu-item {
+  --background: rgba(255, 255, 255, 0.05);
+  --color: rgba(255, 255, 255, 0.75);
+  --padding-start: 16px;
+  --min-height: 44px;
+  font-size: 0.8rem;
+  border-left: 2px solid transparent;
+}
+
+.submenu-item:hover {
+  --background: rgba(255, 255, 255, 0.15);
+  --color: white;
+}
+
+.submenu-item.active-item {
+  --background: rgba(255, 255, 255, 0.22);
+  --color: white;
+  border-left-color: white;
+}
+
+.submenu-item.active-item ion-icon {
+  color: white;
+}

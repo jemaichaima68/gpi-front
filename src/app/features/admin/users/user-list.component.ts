@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -14,7 +15,9 @@ import { InputIconModule } from 'primeng/inputicon';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { UserFormComponent } from './user-form.component';
 import { UserService, AppUser } from '../../../core/services/user.service';
-import { NotifPrefsService } from '../../../core/services/notif-prefs.service'; // ← AJOUT
+import { NotifPrefsService } from '../../../core/services/notif-prefs.service';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 @Component({
   selector: 'app-user-list',
@@ -22,8 +25,8 @@ import { NotifPrefsService } from '../../../core/services/notif-prefs.service'; 
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule, FormsModule,
-    ButtonModule, TableModule,
-    TagModule, ToastModule, TooltipModule,
+    ButtonModule, SplitButtonModule,
+    TableModule, TagModule, ToastModule, TooltipModule,
     ConfirmDialogModule, SelectModule,
     InputTextModule, IconFieldModule, InputIconModule,
     UserFormComponent
@@ -59,21 +62,28 @@ export class UserListComponent implements OnInit {
     { label: 'Inactif',          value: '0' }
   ];
 
+  exportOptions = [
+    { label: 'CSV', icon: 'pi pi-file-excel', command: () => this.exportCsv() },
+    { label: 'PDF', icon: 'pi pi-file-pdf',   command: () => this.exportPdf() }
+  ];
+
   constructor(
     private userService:         UserService,
     private messageService:      MessageService,
     private confirmationService: ConfirmationService,
     private cdr:                 ChangeDetectorRef,
-    private notifPrefs:          NotifPrefsService   // ← AJOUT
+    private notifPrefs:          NotifPrefsService
   ) {}
 
-  ngOnInit() { this.loadUsers(); }
+  ngOnInit() {
+    this.loadUsers();
+  }
 
   loadUsers() {
     this.loading = true;
     this.userService.getAllUsers().subscribe({
       next: (data) => {
-        this.users   = data;
+        this.users = data;
         this.applyFilters();
         this.loading = false;
         this.cdr.markForCheck();
@@ -81,7 +91,6 @@ export class UserListComponent implements OnInit {
       error: () => {
         this.loading = false;
         this.cdr.markForCheck();
-        // Erreur système → contrôlée par le toggle "Alertes système"
         this.notifPrefs.notifySystemAlert(
           this.messageService,
           'Impossible de charger les utilisateurs.'
@@ -91,17 +100,17 @@ export class UserListComponent implements OnInit {
   }
 
   applyFilters() {
-    const q      = this.searchQuery.toLowerCase().trim();
-    const role   = this.selectedRole;
+    const q = this.searchQuery.toLowerCase().trim();
+    const role = this.selectedRole;
     const status = this.selectedStatus;
 
-    this.filteredUsers = this.users.filter(u => {
+    this.filteredUsers = this.users.filter(user => {
       const matchSearch = !q || [
-        u.firstName, u.lastName, u.username, u.email
-      ].some(v => v?.toLowerCase().includes(q));
+        user.firstName, user.lastName, user.username, user.email
+      ].some(field => field?.toLowerCase().includes(q));
 
-      const matchRole   = !role   || u.role === role;
-      const matchStatus = !status || String(u.actif) === status;
+      const matchRole = !role || user.role === role;
+      const matchStatus = !status || String(user.actif) === status;
 
       return matchSearch && matchRole && matchStatus;
     });
@@ -110,10 +119,14 @@ export class UserListComponent implements OnInit {
   }
 
   resetFilters() {
-    this.searchQuery    = '';
-    this.selectedRole   = '';
+    this.searchQuery = '';
+    this.selectedRole = '';
     this.selectedStatus = '';
     this.applyFilters();
+  }
+
+  get hasActiveFilters(): boolean {
+    return !!(this.searchQuery || this.selectedRole || this.selectedStatus);
   }
 
   exportCsv() {
@@ -131,53 +144,96 @@ export class UserListComponent implements OnInit {
       .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
       .join('\n');
 
-    const bom  = '\uFEFF';
-    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    link.href     = url;
+    link.href = URL.createObjectURL(blob);
     link.download = `utilisateurs_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(link.href);
 
-    this.toast('success', 'Export réussi', `${this.filteredUsers.length} utilisateur(s) exporté(s).`);
+    this.toast('success', 'Export réussi', `${this.filteredUsers.length} utilisateur(s) exporté(s) au format CSV.`);
   }
 
-  get hasActiveFilters(): boolean {
-    return !!(this.searchQuery || this.selectedRole || this.selectedStatus);
+  exportPdf() {
+    const headers = [['Nom complet', "Nom d'utilisateur", 'Email', 'Rôle', 'Statut', 'Créé le']];
+    const rows = this.filteredUsers.map(u => [
+      `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
+      u.username,
+      u.email,
+      this.getRoleLabel(u.role),
+      u.actif === 1 ? 'Actif' : 'Inactif',
+      u.dateCreation ? new Date(u.dateCreation).toLocaleDateString('fr-FR') : ''
+    ]);
+
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(16);
+    doc.text('Liste des utilisateurs', 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Généré le ${new Date().toLocaleString('fr-FR')}`, 14, 22);
+
+    autoTable(doc, {
+      head: headers,
+      body: rows,
+      startY: 30,
+      theme: 'striped',
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontStyle: 'bold' },
+      columnStyles: {
+        0: { cellWidth: 35 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 25 }
+      }
+    });
+
+    doc.save(`utilisateurs_${new Date().toISOString().slice(0, 10)}.pdf`);
+    this.toast('success', 'Export réussi', `${this.filteredUsers.length} utilisateur(s) exporté(s) au format PDF.`);
   }
 
-  openAddForm()  { this.selectedUser = null;      this.showForm = true; this.cdr.markForCheck(); }
-  openEditForm(user: AppUser) { this.selectedUser = { ...user }; this.showForm = true; this.cdr.markForCheck(); }
-  openViewForm(user: AppUser) { this.viewUser = { ...user }; this.showViewModal = true; this.cdr.markForCheck(); }
-  closeViewModal() { this.showViewModal = false; this.viewUser = null; this.cdr.markForCheck(); }
+  openAddForm() {
+    this.selectedUser = null;
+    this.showForm = true;
+    this.cdr.markForCheck();
+  }
+
+  openEditForm(user: AppUser) {
+    this.selectedUser = { ...user };
+    this.showForm = true;
+    this.cdr.markForCheck();
+  }
+
+  openViewForm(user: AppUser) {
+    this.viewUser = { ...user };
+    this.showViewModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeViewModal() {
+    this.showViewModal = false;
+    this.viewUser = null;
+    this.cdr.markForCheck();
+  }
 
   toggleStatus(user: AppUser) {
     this.userService.toggleStatus(user.id).subscribe({
       next: () => {
         const wasActive = user.actif === 1;
-        // ← Contrôlé par le toggle "Changement de statut"
-        this.notifPrefs.notifyStatusChange(
-          this.messageService,
-          `${user.username} mis à jour`,
-          wasActive
-        );
+        this.notifPrefs.notifyStatusChange(this.messageService, `${user.username} mis à jour`, wasActive);
         this.loadUsers();
       },
-      error: () => this.notifPrefs.notifySystemAlert(
-        this.messageService,
-        'Impossible de changer le statut.'
-      )
+      error: () => this.notifPrefs.notifySystemAlert(this.messageService, 'Impossible de changer le statut.')
     });
   }
 
   confirmDelete(user: AppUser) {
     this.confirmationService.confirm({
-      message:                `Supprimer définitivement <strong>${user.username}</strong> ?<br>Cette action supprimera aussi le compte Keycloak.`,
-      header:                 'Confirmer la suppression',
-      icon:                   'pi pi-exclamation-triangle',
-      acceptLabel:            'Supprimer',
-      rejectLabel:            'Annuler',
+      message: `Supprimer définitivement <strong>${user.username}</strong> ?<br>Cette action supprimera aussi le compte Keycloak.`,
+      header: 'Confirmer la suppression',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Supprimer',
+      rejectLabel: 'Annuler',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => this.deleteUser(user)
     });
@@ -186,17 +242,10 @@ export class UserListComponent implements OnInit {
   deleteUser(user: AppUser) {
     this.userService.deleteUser(user.id).subscribe({
       next: () => {
-        // ← Contrôlé par le toggle "Suppression d'utilisateur"
-        this.notifPrefs.notifyUserDelete(
-          this.messageService,
-          `${user.username} supprimé avec succès.`
-        );
+        this.notifPrefs.notifyUserDelete(this.messageService, `${user.username} supprimé avec succès.`);
         this.loadUsers();
       },
-      error: () => this.notifPrefs.notifySystemAlert(
-        this.messageService,
-        "Impossible de supprimer l'utilisateur."
-      )
+      error: () => this.notifPrefs.notifySystemAlert(this.messageService, "Impossible de supprimer l'utilisateur.")
     });
   }
 
@@ -204,16 +253,10 @@ export class UserListComponent implements OnInit {
     this.showForm = false;
     this.cdr.markForCheck();
     this.loadUsers();
-
     if (this.selectedUser) {
-      // Modification → pas de toggle spécifique, on affiche toujours
       this.toast('success', 'Succès', 'Utilisateur modifié.');
     } else {
-      // Création → contrôlé par le toggle "Ajout d'utilisateur"
-      this.notifPrefs.notifyUserAdd(
-        this.messageService,
-        'Utilisateur créé et email envoyé.'
-      );
+      this.notifPrefs.notifyUserAdd(this.messageService, 'Utilisateur créé et email envoyé.');
     }
   }
 
@@ -224,19 +267,19 @@ export class UserListComponent implements OnInit {
 
   getRoleSeverity(role: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
     switch (role) {
-      case 'Admin':       return 'danger';
+      case 'Admin': return 'danger';
       case 'BACK_OFFICE': return 'warn';
-      case 'CLIENT':      return 'info';
-      default:            return 'secondary';
+      case 'CLIENT': return 'info';
+      default: return 'secondary';
     }
   }
 
   getRoleLabel(role: string): string {
     switch (role) {
-      case 'Admin':       return 'Admin';
+      case 'Admin': return 'Admin';
       case 'BACK_OFFICE': return 'Back-office';
-      case 'CLIENT':      return 'Client';
-      default:            return role;
+      case 'CLIENT': return 'Client';
+      default: return role;
     }
   }
 

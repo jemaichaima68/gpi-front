@@ -1,234 +1,215 @@
-<div class="dashboard">
-
-  <div *ngIf="loading" class="loading-state">
-    <i class="pi pi-spin pi-spinner"></i>
-    <p>Chargement des données...</p>
+<div class="dashboard-wrapper">
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>Chargement du tableau de bord...</p>
   </div>
 
   <div *ngIf="!loading && stats">
-
-    <!-- HEADER -->
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Tableau de bord</h2>
-        <p class="page-sub">Vue d'ensemble de la plateforme GPI Tracker</p>
+    <!-- En-tête avec effet glass -->
+    <div class="dashboard-header glass-panel">
+      <div class="header-left">
+        <h1 class="premium-title">Tableau de bord</h1>
+        <p class="premium-subtitle">Vue d’ensemble et indicateurs clés de la plateforme</p>
       </div>
-      <div class="date-badge">
-        <i class="pi pi-calendar"></i>
-        {{ today | date:'dd/MM/yyyy' }}
-      </div>
-    </div>
-
-    <!-- STAT CARDS -->
-    <div class="stats-grid">
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-icon">
-            <i class="pi pi-users"></i>
-          </div>
-          <span class="stat-trend">
-            +{{ stats.addedThisMonth }} ce mois
-          </span>
+      <div class="header-right">
+        <div class="date-chip glass-chip">
+          <i class="pi pi-calendar"></i>
+          <span>{{ today | date:'dd MMMM yyyy' }}</span>
         </div>
-        <div class="stat-num">{{ stats.totalUsers }}</div>
-        <div class="stat-lbl">Total utilisateurs</div>
-        <div class="stat-bar">
-          <div class="stat-bar-fill" style="width:100%"></div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-icon">
-            <i class="pi pi-check-circle"></i>
-          </div>
-          <span class="stat-trend">{{ getActivePercent() }}%</span>
-        </div>
-        <div class="stat-num">{{ stats.activeUsers }}</div>
-        <div class="stat-lbl">Utilisateurs actifs</div>
-        <div class="stat-bar">
-          <div class="stat-bar-fill" [style.width.%]="getActivePercent()"></div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-icon">
-            <i class="pi pi-times-circle"></i>
-          </div>
-          <span class="stat-trend">{{ 100 - getActivePercent() }}%</span>
-        </div>
-        <div class="stat-num">{{ stats.inactiveUsers }}</div>
-        <div class="stat-lbl">Utilisateurs inactifs</div>
-        <div class="stat-bar">
-          <div class="stat-bar-fill" [style.width.%]="100 - getActivePercent()"></div>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-icon">
-            <i class="pi pi-calendar-plus"></i>
-          </div>
-          <span class="stat-trend">Ce mois</span>
-        </div>
-        <div class="stat-num">{{ stats.addedThisMonth }}</div>
-        <div class="stat-lbl">Ajoutés ce mois</div>
-        <div class="stat-bar">
-          <div class="stat-bar-fill" style="width:60%"></div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ROW 2 -->
-    <div class="row2">
-
-      <div class="card">
-        <div class="card-head">
-          <h3 class="card-title">Répartition par rôle</h3>
-          <span class="card-badge">3 rôles</span>
-        </div>
-        <div class="role-row">
-          <div class="role-dot dot-primary"></div>
-          <span class="role-name">Clients</span>
-          <div class="role-track">
-            <div class="role-fill" [style.width.%]="getRoleBarWidth('CLIENT')"></div>
-          </div>
-          <span class="role-count">{{ getRoleCount('CLIENT') }}</span>
-        </div>
-        <div class="role-row">
-          <div class="role-dot dot-green"></div>
-          <span class="role-name">Back-office</span>
-          <div class="role-track">
-            <div class="role-fill" [style.width.%]="getRoleBarWidth('BACK_OFFICE')"></div>
-          </div>
-          <span class="role-count">{{ getRoleCount('BACK_OFFICE') }}</span>
-        </div>
-        <div class="role-row">
-          <div class="role-dot dot-primary"></div>
-          <span class="role-name">Admins</span>
-          <div class="role-track">
-            <div class="role-fill" [style.width.%]="getRoleBarWidth('ADMIN')"></div>
-          </div>
-          <span class="role-count">{{ getRoleCount('ADMIN') }}</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <h3 class="card-title">Derniers ajoutés</h3>
-          <span class="card-badge">{{ stats.recentUsers.length || 0 }} récents</span>
-        </div>
-        <div *ngFor="let user of stats.recentUsers; let i = index">
-          <div class="user-item">
-            <div class="avatar" [style.background]="getAvatarGradient(i)">
-              {{ getInitials(user) }}
-            </div>
-            <div class="user-info">
-              <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
-              <div class="user-email">{{ user.email }}</div>
-            </div>
-            <div [class]="getRoleBadgeClass(user.role)">
-              {{ getRoleLabel(user.role) }}
-            </div>
-          </div>
-        </div>
-        <div *ngIf="stats.recentUsers.length === 0" class="empty-msg">
-          Aucun utilisateur récent
-        </div>
-      </div>
-
-    </div>
-
-    <!-- GRAPHIQUE -->
-    <div class="card chart-card">
-      <div class="card-head">
-        <h3 class="card-title">Évolution des inscriptions</h3>
-        <span class="card-badge">6 derniers mois</span>
-      </div>
-      <div class="chart-wrapper">
-        <canvas #chartCanvas></canvas>
       </div>
     </div>
 
-    <!-- ROW 3 -->
-    <div class="row3">
-
-      <div class="card">
-        <div class="card-head">
-          <h3 class="card-title">Activité récente</h3>
-          <span class="card-badge">Aujourd'hui</span>
+    <!-- Cartes KPI (4) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon-wrapper">
+          <div class="kpi-icon"><i class="pi pi-users"></i></div>
         </div>
-        <div class="activity-item">
-          <div class="act-icon act-green">
-            <i class="pi pi-check-circle"></i>
-          </div>
-          <div>
-            <div class="act-text">Plateforme GPI Tracker opérationnelle</div>
-            <div class="act-time">Système actif</div>
-          </div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.totalUsers }}</div>
+          <div class="kpi-label">Total utilisateurs</div>
         </div>
-        <div class="activity-item" *ngFor="let user of stats.recentUsers.slice(0,3)">
-          <div class="act-icon act-green">
-            <i class="pi pi-user-plus"></i>
-          </div>
-          <div>
-            <div class="act-text">
-              Utilisateur <strong>{{ user.firstName }} {{ user.lastName }}</strong>
-              créé — rôle {{ getRoleLabel(user.role) }}
-            </div>
-            <div class="act-time">
-              {{ user.dateCreation | date:'dd/MM/yyyy HH:mm' }}
-            </div>
-          </div>
-        </div>
+        <div class="kpi-trend"><i class="pi pi-arrow-up"></i> +{{ stats.addedThisMonth }} ce mois</div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
-          <h3 class="card-title">Actions rapides</h3>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrapper">
+          <div class="kpi-icon"><i class="pi pi-check-circle"></i></div>
         </div>
-        <a routerLink="/admin/users" class="quick-btn">
-          <div class="qb-icon">
-            <i class="pi pi-user-plus"></i>
-          </div>
-          <div>
-            <div class="qb-label">Ajouter utilisateur</div>
-            <div class="qb-sub">Créer un nouveau compte</div>
-          </div>
-          <i class="pi pi-chevron-right arrow"></i>
-        </a>
-        <a routerLink="/admin/users" class="quick-btn">
-          <div class="qb-icon">
-            <i class="pi pi-users"></i>
-          </div>
-          <div>
-            <div class="qb-label">Voir utilisateurs</div>
-            <div class="qb-sub">Liste complète</div>
-          </div>
-          <i class="pi pi-chevron-right arrow"></i>
-        </a>
-        <a routerLink="/admin/logs" class="quick-btn">
-          <div class="qb-icon">
-            <i class="pi pi-list"></i>
-          </div>
-          <div>
-            <div class="qb-label">Logs d'activité</div>
-            <div class="qb-sub">Historique complet</div>
-          </div>
-          <i class="pi pi-chevron-right arrow"></i>
-        </a>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.activeUsers }}</div>
+          <div class="kpi-label">Comptes actifs</div>
+        </div>
+        <div class="kpi-trend">{{ getActivePercent() }}% du total</div>
       </div>
 
+      <div class="kpi-card">
+        <div class="kpi-icon-wrapper">
+          <div class="kpi-icon"><i class="pi pi-times-circle"></i></div>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.inactiveUsers }}</div>
+          <div class="kpi-label">Comptes inactifs</div>
+        </div>
+        <div class="kpi-trend">{{ 100 - getActivePercent() }}%</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrapper">
+          <div class="kpi-icon"><i class="pi pi-calendar-plus"></i></div>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-value">{{ stats.addedThisMonth }}</div>
+          <div class="kpi-label">Nouveaux ce mois</div>
+        </div>
+        <div class="kpi-trend">+{{ stats.addedThisMonth }} vs mois préc.</div>
+      </div>
     </div>
 
+    <!-- Zone deux colonnes -->
+    <div class="two-columns-layout">
+      <!-- Colonne gauche -->
+      <div class="left-col">
+        <!-- Carte Rôles -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h3><i class="pi pi-tag"></i> Répartition par rôle</h3>
+            <span class="badge-glass">{{ stats.totalUsers }} utilisateurs</span>
+          </div>
+          <div class="role-stats">
+            <div class="role-item">
+              <div class="role-info">
+                <span class="role-dot" style="background: #6366f1;"></span>
+                <span class="role-name">Clients</span>
+              </div>
+              <div class="role-progress">
+                <div class="progress-bar-bg">
+                  <div class="progress-fill" [style.width.%]="getRoleBarWidth('CLIENT')" style="background: #6366f1;"></div>
+                </div>
+                <span class="role-count">{{ getRoleCount('CLIENT') }}</span>
+              </div>
+            </div>
+            <div class="role-item">
+              <div class="role-info">
+                <span class="role-dot" style="background: #8b5cf6;"></span>
+                <span class="role-name">Back-office</span>
+              </div>
+              <div class="role-progress">
+                <div class="progress-bar-bg">
+                  <div class="progress-fill" [style.width.%]="getRoleBarWidth('BACK_OFFICE')" style="background: #8b5cf6;"></div>
+                </div>
+                <span class="role-count">{{ getRoleCount('BACK_OFFICE') }}</span>
+              </div>
+            </div>
+            <div class="role-item">
+              <div class="role-info">
+                <span class="role-dot" style="background: #a78bfa;"></span>
+                <span class="role-name">Administrateurs</span>
+              </div>
+              <div class="role-progress">
+                <div class="progress-bar-bg">
+                  <div class="progress-fill" [style.width.%]="getRoleBarWidth('Admin')" style="background: #a78bfa;"></div>
+                </div>
+                <span class="role-count">{{ getRoleCount('Admin') }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Carte Graphique -->
+        <div class="glass-card chart-card">
+          <div class="card-header">
+            <h3><i class="pi pi-chart-line"></i> Évolution des inscriptions</h3>
+            <span class="badge-glass">6 derniers mois</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas #chartCanvas></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite -->
+      <div class="right-col">
+        <!-- Derniers inscrits -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h3><i class="pi pi-user-plus"></i> Derniers inscrits</h3>
+            <span class="badge-glass">{{ stats.recentUsers.length }} récents</span>
+          </div>
+          <div class="users-list">
+            <div *ngFor="let user of stats.recentUsers; let i = index" class="user-row">
+              <div class="user-avatar" [style.background]="getAvatarGradient(i)">
+                {{ getInitials(user) }}
+              </div>
+              <div class="user-details">
+                <div class="user-name-line">
+                  <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+                  <span class="role-tag" [class]="getRoleBadgeClass(user.role)">{{ getRoleLabel(user.role) }}</span>
+                </div>
+                <div class="user-email">{{ user.email }}</div>
+              </div>
+            </div>
+            <div *ngIf="stats.recentUsers.length === 0" class="empty-placeholder">Aucun utilisateur récent</div>
+          </div>
+        </div>
+
+        <!-- Activité récente -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h3><i class="pi pi-clock"></i> Activité récente</h3>
+            <span class="badge-glass">Aujourd'hui</span>
+          </div>
+          <div class="activity-feed">
+            <div class="activity-entry">
+              <div class="activity-icon-bg"><i class="pi pi-check-circle"></i></div>
+              <div class="activity-text">
+                <strong>GPI Tracker</strong> opérationnel
+                <div class="activity-meta">Système actif</div>
+              </div>
+            </div>
+            <div *ngFor="let user of stats.recentUsers.slice(0,2)" class="activity-entry">
+              <div class="activity-icon-bg"><i class="pi pi-user-plus"></i></div>
+              <div class="activity-text">
+                Nouvel utilisateur <strong>{{ user.firstName }} {{ user.lastName }}</strong> ({{ getRoleLabel(user.role) }})
+                <div class="activity-meta">{{ user.dateCreation | date:'dd/MM/yyyy HH:mm' }}</div>
+              </div>
+            </div>
+            <div class="activity-entry">
+              <div class="activity-icon-bg"><i class="pi pi-shield"></i></div>
+              <div class="activity-text">
+                Connexion administrateur <strong>Dashboard</strong>
+                <div class="activity-meta">Il y a 2 heures</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="glass-card actions-card">
+          <div class="card-header">
+            <h3><i class="pi pi-bolt"></i> Actions rapides</h3>
+          </div>
+          <div class="actions-stack">
+            <a routerLink="/admin/users" class="action-link">
+              <i class="pi pi-user-plus"></i> Ajouter un utilisateur
+              <i class="pi pi-chevron-right link-arrow"></i>
+            </a>
+            <a routerLink="/admin/users" class="action-link">
+              <i class="pi pi-users"></i> Gérer les utilisateurs
+              <i class="pi pi-chevron-right link-arrow"></i>
+            </a>
+            <a routerLink="/admin/logs" class="action-link">
+              <i class="pi pi-list"></i> Logs d'activité
+              <i class="pi pi-chevron-right link-arrow"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div *ngIf="!loading && !stats" class="empty-state">
+  <div *ngIf="!loading && !stats" class="error-state">
     <i class="pi pi-exclamation-triangle"></i>
-    <p>Impossible de charger les données</p>
+    <p>Impossible de charger les données du tableau de bord.</p>
   </div>
-
 </div>
