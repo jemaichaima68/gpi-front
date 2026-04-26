@@ -166,6 +166,10 @@ import { AuthService } from '../../../core/services/auth.service';
       font-weight: 600 !important;
       padding: 10px 24px !important;
     }
+    :host {
+  display: block;
+  overflow: visible;
+}
   `]
 })
 export class AgentProfileComponent implements OnInit {

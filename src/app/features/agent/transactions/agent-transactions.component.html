@@ -27,7 +27,6 @@
       <span>Filtres</span>
     </div>
 
-    <!-- Recherche -->
     <div class="filter-row">
       <div class="filter-search">
         <p-iconfield>
@@ -42,7 +41,6 @@
       </div>
 
       <div class="filter-selects">
-        <!-- Filtre Type -->
         <div class="filter-select-wrapper">
           <i class="pi pi-tag filter-icon"></i>
           <p-select
@@ -56,7 +54,6 @@
           </p-select>
         </div>
 
-        <!-- Filtre Statut -->
         <div class="filter-select-wrapper">
           <i class="pi pi-chart-line filter-icon"></i>
           <p-select
@@ -82,10 +79,9 @@
       </div>
     </div>
 
-    <!-- Filtres par date -->
     <div class="filter-date-buttons">
       <p-button 
-        [label]="'📅 Toutes'" 
+        [label]="'Toutes'" 
         [severity]="selectedPeriod === 'all' ? 'primary' : 'secondary'"
         [text]="selectedPeriod !== 'all'"
         (onClick)="onPeriodChange('all')" />
@@ -116,7 +112,6 @@
         (onClick)="onPeriodChange('custom')" />
     </div>
 
-    <!-- Période personnalisée -->
     <div *ngIf="showCustomDatePicker" class="custom-date-range">
       <div class="date-picker-group">
         <label>Du :</label>
@@ -139,7 +134,6 @@
         (onClick)="applyCustomDateFilter()" />
     </div>
 
-    <!-- Info filtre actif -->
     <div *ngIf="selectedPeriod !== 'all'" class="filter-info">
       <i class="pi pi-calendar"></i>
       <span>Filtre date : {{ dateFilterInfo }}</span>
@@ -209,7 +203,7 @@
             <span *ngIf="!tx.alerte">—</span>
           </td>
           <td>
-            <div class="action-buttons">
+            <div class="action-buttons-new">
               <p-button
                 icon="pi pi-eye"
                 severity="secondary"
@@ -218,33 +212,15 @@
                 (onClick)="showDetail(tx)"
                 pTooltip="Voir détails" />
               
-              <div *ngIf="needsAgentAction(tx.status)" class="status-actions">
-                <p-select
-                  [options]="statusOptions"
-                  [(ngModel)]="selectedStatus[tx.id]"
-                  placeholder="Statut"
-                  optionLabel="label"
-                  optionValue="value"
-                  (onChange)="onStatusChange(tx.id, selectedStatus[tx.id])"
-                  styleClass="status-select-sm"
-                  appendTo="body" />
-                
-                <input 
-                  *ngIf="showMotifInput[tx.id]"
-                  type="text" 
-                  pInputText 
-                  [(ngModel)]="rejectionReason[tx.id]"
-                  placeholder="Motif"
-                  class="motif-input-sm" />
-                
-                <p-button
-                  icon="pi pi-send"
-                  severity="success"
-                  [rounded]="true"
-                  [disabled]="!selectedStatus[tx.id]"
-                  (onClick)="sendConfirmation(tx.id, tx.msgId)"
-                  pTooltip="Envoyer" />
-              </div>
+              <p-button
+                *ngIf="needsAgentAction(tx.status)"
+                label="Traiter"
+                icon="pi pi-check-circle"
+                severity="primary"
+                size="small"
+                (onClick)="openProcessDialog(tx)"
+                pTooltip="Prendre une décision sur cette transaction"
+                tooltipPosition="top" />
             </div>
           </td>
         </tr>
@@ -264,29 +240,205 @@
 
 </div>
 
-<!-- Dialog motif rejet -->
+<!-- DIALOGUE DE TRAITEMENT PRINCIPAL -->
 <p-dialog 
-  header="Motif du rejet" 
-  [(visible)]="showRejectDialog" 
+  header="📋 Traitement de la transaction"
+  [(visible)]="showProcessDialog" 
   [modal]="true" 
-  [style]="{ width: '450px' }">
-  <div class="reject-dialog-content">
-    <p>Veuillez indiquer le motif du rejet :</p>
-    <textarea 
-      pInputText
-      [(ngModel)]="rejectMotif" 
-      rows="4" 
-      placeholder="Ex: Bénéficiaire non vérifié, montant suspect, etc."
-      style="width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px;">
-    </textarea>
+  [style]="{ width: '550px' }"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  [closeOnEscape]="true"
+  (onHide)="closeProcessDialog()">
+  
+  <div *ngIf="currentTransaction" class="process-dialog-content">
+    
+    <!-- ALERTE CRITIQUE - Affichée en premier si présente -->
+    <div *ngIf="currentTransaction.alerte && currentTransaction.alerte !== 'OK'" 
+         class="alert-banner-dialog" 
+         [class.alert-grave-dialog]="currentTransaction.alerte === 'GRAVE'"
+         [class.alert-attention-dialog]="currentTransaction.alerte === 'ATTENTION'">
+      <div class="alert-header-dialog">
+        <i [class]="'pi ' + getAlerteIcon(currentTransaction.alerte)"></i>
+        <span class="alert-title-dialog">{{ getAlerteLabel(currentTransaction.alerte) }}</span>
+      </div>
+      <div class="alert-message-dialog" *ngIf="currentTransaction.motifAlerte">
+        <strong>Motif :</strong> {{ currentTransaction.motifAlerte }}
+      </div>
+      <div class="alert-action-dialog" *ngIf="currentTransaction.alerte === 'GRAVE'">
+        <i class="pi pi-shield"></i>
+        <span>Cette transaction nécessite une attention immédiate et une vérification approfondie avant toute décision.</span>
+      </div>
+    </div>
+
+    <!-- Récapitulatif -->
+    <div class="transaction-summary">
+      <div class="summary-header">
+        <i class="pi pi-info-circle"></i>
+        <span>Récapitulatif de la transaction</span>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-label">MsgId :</span>
+          <span class="summary-value">{{ currentTransaction.msgId }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">UETR :</span>
+          <span class="summary-value">{{ currentTransaction.uetr || '-' }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Montant :</span>
+          <span class="summary-value"><strong>{{ currentTransaction.amount | number:'1.2-2' }} {{ currentTransaction.currency }}</strong></span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Débiteur :</span>
+          <span class="summary-value">{{ currentTransaction.debtorName }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Créditeur :</span>
+          <span class="summary-value">{{ currentTransaction.creditorName }}</span>
+        </div>
+        <div class="summary-item" *ngIf="currentTransaction.creditorCountry">
+          <span class="summary-label">Pays créditeur :</span>
+          <span class="summary-value">{{ currentTransaction.creditorCountry }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Date réception :</span>
+          <span class="summary-value">{{ currentTransaction.receivedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sélection du statut -->
+    <div class="status-selection">
+      <div class="selection-header">
+        <i class="pi pi-flag"></i>
+        <span>Choisissez la décision</span>
+      </div>
+      
+      <div class="status-options-grid">
+        <div *ngFor="let option of statusOptions" 
+             class="status-option"
+             [class.selected]="selectedProcessStatus === option.value"
+             [style.border-left-color]="option.color"
+             (click)="selectedProcessStatus = option.value">
+          <div class="status-radio">
+            <div class="custom-radio" [class.checked]="selectedProcessStatus === option.value">
+              <i *ngIf="selectedProcessStatus === option.value" class="pi pi-check"></i>
+            </div>
+          </div>
+          <div class="status-info">
+            <div class="status-label" [style.color]="option.color">{{ option.label }}</div>
+            <div class="status-description">{{ option.description }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommandation basée sur l'alerte -->
+    <div *ngIf="currentTransaction.alerte" class="recommendation-box">
+      <div class="recommendation-header">
+        <i class="pi pi-lightbulb"></i>
+        <span>Recommandation</span>
+      </div>
+      <div class="recommendation-content">
+        <ng-container [ngSwitch]="currentTransaction.alerte">
+          <ng-container *ngSwitchCase="'OK'">
+            <span>Aucune alerte détectée. Cette transaction peut être traitée normalement.</span>
+          </ng-container>
+          <ng-container *ngSwitchCase="'ATTENTION'">
+            <span>⚠️ Transaction à surveiller. Vérifiez les informations avant de prendre une décision. Un rejet peut être approprié si les informations ne correspondent pas.</span>
+          </ng-container>
+          <ng-container *ngSwitchCase="'GRAVE'">
+            <span>🔴 Transaction critique ! Forte recommandation de <strong>REJETER</strong> cette transaction après vérification approfondie. Contactez le département conformité si nécessaire.</span>
+          </ng-container>
+          <ng-container *ngSwitchDefault>
+            <span>Veuillez examiner attentivement cette transaction avant de prendre une décision.</span>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+
+    <div *ngIf="selectedProcessStatus === 'RJCT'" class="rjct-info-message">
+      <i class="pi pi-info-circle"></i>
+      <span>Un motif de rejet vous sera demandé à l'étape suivante.</span>
+    </div>
   </div>
+
   <ng-template pTemplate="footer">
-    <p-button label="Annuler" (onClick)="showRejectDialog = false" severity="secondary" />
-    <p-button label="Confirmer" icon="pi pi-check" severity="danger" (onClick)="confirmReject()" />
+    <div class="dialog-footer">
+      <p-button label="Annuler" icon="pi pi-times" severity="secondary" (onClick)="closeProcessDialog()" />
+      <p-button 
+        [label]="selectedProcessStatus === 'RJCT' ? 'Confirmer et saisir motif' : 'Confirmer la décision'"
+        [icon]="selectedProcessStatus === 'RJCT' ? 'pi pi-pen-to-square' : 'pi pi-check'"
+        [severity]="selectedProcessStatus === 'RJCT' ? 'danger' : 'primary'"
+        (onClick)="confirmStatusSelection()"
+        [disabled]="!selectedProcessStatus" />
+    </div>
   </ng-template>
 </p-dialog>
 
-<!-- Dialog détail -->
+<!-- SOUS-DIALOGUE POUR LE MOTIF DE REJET -->
+<p-dialog 
+  header="❌ Motif du rejet"
+  [(visible)]="showRejectionReasonDialog" 
+  [modal]="true" 
+  [style]="{ width: '550px' }"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  [closeOnEscape]="true"
+  (onHide)="closeRejectionReasonDialog()">
+  
+  <div class="rejection-dialog-content">
+    <div class="rejection-warning">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>Vous êtes sur le point de REJETER cette transaction. Veuillez fournir un motif détaillé.</span>
+    </div>
+
+    <div class="rejection-form">
+      <label class="rejection-label">
+        Motif du rejet <span class="required">*</span>
+      </label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="rejectionReasonText"
+        rows="6"
+        placeholder="Veuillez décrire précisément le motif du rejet...
+
+Exemples :
+• Bénéficiaire non vérifié / KYC incomplet
+• Montant suspect / anormal par rapport à l'historique
+• Pays bénéficiaire sous sanctions
+• Compte bénéficiaire inexistant ou bloqué
+• Format UETR invalide ou non conforme
+• Doublon détecté avec une transaction précédente"
+        class="rejection-textarea"
+        [class.has-content]="rejectionReasonText.length > 0">
+      </textarea>
+      
+      <div class="rejection-hint">
+        <i class="pi pi-info-circle"></i>
+        <span>Ce motif sera inclus dans le message PACS002 et sera visible par l'émetteur de la transaction.</span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button label="Retour" icon="pi pi-arrow-left" severity="secondary" (onClick)="closeRejectionReasonDialog(); showProcessDialog = true" />
+      <p-button 
+        label="Confirmer le rejet" 
+        icon="pi pi-check" 
+        severity="danger" 
+        (onClick)="confirmRejectionWithReason()"
+        [disabled]="!rejectionReasonText.trim()" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- DIALOGUE DÉTAIL -->
 <p-dialog 
   header="Détail de la transaction"
   [(visible)]="showDetailDialog" 
@@ -353,21 +505,5 @@
 
   <ng-template pTemplate="footer">
     <p-button label="Fermer" (onClick)="closeDetailDialog()" severity="secondary" />
-    <div *ngIf="selectedTransaction?.status === 'EN_ATTENTE' || selectedTransaction?.status === 'SIGNALE'" class="dialog-actions">
-      <p-select
-        [options]="statusOptions"
-        [(ngModel)]="selectedStatus[selectedTransaction!.id]"
-        placeholder="Choisir statut"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="status-select">
-      </p-select>
-      <p-button 
-        label="Envoyer" 
-        icon="pi pi-send" 
-        severity="success" 
-        [disabled]="!selectedStatus[selectedTransaction!.id]"
-        (onClick)="sendConfirmation(selectedTransaction!.id, selectedTransaction!.msgId); closeDetailDialog()" />
-    </div>
   </ng-template>
 </p-dialog>

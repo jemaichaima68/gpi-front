@@ -14,6 +14,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
+import { RadioButtonModule } from 'primeng/radiobutton';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { environment } from '../../../../environments/environment';
@@ -57,6 +58,7 @@ export interface SwiftMessage {
     DialogModule,
     TooltipModule,
     SelectModule,
+    RadioButtonModule,
     IconFieldModule,
     InputIconModule
   ],
@@ -88,12 +90,23 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   showDetailDialog = false;
   selectedTransaction: SwiftMessage | null = null;
 
+  // Dialogue de traitement principal
+  showProcessDialog = false;
+  currentTransaction: SwiftMessage | null = null;
+  selectedProcessStatus: string = '';
+
+  // Sous-dialogue pour le motif de rejet
+  showRejectionReasonDialog = false;
+  rejectionReasonText: string = '';
+  pendingTransactionId: number | null = null;
+  pendingTransactionMsgId: string = '';
+
   statusOptions = [
-    { label: '✅ ACCP - Accepté', value: 'ACCP' },
-    { label: '❌ RJCT - Rejeté', value: 'RJCT' },
-    { label: '⏳ PDNG - En attente', value: 'PDNG' },
-    { label: '🔧 ACTC - Validé technique', value: 'ACTC' },
-    { label: '💰 ACSP - En cours de règlement', value: 'ACSP' }
+    { label: ' ACCP - Accepté', value: 'ACCP', description: 'Transaction acceptée, le paiement sera traité normalement.', color: '#10b981' },
+    { label: ' RJCT - Rejeté', value: 'RJCT', description: 'Transaction rejetée. Un motif doit être fourni.', color: '#ef4444' },
+    { label: ' PDNG - En attente', value: 'PDNG', description: 'Transaction mise en attente pour vérification supplémentaire.', color: '#f59e0b' },
+    { label: ' ACTC - Validé technique', value: 'ACTC', description: 'Validation technique OK, en attente de traitement.', color: '#3b82f6' },
+    { label: ' ACSP - En cours de règlement', value: 'ACSP', description: 'Acceptée, transfert en cours d\'exécution.', color: '#8b5cf6' }
   ];
 
   // Options pour les filtres
@@ -218,8 +231,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
         return data;
     }
   }
-
-  // ==================== MÉTHODES DE FILTRAGE ====================
 
   applySearchFilter(transactions: SwiftMessage[]): SwiftMessage[] {
     if (!this.searchQuery.trim()) return transactions;
@@ -368,8 +379,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     this.loadData(this.currentType);
   }
 
-  // ==================== MÉTHODES D'EXPORT ====================
-
   exportCsv(): void {
     const headers = [
       'ID', 'Type', 'MsgId', 'UETR', 'Montant', 'Devise',
@@ -471,7 +480,97 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ==================== MÉTHODES EXISTANTES ====================
+  // Dialogue de traitement principal
+  openProcessDialog(transaction: SwiftMessage): void {
+    this.currentTransaction = transaction;
+    this.selectedProcessStatus = '';
+    this.showProcessDialog = true;
+  }
+
+  closeProcessDialog(): void {
+    this.showProcessDialog = false;
+    this.currentTransaction = null;
+    this.selectedProcessStatus = '';
+  }
+
+  // Quand l'utilisateur confirme le statut dans le dialogue principal
+  confirmStatusSelection(): void {
+    if (!this.currentTransaction) return;
+    
+    if (!this.selectedProcessStatus) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Statut requis',
+        detail: 'Veuillez sélectionner un statut de traitement',
+        life: 3000
+      });
+      return;
+    }
+    
+    // Si le statut est RJCT, ouvrir le sous-dialogue pour le motif
+    if (this.selectedProcessStatus === 'RJCT') {
+      this.pendingTransactionId = this.currentTransaction.id;
+      this.pendingTransactionMsgId = this.currentTransaction.msgId;
+      this.rejectionReasonText = '';
+      this.showProcessDialog = false;
+      this.showRejectionReasonDialog = true;
+    } else {
+      // Pour les autres statuts, envoyer directement
+      this.sendDecision(this.currentTransaction.id, this.currentTransaction.msgId, this.selectedProcessStatus, '');
+      this.closeProcessDialog();
+    }
+  }
+
+  // Envoyer la décision au backend
+  sendDecision(transactionId: number, msgId: string, status: string, motif: string): void {
+    this.http.put(`${this.API}/${transactionId}/confirmation`, { status, motif })
+      .subscribe({
+        next: () => {
+          const statusLabel = this.statusOptions.find(s => s.value === status)?.label || status;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Décision enregistrée',
+            detail: `Transaction ${msgId} → ${statusLabel}`,
+            life: 4000
+          });
+          this.refreshCurrentView();
+        },
+        error: (err) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: err.error || "Impossible d'enregistrer la décision",
+            life: 5000
+          });
+        }
+      });
+  }
+
+  // Confirmation du rejet avec motif (sous-dialogue)
+  confirmRejectionWithReason(): void {
+    if (!this.rejectionReasonText.trim()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Motif requis',
+        detail: 'Veuillez indiquer un motif de rejet détaillé',
+        life: 3000
+      });
+      return;
+    }
+    
+    if (this.pendingTransactionId && this.pendingTransactionMsgId) {
+      this.sendDecision(this.pendingTransactionId, this.pendingTransactionMsgId, 'RJCT', this.rejectionReasonText);
+    }
+    
+    this.closeRejectionReasonDialog();
+  }
+
+  closeRejectionReasonDialog(): void {
+    this.showRejectionReasonDialog = false;
+    this.rejectionReasonText = '';
+    this.pendingTransactionId = null;
+    this.pendingTransactionMsgId = '';
+  }
 
   showDetail(transaction: SwiftMessage): void {
     this.selectedTransaction = transaction;
@@ -540,71 +639,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     if (status !== 'RJCT') {
       this.rejectionReason[id] = '';
     }
-  }
-
-  acceptTransaction(id: number, msgId: string): void {
-    this.confirmationService.confirm({
-      message: `Voulez-vous vraiment ACCEPTER la transaction ${msgId} ?`,
-      header: 'Confirmation',
-      icon: 'pi pi-check-circle',
-      acceptLabel: 'Oui',
-      rejectLabel: 'Non',
-      acceptButtonStyleClass: 'p-button-success',
-      accept: () => {
-        this.http.put(`${this.API}/${id}/accepter`, {}).subscribe({
-          next: () => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Acceptée',
-              detail: `Transaction ${msgId} acceptée`,
-              life: 3000
-            });
-            this.refreshCurrentView();
-          },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible d\'accepter',
-              life: 3000
-            });
-          }
-        });
-      }
-    });
-  }
-
-  openRejectDialog(id: number, msgId: string): void {
-    this.selectedTransactionId = id;
-    this.rejectMotif = '';
-    this.showRejectDialog = true;
-  }
-
-  confirmReject(): void {
-    if (!this.selectedTransactionId) return;
-
-    this.http.put(`${this.API}/${this.selectedTransactionId}/rejeter`, this.rejectMotif).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Rejetée',
-          detail: 'Transaction rejetée',
-          life: 3000
-        });
-        this.showRejectDialog = false;
-        this.selectedTransactionId = null;
-        this.rejectMotif = '';
-        this.refreshCurrentView();
-      },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Impossible de rejeter',
-          life: 3000
-        });
-      }
-    });
   }
 
   getStatusSeverity(status: string): "success" | "secondary" | "info" | "warn" | "danger" {

@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
 
+/* CORRECTION : Un seul :host avec toutes les règles - PAS DE SCROLL */
 :host {
   --brand: #0f4c75;
   --brand-mid: #1b6ca8;
@@ -29,14 +30,16 @@
   --font-mono: 'DM Mono', monospace;
 
   display: block;
-  padding: 36px 40px;
-  min-height: 100vh;
+  width: 100%;
+  overflow: visible;  /* ← PAS de scroll ici */
   font-family: var(--font);
   background: var(--bg-page);
   color: var(--txt-body);
+  padding: 0;  /* ← Pas de padding sur :host */
+  min-height: auto;  /* ← Pas de min-height */
 }
 
-/* ─── BACKGROUND TEXTURE ─── */
+/* Le background fixe reste */
 :host::before {
   content: '';
   position: fixed;
@@ -49,11 +52,13 @@
   z-index: 0;
 }
 
+/* Le conteneur principal gère le padding */
 .dashboard-shell {
   position: relative;
   z-index: 1;
   max-width: 1500px;
   margin: 0 auto;
+  padding: 36px 40px;  /* ← Le padding est ici */
 }
 
 /* ─── HEADER ─── */
@@ -367,14 +372,18 @@
 }
 
 @media (max-width: 1080px) {
-  :host { padding: 24px 28px; }
+  .dashboard-shell {
+    padding: 24px 28px;
+  }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .stats-row  { grid-template-columns: repeat(3, 1fr); }
   .content-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 640px) {
-  :host { padding: 16px; }
+  .dashboard-shell {
+    padding: 16px;
+  }
   .stats-grid, .stats-row { grid-template-columns: repeat(2, 1fr); }
   .stat-value { font-size: 1.5rem; }
   .page-title { font-size: 1.5rem; }

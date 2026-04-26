@@ -30,7 +30,7 @@ ion-menu {
   backdrop-filter: blur(4px);
 }
 
-/* Orbes décoratifs animés dans la sidebar (plus vifs) */
+/* Orbes décoratifs animés dans la sidebar */
 ion-menu::before {
   content: '';
   position: absolute;
@@ -107,15 +107,9 @@ ion-menu ion-header ion-title:hover {
 }
 
 @keyframes titleGradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* ─── Menu Items – dynamiques et vivants ─── */
@@ -150,7 +144,7 @@ ion-menu ion-content ion-item {
   cursor: pointer;
 }
 
-/* Effet de brillance au survol (plus rapide) */
+/* Effet de brillance au survol */
 ion-menu ion-content ion-item::after {
   content: '';
   position: absolute;
@@ -229,6 +223,47 @@ ion-item.active-item ion-icon {
   filter: drop-shadow(0 0 4px white);
 }
 
+/* Menu parent (avec sous-menu) */
+.menu-parent {
+  --background: rgba(255, 255, 255, 0.1);
+  --color: rgba(255, 255, 255, 0.95);
+  --padding-start: 18px;
+  --min-height: 52px;
+  cursor: pointer;
+}
+
+.menu-parent:hover {
+  --background: rgba(255, 255, 255, 0.28);
+  --color: white;
+}
+
+/* Sous-menu */
+.submenu {
+  margin-left: 32px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.submenu-item {
+  --background: rgba(255, 255, 255, 0.05);
+  --color: rgba(255, 255, 255, 0.85);
+  --padding-start: 16px;
+  --min-height: 46px;
+  font-size: 0.85rem;
+  margin: 4px 0;
+}
+
+.submenu-item:hover {
+  --background: rgba(255, 255, 255, 0.2);
+  --color: white;
+}
+
+.submenu-item.active-item {
+  --background: rgba(255, 255, 255, 0.28);
+  --color: white;
+  border-right: 2px solid white;
+}
+
 /* ─── Sidebar Footer – plus intégré ─── */
 ion-menu ion-footer {
   background: transparent;
@@ -248,10 +283,10 @@ ion-menu ion-footer ion-item {
   --background: rgba(255, 255, 255, 0.12);
   --color: white;
   --padding-start: 16px;
-  --min-height: 74px;
+  --min-height: 52px;
   transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-  border-radius: 22px;
-  margin: 0 0 10px 0;
+  border-radius: 18px;
+  margin: 0 0 8px 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   overflow: hidden;
@@ -281,46 +316,29 @@ ion-menu ion-footer ion-item:hover {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
-ion-menu ion-footer ion-item h3 {
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: white !important;
-  margin: 0 0 4px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+ion-menu ion-footer ion-item ion-icon {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+  margin-right: 16px;
 }
 
-ion-menu ion-footer ion-item p {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.9) !important;
-  margin: 0;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+/* Logout item spécifique */
+.logout-item {
+  margin-top: 8px;
 }
 
-ion-menu ion-footer ion-icon[name="person-circle-outline"] {
-  color: white;
-  font-size: 2.4rem;
-  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.3));
-  transition: transform 0.3s ease;
-}
-
-ion-menu ion-footer ion-item:hover ion-icon[name="person-circle-outline"] {
-  transform: scale(1.08) rotate(-3deg);
-}
-
-ion-menu ion-footer ion-icon[name="log-out-outline"] {
+.logout-item ion-icon[name="log-out-outline"] {
   color: rgba(255, 255, 255, 0.9);
   transition: all 0.25s ease;
-  font-size: 1.5rem;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+  font-size: 1.3rem;
 }
 
-ion-menu ion-footer ion-icon[name="log-out-outline"]:hover {
+.logout-item:hover ion-icon[name="log-out-outline"] {
   color: #ffc9c9;
-  transform: scale(1.15) translateX(3px);
+  transform: scale(1.1) translateX(3px);
   filter: drop-shadow(0 0 8px #ffb3b3);
 }
+
 /* ============================================================
    MAIN NAVBAR – design épuré, glassmorphisme et animations
    ============================================================ */
@@ -434,39 +452,6 @@ ion-menu-button:hover {
   background: linear-gradient(135deg, #a855f7, #d946ef);
 }
 
-/* Option : ajouter un petit indicateur de notification (si besoin) */
-.navbar-avatar-btn::after {
-  content: '';
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 10px;
-  height: 10px;
-  background: #f97316;
-  border-radius: 50%;
-  border: 2px solid white;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-/* Exemple de badge actif (décommentez si vous voulez l'activer) */
-/* .navbar-avatar-btn.notify::after { opacity: 1; } */
-
-/* Adaptation responsive */
-@media (max-width: 768px) {
-  .page-title-text {
-    font-size: 0.85rem;
-  }
-  .navbar-avatar-btn {
-    width: 38px;
-    height: 38px;
-    font-size: 0.8rem;
-    margin-right: 8px;
-  }
-  .toolbar-center {
-    gap: 6px;
-  }
-}
 /* ============================================================
    TOAST (amélioré)
    ============================================================ */
@@ -486,8 +471,12 @@ ion-menu-button:hover {
   font-family: 'Plus Jakarta Sans', sans-serif !important;
 }
 
+:host ::ng-deep .p-toast .p-toast-message .p-toast-summary {
+  font-weight: 800 !important;
+}
+
 /* ============================================================
-   MAIN CONTENT
+   MAIN CONTENT - LE SEUL QUI DOIT SCROLLER
    ============================================================ */
 ion-content.ion-padding {
   --background: transparent;
@@ -495,11 +484,17 @@ ion-content.ion-padding {
   --padding-end: 0;
   --padding-top: 0;
   --padding-bottom: 0;
+  --overflow-y: auto !important;
+  overflow-y: auto !important;
+  height: 100%;
 }
 
-.ion-page#main-content {
+.ion-page#agent-main-content {
   width: 100%;
   min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ============================================================
@@ -513,7 +508,7 @@ ion-content.ion-padding {
 @media (max-width: 768px) {
   ion-split-pane { --side-max-width: 0px !important; --side-min-width: 0px !important; }
   ion-menu       { display: none !important; }
-  .ion-page#main-content { width: 100% !important; max-width: 100% !important; left: 0 !important; }
+  .ion-page#agent-main-content { width: 100% !important; max-width: 100% !important; left: 0 !important; }
   .page-title-text { font-size: 0.85rem; }
   .navbar-avatar-btn { width: 38px; height: 38px; font-size: 0.8rem; margin-right: 8px; }
 }
@@ -538,9 +533,8 @@ ion-menu ion-content ion-item {
   gap: 8px;
 }
 
-/* NOUVELLE COULEUR DE L'ICÔNE : dorée/ambrée */
 .logo-title i {
-  color: #fbbf24;   /* Couleur ambrée élégante */
+  color: #fbbf24;
   font-size: 1.3rem;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
   transition: transform 0.2s ease, filter 0.2s ease;
@@ -549,594 +543,4 @@ ion-menu ion-content ion-item {
 .logo-title i:hover {
   transform: scale(1.08) rotate(3deg);
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-}
-/* ============================================================
-   NOTIFICATIONS
-   ============================================================ */
-.notification-icon-wrapper {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  background: rgba(139, 92, 246, 0.1);
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-right: 8px;
-}
-
-.notification-icon-wrapper:hover {
-  background: rgba(139, 92, 246, 0.2);
-  transform: scale(1.05);
-}
-
-.notification-icon-wrapper i {
-  font-size: 1.2rem;
-  color: #8b5cf6;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -6px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.6rem;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-/* Panneau de notifications */
-.notifications-panel {
-  width: 380px;
-  max-height: 500px;
-  background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-}
-
-.notif-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-}
-
-.notif-header h4 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.mark-all-btn {
-  background: rgba(255,255,255,0.2);
-  border: none;
-  color: white;
-  font-size: 0.7rem;
-  padding: 5px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mark-all-btn:hover {
-  background: rgba(255,255,255,0.3);
-}
-
-.notif-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.notif-item {
-  display: flex;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.notif-item:hover {
-  background: #f8fafc;
-}
-
-.notif-item.unread {
-  background: #eef2ff;
-}
-
-.notif-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.notif-icon.notif-contact {
-  background: #fef3c7;
-  color: #f59e0b;
-}
-
-.notif-icon.notif-user_created {
-  background: #dcfce7;
-  color: #10b981;
-}
-
-.notif-content {
-  flex: 1;
-}
-
-.notif-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
-
-.notif-message {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.notif-time {
-  font-size: 0.65rem;
-  color: #94a3b8;
-}
-
-.notif-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 14px;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #10b981;
-}
-
-.notif-close:hover {
-  background: #10b981;
-  color: white;
-  border-color: #10b981;
-}
-
-.notif-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #94a3b8;
-}
-
-.notif-empty i {
-  font-size: 2rem;
-  margin-bottom: 10px;
-}
-/* ============================================================
-   BOUTON NOTIFICATION
-   ============================================================ */
-.notification-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background: rgba(139, 92, 246, 0.1);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  margin-right: 12px;
-  position: relative;
-}
-
-.notification-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
-  transform: scale(1.05);
-}
-
-.notification-btn i {
-  font-size: 1.2rem;
-  color: #8b5cf6;
-}
-
-/* Badge PrimeNG personnalisé */
-.p-button .p-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ============================================================
-   POPOVER NOTIFICATIONS
-   ============================================================ */
-.notifications-panel {
-  width: 380px;
-  max-height: 500px;
-  background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-.notif-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-}
-
-.notif-header h4 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.mark-all-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 0.7rem;
-  padding: 5px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mark-all-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.notif-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.notif-item {
-  display: flex;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.notif-item:hover {
-  background: #f8fafc;
-}
-
-.notif-item.unread {
-  background: #eef2ff;
-}
-
-.notif-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.notif-icon.notif-contact {
-  background: #fef3c7;
-  color: #f59e0b;
-}
-
-.notif-icon.notif-user_created {
-  background: #dcfce7;
-  color: #10b981;
-}
-
-.notif-content {
-  flex: 1;
-}
-
-.notif-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
-
-.notif-message {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.notif-time {
-  font-size: 0.65rem;
-  color: #94a3b8;
-}
-
-.notif-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 14px;
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #10b981;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notif-close:hover {
-  background: #10b981;
-  color: white;
-  border-color: #10b981;
-}
-
-.notif-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #94a3b8;
-}
-
-.notif-empty i {
-  font-size: 2rem;
-  margin-bottom: 10px;
-}
-/* ============================================================
-   NOTIFICATION ICON
-   ============================================================ */
-.notification-icon-wrapper {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  background: rgba(139, 92, 246, 0.1);
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-right: 8px;
-}
-
-.notification-icon-wrapper:hover {
-  background: rgba(139, 92, 246, 0.2);
-  transform: scale(1.05);
-}
-
-.notification-icon-wrapper i {
-  font-size: 1.2rem;
-  color: #8b5cf6;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -6px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.6rem;
-  font-weight: 700;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-/* ============================================================
-   NOTIFICATIONS PANEL (Dialog)
-   ============================================================ */
-.notifications-panel {
-  min-height: 300px;
-  max-height: 500px;
-}
-
-.notif-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0 16px;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 12px;
-}
-
-.notif-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.notif-header-left i {
-  color: #8b5cf6;
-  font-size: 1.1rem;
-}
-
-.mark-all-btn {
-  background: transparent;
-  border: none;
-  color: #6366f1;
-  font-size: 0.7rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 20px;
-  transition: all 0.2s;
-}
-
-.mark-all-btn:hover {
-  background: #eef2ff;
-}
-
-.notif-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.notif-item {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  transition: all 0.2s;
-  background: #f8fafc;
-}
-
-.notif-item:hover {
-  background: #f1f5f9;
-}
-
-.notif-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.notif-icon.notif-contact {
-  background: #fef3c7;
-  color: #f59e0b;
-}
-
-.notif-icon.notif-user_created {
-  background: #dcfce7;
-  color: #10b981;
-}
-
-.notif-content {
-  flex: 1;
-}
-
-.notif-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
-
-.notif-message {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.notif-time {
-  font-size: 0.65rem;
-  color: #94a3b8;
-}
-
-.notif-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 14px;
-  background: #e2e8f0;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #10b981;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-.notif-close:hover {
-  background: #10b981;
-  color: white;
-}
-
-.notif-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #94a3b8;
-}
-
-.notif-empty i {
-  font-size: 2rem;
-  margin-bottom: 10px;
-}
-/* ============================================================
-   NOTIFICATION ACTIONS
-   ============================================================ */
-.notif-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-}
-
-.notif-reply {
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  background: #e0e7ff;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: #4f46e5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.notif-reply:hover {
-  background: #4f46e5;
-  color: white;
-  transform: scale(1.05);
-}
-
-.notif-reply i {
-  font-size: 0.85rem;
-}
-
-.notif-agent-email {
-  font-size: 0.65rem;
-  color: #6366f1;
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #eef2ff;
-  padding: 4px 8px;
-  border-radius: 12px;
-  width: fit-content;
-}
-
-.notif-agent-email i {
-  font-size: 0.6rem;
 }

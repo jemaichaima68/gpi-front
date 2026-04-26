@@ -1,0 +1,201 @@
+<div class="detail-container">
+  <p-toast />
+  
+  <div class="header">
+    <h2>📋 Détail de la transaction</h2>
+    <div class="header-buttons">
+      <p-button 
+        label="Télécharger XML" 
+        icon="pi pi-download" 
+        severity="secondary" 
+        [outlined]="true"
+        (onClick)="downloadXmlFile()"
+        pTooltip="Télécharger le fichier XML original"
+        tooltipPosition="top" />
+      <p-button 
+        label="Voir XML" 
+        icon="pi pi-code" 
+        severity="info" 
+        [outlined]="true"
+        (onClick)="viewXmlContent()"
+        pTooltip="Visualiser le contenu du fichier XML"
+        tooltipPosition="top" />
+      <p-button label="Retour" icon="pi pi-arrow-left" (onClick)="goBackToDashboard()" styleClass="p-button-outlined" />
+    </div>
+  </div>
+
+  <p-card>
+    <div *ngIf="loading && !transaction && !error" class="empty-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>Chargement en cours...</p>
+    </div>
+
+    <div *ngIf="error" class="error-state">
+      <i class="pi pi-exclamation-triangle"></i>
+      <h3>Erreur</h3>
+      <p>{{ error }}</p>
+      <p-button label="Réessayer" icon="pi pi-refresh" (onClick)="loadTransaction()" />
+    </div>
+
+    <div *ngIf="transaction && !loading">
+      
+      <div *ngIf="transaction.alerte && transaction.alerte !== 'OK'" 
+           class="alert-banner" 
+           [class.alert-grave]="transaction.alerte === 'GRAVE'"
+           [class.alert-attention]="transaction.alerte === 'ATTENTION'">
+        <i [class]="'pi ' + getAlerteIcon(transaction.alerte)"></i>
+        <div class="alert-content">
+          <strong>{{ getAlerteLabel(transaction.alerte) }}</strong>
+          <span *ngIf="transaction.motifAlerte">{{ transaction.motifAlerte }}</span>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-row">
+          <div class="detail-label">MsgId :</div>
+          <div class="detail-value"><code>{{ transaction.msgId || '-' }}</code></div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Type :</div>
+          <div class="detail-value">
+            <p-tag [value]="transaction.messageType || '-'" severity="info" />
+          </div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">UETR :</div>
+          <div class="detail-value uetr-value">
+            <code>{{ transaction.uetr || '-' }}</code>
+            <i *ngIf="transaction.uetr" 
+               class="pi pi-copy" 
+               (click)="copyToClipboard(transaction.uetr)"
+               pTooltip="Copier l'UETR"
+               tooltipPosition="top"></i>
+          </div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Montant :</div>
+          <div class="detail-value amount">
+            <strong>{{ transaction.amount | number:'1.2-2' }} {{ transaction.currency }}</strong>
+          </div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Débiteur :</div>
+          <div class="detail-value">{{ transaction.debtorName || '-' }}</div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Créditeur :</div>
+          <div class="detail-value">{{ transaction.creditorName || '-' }}</div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Pays bénéficiaire :</div>
+          <div class="detail-value">
+            <span class="country-badge">{{ transaction.creditorCountry || '-' }}</span>
+          </div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Statut :</div>
+          <div class="detail-value">
+            <p-tag 
+              [value]="getStatusLabel(transaction.status)" 
+              [severity]="getStatusSeverity(transaction.status)"
+              [pTooltip]="getStatusTooltip(transaction.status)"
+              tooltipPosition="top" />
+          </div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Reçu le :</div>
+          <div class="detail-value">{{ transaction.receivedAt | date:'dd/MM/yyyy HH:mm:ss' }}</div>
+        </div>
+        
+        <div class="detail-row" *ngIf="transaction.fileName">
+          <div class="detail-label">Fichier source :</div>
+          <div class="detail-value">{{ transaction.fileName }}</div>
+        </div>
+        
+        <div class="detail-row" *ngIf="transaction.rejectionReason">
+          <div class="detail-label">Motif rejet :</div>
+          <div class="detail-value rejection-reason">{{ transaction.rejectionReason }}</div>
+        </div>
+        
+        <div class="detail-row" *ngIf="transaction.originalMsgId">
+          <div class="detail-label">Message original :</div>
+          <div class="detail-value">{{ transaction.originalMsgId }}</div>
+        </div>
+      </div>
+
+      <div class="action-buttons" *ngIf="needsAgentAction(transaction.status)">
+        <p-button 
+          label="Accepter" 
+          icon="pi pi-check" 
+          severity="success" 
+          (onClick)="acceptTransaction()" />
+        <p-button 
+          label="Rejeter" 
+          icon="pi pi-times" 
+          severity="danger" 
+          (onClick)="rejectTransaction()" />
+      </div>
+    </div>
+  </p-card>
+</div>
+
+<!-- DIALOGUE DE VISUALISATION XML -->
+<p-dialog 
+  header="📄 Contenu du fichier XML" 
+  [(visible)]="showXmlDialog" 
+  [modal]="true" 
+  [style]="{ width: '800px', maxWidth: '90vw' }"
+  [maximizable]="false"
+  [draggable]="true"
+  [resizable]="true"
+  [closable]="true"
+  [closeOnEscape]="true"
+  [appendTo]="'body'"
+  [position]="'center'">
+  
+  <div class="xml-dialog-content">
+    <div class="xml-toolbar">
+      <div class="xml-info">
+        <i class="pi pi-file-code"></i>
+        <span class="xml-filename" *ngIf="transaction?.fileName">
+          {{ transaction.fileName }}
+        </span>
+      </div>
+      <div class="xml-actions">
+        <p-button 
+          icon="pi pi-copy" 
+          label="Copier" 
+          severity="secondary" 
+          [text]="true" 
+          size="small"
+          (onClick)="copyXmlToClipboard()"
+          pTooltip="Copier le XML" />
+        <p-button 
+          icon="pi pi-download" 
+          label="Télécharger" 
+          severity="secondary" 
+          [text]="true" 
+          size="small"
+          (onClick)="downloadXmlFile()"
+          pTooltip="Télécharger le fichier" />
+      </div>
+    </div>
+    <div class="xml-content-wrapper">
+      <pre class="xml-pre">{{ formattedXmlContent }}</pre>
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="xml-dialog-footer">
+      <p-button label="Fermer" icon="pi pi-times" severity="secondary" (onClick)="showXmlDialog = false" />
+    </div>
+  </ng-template>
+</p-dialog>

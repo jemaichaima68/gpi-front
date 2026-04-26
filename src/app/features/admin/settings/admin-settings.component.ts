@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
+import { TableModule } from 'primeng/table';
 import { environment } from '../../../../environments/environment';
 
 export interface AppSettingsDto {
@@ -16,6 +17,16 @@ export interface AppSettingsDto {
   devisesAutorisees: string[];
   paysSanctionnes: string[];
   delaiTraitementH: number;
+}
+
+export interface BankDirectorySimpleDto {
+  bic: string;
+  bankName: string;
+  countryCode: string;
+  city: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  occurrenceCount: number;
 }
 
 @Component({
@@ -27,7 +38,8 @@ export interface AppSettingsDto {
     ButtonModule,
     InputTextModule,
     InputNumberModule,
-    ToastModule
+    ToastModule,
+    TableModule
   ],
   providers: [MessageService],
   templateUrl: './admin-settings.component.html',
@@ -37,8 +49,10 @@ export class AdminSettingsComponent implements OnInit {
 
   loading = true;
   saving = false;
+  activeTab: string = 'rules';
 
   private readonly API = `${environment.apiUrl}/api/admin/settings`;
+  private readonly BANK_API = `${environment.apiUrl}/api/admin/bank-directory`;
 
   settings: AppSettingsDto = {
     montantMax: 50000,
@@ -52,7 +66,12 @@ export class AdminSettingsComponent implements OnInit {
   newDevise = '';
   newPays = '';
 
-  // Pays sanctionnés : liste de référence (ISO 3166-1 alpha-2)
+  // ==================== ANNUAIRE DES BANQUES (SIMPLE) ====================
+  banks: BankDirectorySimpleDto[] = [];
+  bankLoading = false;
+  bankSearchTerm = '';
+
+  // Pays sanctionnés
   countryNames: Record<string, string> = {
     AF: 'Afghanistan',
     AL: 'Albanie',
@@ -96,11 +115,12 @@ export class AdminSettingsComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private messageService: MessageService,
-    private cdr: ChangeDetectorRef  // ← AJOUTER
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadSettings();
+    this.loadBanks();
   }
 
   loadSettings(): void {
@@ -109,14 +129,13 @@ export class AdminSettingsComponent implements OnInit {
       next: (data) => {
         this.settings = data;
         this.loading = false;
-        this.cdr.detectChanges();  // ← FORCER LA DÉTECTION
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Erreur chargement settings:', err);
         this.loading = false;
-        this.cdr.detectChanges();  // ← FORCER LA DÉTECTION
+        this.cdr.detectChanges();
         
-        // Données mockées par défaut
         this.settings = {
           montantMax: 50000,
           montantMin: 1,
@@ -133,6 +152,41 @@ export class AdminSettingsComponent implements OnInit {
         });
       }
     });
+  }
+
+  // ==================== ANNUAIRE DES BANQUES ====================
+
+  loadBanks(): void {
+    this.bankLoading = true;
+    this.http.get<BankDirectorySimpleDto[]>(this.BANK_API).subscribe({
+      next: (data) => {
+        this.banks = data;
+        this.bankLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Erreur chargement banques:', err);
+        this.bankLoading = false;
+        this.cdr.detectChanges();
+        // Données mockées pour l'affichage
+        this.banks = [
+          { bic: 'BNPAFRPP', bankName: 'BNP Paribas', countryCode: 'FR', city: 'Paris', firstSeenAt: new Date().toISOString(), lastSeenAt: new Date().toISOString(), occurrenceCount: 1 },
+          { bic: 'DEUTDEFF', bankName: 'Deutsche Bank', countryCode: 'DE', city: 'Frankfurt', firstSeenAt: new Date().toISOString(), lastSeenAt: new Date().toISOString(), occurrenceCount: 1 },
+          { bic: 'CITIUS33', bankName: 'Citibank N.A.', countryCode: 'US', city: 'New York', firstSeenAt: new Date().toISOString(), lastSeenAt: new Date().toISOString(), occurrenceCount: 1 },
+          { bic: 'EMIRAEAD', bankName: 'Emirates NBD', countryCode: 'AE', city: 'Dubai', firstSeenAt: new Date().toISOString(), lastSeenAt: new Date().toISOString(), occurrenceCount: 1 }
+        ];
+      }
+    });
+  }
+
+  getFilteredBanks(): BankDirectorySimpleDto[] {
+    if (!this.bankSearchTerm) return this.banks;
+    const term = this.bankSearchTerm.toLowerCase();
+    return this.banks.filter(bank => 
+      bank.bic.toLowerCase().includes(term) ||
+      bank.bankName.toLowerCase().includes(term) ||
+      (bank.countryCode && bank.countryCode.toLowerCase().includes(term))
+    );
   }
 
   // Devises
@@ -182,7 +236,7 @@ export class AdminSettingsComponent implements OnInit {
       next: (data) => {
         this.settings = data;
         this.saving = false;
-        this.cdr.detectChanges();  // ← FORCER LA DÉTECTION
+        this.cdr.detectChanges();
         this.messageService.add({
           severity: 'success',
           summary: 'Paramètres enregistrés',
@@ -192,7 +246,7 @@ export class AdminSettingsComponent implements OnInit {
       },
       error: () => {
         this.saving = false;
-        this.cdr.detectChanges();  // ← FORCER LA DÉTECTION
+        this.cdr.detectChanges();
         this.messageService.add({
           severity: 'error',
           summary: 'Erreur',

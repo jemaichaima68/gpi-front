@@ -840,3 +840,931 @@ body.p-overflow-hidden {
   font-size: 0.7rem;
   border-radius: 6px;
 }
+/* ==================== NOUVEAUX STYLES POUR LE DIALOGUE DE TRAITEMENT ==================== */
+
+/* Conteneur principal */
+.process-dialog-content {
+  padding: 4px 0 8px 0;
+}
+
+/* Récapitulatif de la transaction */
+.transaction-summary {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e293b;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-header i {
+  color: #4f46e5;
+}
+
+.summary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.summary-label {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.summary-value {
+  color: #1e293b;
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+}
+
+.alert-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.alert-critical {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.alert-warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* Sélection du statut */
+.status-selection {
+  margin-bottom: 24px;
+}
+
+.selection-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e293b;
+  margin-bottom: 14px;
+}
+
+.selection-header i {
+  color: #4f46e5;
+}
+
+.status-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-left-width: 4px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-option:hover {
+  background: #f8fafc;
+  transform: translateX(2px);
+}
+
+.status-option.selected {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
+}
+
+.custom-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.custom-radio.checked {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.custom-radio.checked i {
+  color: white;
+  font-size: 0.7rem;
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 3px;
+}
+
+.status-description {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* Section motif de rejet (améliorée) */
+.rejection-section {
+  background: #fef2f2;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #fecaca;
+  margin-bottom: 16px;
+}
+
+.rejection-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #dc2626;
+  margin-bottom: 14px;
+}
+
+.rejection-header .required {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+.rejection-textarea {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid #fecaca;
+  background: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.rejection-textarea:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.rejection-textarea.has-content {
+  border-color: #dc2626;
+  background: #fff;
+}
+
+.rejection-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fff8f0;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 0.7rem;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.rejection-hint i {
+  color: #f59e0b;
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+
+/* Message de confirmation */
+.confirmation-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #ecfdf5;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #065f46;
+  margin-bottom: 16px;
+  border: 1px solid #a7f3d0;
+}
+
+.confirmation-message i {
+  font-size: 1rem;
+  color: #10b981;
+}
+
+/* Pied du dialogue */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 8px 0 0 0;
+}
+
+/* Actions dans le tableau */
+.action-buttons-new {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 100px;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  padding: 18px 24px;
+  border-radius: 16px 16px 0 0;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon {
+  color: white;
+  background: rgba(255,255,255,0.2);
+}
+
+:host ::ng-deep .p-dialog .p-dialog-content {
+  padding: 24px;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e2e8f0;
+}
+/* ==================== NOUVEAUX STYLES POUR LE DIALOGUE DE TRAITEMENT ==================== */
+
+.process-dialog-content {
+  padding: 4px 0 8px 0;
+}
+
+.transaction-summary {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e293b;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-header i {
+  color: #4f46e5;
+}
+
+.summary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.summary-label {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.summary-value {
+  color: #1e293b;
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+}
+
+.alert-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.alert-critical {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.alert-warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-selection {
+  margin-bottom: 24px;
+}
+
+.selection-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e293b;
+  margin-bottom: 14px;
+}
+
+.selection-header i {
+  color: #4f46e5;
+}
+
+.status-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-left-width: 4px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-option:hover {
+  background: #f8fafc;
+  transform: translateX(2px);
+}
+
+.status-option.selected {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
+}
+
+.custom-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.custom-radio.checked {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.custom-radio.checked i {
+  color: white;
+  font-size: 0.7rem;
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 3px;
+}
+
+.status-description {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.rejection-section {
+  background: #fef2f2;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #fecaca;
+  margin-bottom: 16px;
+}
+
+.rejection-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #dc2626;
+  margin-bottom: 14px;
+}
+
+.rejection-header .required {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+.rejection-textarea {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid #fecaca;
+  background: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.rejection-textarea:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.rejection-textarea.has-content {
+  border-color: #dc2626;
+  background: #fff;
+}
+
+.rejection-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fff8f0;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 0.7rem;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.rejection-hint i {
+  color: #f59e0b;
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+
+.confirmation-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #ecfdf5;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #065f46;
+  margin-bottom: 16px;
+  border: 1px solid #a7f3d0;
+}
+
+.confirmation-message i {
+  font-size: 1rem;
+  color: #10b981;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 8px 0 0 0;
+}
+
+.action-buttons-new {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 100px;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: white;
+  padding: 18px 24px;
+  border-radius: 16px 16px 0 0;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon {
+  color: white;
+  background: rgba(255,255,255,0.2);
+}
+
+:host ::ng-deep .p-dialog .p-dialog-content {
+  padding: 24px;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e2e8f0;
+}
+/* ==================== STYLES POUR LE SOUS-DIALOGUE DE REJET ==================== */
+
+.rejection-dialog-content {
+  padding: 8px 0;
+}
+
+.rejection-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fef2f2;
+  border-radius: 12px;
+  border: 1px solid #fecaca;
+  margin-bottom: 20px;
+}
+
+.rejection-warning i {
+  font-size: 1.2rem;
+  color: #dc2626;
+}
+
+.rejection-warning span {
+  font-size: 0.85rem;
+  color: #991b1b;
+  font-weight: 500;
+}
+
+.rejection-form {
+  margin-bottom: 16px;
+}
+
+.rejection-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.rejection-label .required {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+.rejection-textarea {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.rejection-textarea:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.rejection-textarea.has-content {
+  border-color: #ef4444;
+}
+
+.rejection-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fff8f0;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 0.7rem;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.rejection-hint i {
+  color: #f59e0b;
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+/* Message d'info pour RJCT */
+.rjct-info-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border-radius: 12px;
+  margin-top: 16px;
+  border: 1px solid #fde68a;
+}
+
+.rjct-info-message i {
+  color: #f59e0b;
+  font-size: 1rem;
+}
+
+.rjct-info-message span {
+  font-size: 0.8rem;
+  color: #92400e;
+  font-weight: 500;
+}
+/* ==================== STYLES POUR LE SOUS-DIALOGUE DE REJET ==================== */
+
+.rejection-dialog-content {
+  padding: 8px 0;
+}
+
+.rejection-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fef2f2;
+  border-radius: 12px;
+  border: 1px solid #fecaca;
+  margin-bottom: 20px;
+}
+
+.rejection-warning i {
+  font-size: 1.2rem;
+  color: #dc2626;
+}
+
+.rejection-warning span {
+  font-size: 0.85rem;
+  color: #991b1b;
+  font-weight: 500;
+}
+
+.rejection-form {
+  margin-bottom: 16px;
+}
+
+.rejection-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.rejection-label .required {
+  color: #dc2626;
+  font-size: 0.75rem;
+}
+
+.rejection-textarea {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.rejection-textarea:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.rejection-textarea.has-content {
+  border-color: #ef4444;
+}
+
+.rejection-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fff8f0;
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 0.7rem;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.rejection-hint i {
+  color: #f59e0b;
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+
+/* Message d'info pour RJCT */
+.rjct-info-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border-radius: 12px;
+  margin-top: 16px;
+  border: 1px solid #fde68a;
+}
+
+.rjct-info-message i {
+  color: #f59e0b;
+  font-size: 1rem;
+}
+
+.rjct-info-message span {
+  font-size: 0.8rem;
+  color: #92400e;
+  font-weight: 500;
+}
+/* Version pastel doux */
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background: linear-gradient(135deg, #a5b4fc, #c4b5fd) !important;
+  /* Indigo très doux → mauve pastel */
+  color: #1e1b4b;
+  padding: 18px 24px;
+  border-radius: 16px 16px 0 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1e1b4b;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon {
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.1);
+  border-radius: 50%;
+}
+
+:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon:hover {
+  background: rgba(79, 70, 229, 0.2);
+  color: #4f46e5;
+}
+/* ==================== BANDEAU D'ALERTE DANS LE DIALOGUE ==================== */
+
+.alert-banner-dialog {
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  border-left: 4px solid;
+}
+
+.alert-grave-dialog {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left-color: #dc2626;
+  border-bottom: 1px solid #fecaca;
+}
+
+.alert-attention-dialog {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-left-color: #f59e0b;
+  border-bottom: 1px solid #fde68a;
+}
+
+.alert-header-dialog {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.alert-header-dialog i {
+  font-size: 1.2rem;
+}
+
+.alert-grave-dialog .alert-header-dialog i {
+  color: #dc2626;
+}
+
+.alert-attention-dialog .alert-header-dialog i {
+  color: #f59e0b;
+}
+
+.alert-title-dialog {
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.alert-grave-dialog .alert-title-dialog {
+  color: #991b1b;
+}
+
+.alert-attention-dialog .alert-title-dialog {
+  color: #92400e;
+}
+
+.alert-message-dialog {
+  font-size: 0.8rem;
+  color: #374151;
+  padding-left: 30px;
+  margin-bottom: 8px;
+}
+
+.alert-message-dialog strong {
+  font-weight: 700;
+}
+
+.alert-action-dialog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(220, 38, 38, 0.08);
+  border-radius: 10px;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: #991b1b;
+  border: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.alert-action-dialog i {
+  font-size: 0.9rem;
+  color: #dc2626;
+}
+
+/* ==================== BOÎTE DE RECOMMANDATION ==================== */
+
+.recommendation-box {
+  background: #f0fdf4;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  border: 1px solid #bbf7d0;
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #166534;
+}
+
+.recommendation-header i {
+  color: #f59e0b;
+  font-size: 0.9rem;
+}
+
+.recommendation-content {
+  font-size: 0.8rem;
+  color: #14532d;
+  line-height: 1.4;
+  padding-left: 28px;
+}
+
+.recommendation-content strong {
+  color: #dc2626;
+  font-weight: 800;
+}
+:host {
+  display: block;
+  padding: 36px 40px;
+  min-height: auto;  /* ← Changé : au lieu de min-height: 100vh */
+  overflow: visible;  /* ← Ajouté */
+}
