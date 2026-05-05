@@ -1,0 +1,110 @@
+<div class="tracking-container">
+  
+  <h1 class="page-title">Suivi d'un transfert</h1>
+
+  <!-- Zone de recherche -->
+  <div class="search-section">
+    <label class="uetr-label">UETR</label>
+    <div class="input-group">
+      <input 
+        type="text" 
+        [(ngModel)]="uetrToSearch"
+        placeholder="97ed4827-7bef-4491-a06f-858655712d"
+        class="uetr-input"
+        (keyup.enter)="searchTransfer()"
+      >
+      <button (click)="searchTransfer()" class="search-btn">
+        🔍 Rechercher
+      </button>
+    </div>
+    <div class="search-footer">
+      <span>{{ currentDate | date:'dd MMM yyyy' }}</span>
+      <span class="initials">{{ userInitials }}</span>
+    </div>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="errorMessage" class="error-message">
+    ⚠️ {{ errorMessage }}
+  </div>
+
+  <!-- Résultats -->
+  <div *ngIf="transferDetails" class="results">
+    
+    <!-- Détails du transfert -->
+    <div class="card">
+      <h2 class="card-title">📋 Détails du transfert</h2>
+      <div class="details-grid">
+        <div class="detail-item">
+          <span class="detail-label">Montant :</span>
+          <span class="detail-value">{{ transferDetails.amount | number:'1.2-2' }} {{ transferDetails.currency || 'EUR' }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Statut :</span>
+          <span class="detail-value">{{ getStatusLabel(transferDetails.status) }}</span>
+          <span *ngIf="transferDetails.status === 'ACSC'" class="detail-date">
+            le {{ getStatusDate() }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parcours SWIFT -->
+    <div class="card">
+      <h2 class="card-title">🌍 Parcours du virement SWIFT GPI</h2>
+      <div class="journey-list">
+        <div class="journey-item" *ngFor="let bank of journeyData.banks; let i = index">
+          <div class="journey-number">{{ i + 1 }}</div>
+          <div class="journey-content">
+            <div class="journey-bank">{{ bank.name }}</div>
+            <div class="journey-role">{{ bank.role }}</div>
+            <div class="journey-fees" *ngIf="bank.fees">{{ bank.fees }}</div>
+          </div>
+          <div class="journey-status">
+            <span class="status-badge" [ngClass]="{
+              'status-sent': bank.status === 'Envoyé',
+              'status-completed': bank.status === 'Terminé',
+              'status-pending': bank.status !== 'Envoyé' && bank.status !== 'Terminé'
+            }">
+              {{ bank.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Résumé des frais -->
+    <div class="card fees-card">
+      <h2 class="card-title">💰 Résumé des frais déduits</h2>
+      <div class="fees-grid">
+        <div class="fees-item">
+          <span class="fees-label">Frais totaux :</span>
+          <span class="fees-amount">{{ journeyData.totalFees | number:'1.2-2' }} EUR</span>
+        </div>
+        <div class="fees-item highlight">
+          <span class="fees-label">Montant net crédité :</span>
+          <span class="fees-amount">{{ journeyData.netAmount | number:'1.2-2' }} USD</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boutons export -->
+    <div class="export-buttons">
+      <button class="btn-export" (click)="exportPdf()">
+        📄 Exporter PDF
+      </button>
+      <button class="btn-export" (click)="exportExcel()">
+        📊 Exporter Excel
+      </button>
+    </div>
+
+  </div>
+
+  <!-- État vide -->
+  <div *ngIf="!transferDetails && !errorMessage" class="empty-state">
+    <div class="empty-icon">🔍</div>
+    <h3>Recherchez un transfert</h3>
+    <p>Entrez un code UETR pour voir les détails de votre transaction</p>
+  </div>
+
+</div>

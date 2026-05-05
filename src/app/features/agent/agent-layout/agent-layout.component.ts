@@ -9,14 +9,25 @@ import { ButtonModule } from 'primeng/button';
 import {
   IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle,
   IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle,
-  IonButtons, IonMenuButton, IonFooter
+  IonFooter, IonButtons, IonMenuButton  // ✅ AJOUTER ICI
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   homeOutline, listOutline, logOutOutline,
   sendOutline, personCircleOutline, personOutline,
-  documentTextOutline, checkmarkCircleOutline
+  documentTextOutline, checkmarkCircleOutline,
+  chevronDownOutline, chevronForwardOutline,
+  menuOutline  // ✅ AJOUTER menuOutline
 } from 'ionicons/icons';
+
+interface MenuItem {
+  label: string;
+  icon: string;
+  route?: string | null;
+  isParent?: boolean;
+  expanded?: boolean;
+  children?: MenuItem[];
+}
 
 @Component({
   selector: 'app-agent-layout',
@@ -25,7 +36,7 @@ import {
     CommonModule, RouterModule, ToastModule, BadgeModule, ButtonModule,
     IonApp, IonSplitPane, IonMenu, IonHeader, IonToolbar, IonTitle,
     IonContent, IonList, IonItem, IonIcon, IonLabel, IonMenuToggle,
-    IonButtons, IonMenuButton, IonFooter
+    IonFooter, IonButtons, IonMenuButton  // ✅ AJOUTER ICI AUSSI
   ],
   providers: [MessageService],
   templateUrl: './agent-layout.component.html',
@@ -36,8 +47,7 @@ export class AgentLayoutComponent implements OnInit {
   username = '';
   avatarInitials = 'A';
 
-  // Menu items (affichés en haut)
-  menuItems = [
+  menuItems: MenuItem[] = [
     { label: 'Tableau de bord', icon: 'home-outline', route: '/agent/dashboard' },
     { 
       label: 'Transactions', 
@@ -54,8 +64,7 @@ export class AgentLayoutComponent implements OnInit {
     { label: 'Logs activité', icon: 'document-text-outline', route: '/agent/logs' }
   ];
 
-  // Items du bas (Profil et Déconnexion)
-  bottomItems = [
+  bottomItems: MenuItem[] = [
     { label: 'Mon Profil', icon: 'person-outline', route: '/agent/profile' }
   ];
 
@@ -67,7 +76,9 @@ export class AgentLayoutComponent implements OnInit {
     addIcons({
       homeOutline, listOutline, logOutOutline,
       sendOutline, personCircleOutline, personOutline,
-      documentTextOutline, checkmarkCircleOutline
+      documentTextOutline, checkmarkCircleOutline,
+      chevronDownOutline, chevronForwardOutline,
+      menuOutline
     });
   }
 
@@ -90,7 +101,7 @@ export class AgentLayoutComponent implements OnInit {
     this.authService.logout();
   }
 
-  toggleSubMenu(item: any): void {
+  toggleSubMenu(item: MenuItem): void {
     if (item.isParent) {
       item.expanded = !item.expanded;
     }

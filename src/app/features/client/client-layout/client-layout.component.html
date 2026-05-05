@@ -1,0 +1,68 @@
+<div class="layout">
+  
+  <!-- Bouton menu mobile -->
+  <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+    ☰
+  </button>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" [class.mobile-open]="isMobileMenuOpen">
+    <div class="sidebar-header">
+      <div class="logo">
+         GPI Tracker
+      </div>
+      <button class="close-menu" (click)="toggleMobileMenu()">✕</button>
+    </div>
+
+    <nav class="nav-menu">
+      <a routerLink="/client/dashboard" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
+         Tableau de bord
+      </a>
+      <a routerLink="/client/tracking" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
+         Suivi
+      </a>
+      <a routerLink="/client/history" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
+         Historique
+      </a>
+      <a routerLink="/client/profile" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
+         Mon Profil
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-item logout" (click)="logout()">
+         Déconnexion
+      </a>
+    </div>
+  </aside>
+
+  <!-- Overlay mobile -->
+  <div class="mobile-overlay" *ngIf="isMobileMenuOpen" (click)="toggleMobileMenu()"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+    <div class="header">
+      <div class="header-left">
+        <h1 class="page-title">Espace Client</h1>
+      </div>
+      <div class="header-right">
+        <div class="notification-bell" (click)="toggleNotifications()">
+          🔔
+          <span class="notification-badge" *ngIf="unreadCount > 0">{{unreadCount}}</span>
+        </div>
+        <div class="user-avatar" (click)="goToProfile()">
+          <span class="avatar-initials">{{userInitials}}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="notification-popup" *ngIf="showNotifications">
+      <app-notification-popup (close)="toggleNotifications()"></app-notification-popup>
+    </div>
+
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+</div>

@@ -1,10 +1,10 @@
 <p-toast position="top-right" />
 
 <ion-app>
-  <ion-split-pane contentId="agent-main-content">
+  <ion-split-pane contentId="agent-main-content" when="md">
 
-    <!-- SIDEBAR -->
-    <ion-menu contentId="agent-main-content" menuId="agent-menu">
+    <!-- ==================== SIDEBAR / MENU ==================== -->
+    <ion-menu contentId="agent-main-content" menuId="agent-menu" side="start" type="push" [swipeGesture]="true">
       
       <!-- HEADER SIDEBAR -->
       <ion-header>
@@ -16,10 +16,11 @@
         </ion-toolbar>
       </ion-header>
 
-      <!-- MENU ITEMS (PARTIE HAUTE) -->
+      <!-- MENU ITEMS -->
       <ion-content>
         <ion-list lines="none">
-          <!-- Éléments normaux (sans sous-menu) -->
+          
+          <!-- Éléments normaux -->
           <ng-container *ngFor="let item of menuItems">
             <ng-container *ngIf="!item.isParent; else parentItem">
               <ion-menu-toggle auto-hide="false">
@@ -34,7 +35,7 @@
               </ion-menu-toggle>
             </ng-container>
             
-            <!-- Éléments avec sous-menu (Transactions) -->
+            <!-- Éléments avec sous-menu -->
             <ng-template #parentItem>
               <ion-item 
                 button 
@@ -46,7 +47,6 @@
                 <ion-icon slot="end" [name]="item.expanded ? 'chevron-down-outline' : 'chevron-forward-outline'"></ion-icon>
               </ion-item>
               
-              <!-- Sous-menu -->
               <div *ngIf="item.expanded" class="submenu">
                 <ion-menu-toggle auto-hide="false" *ngFor="let child of item.children">
                   <ion-item
@@ -65,10 +65,9 @@
         </ion-list>
       </ion-content>
 
-      <!-- FOOTER SIDEBAR (PARTIE BASSE : PROFIL + DÉCONNEXION) -->
+      <!-- FOOTER -->
       <ion-footer>
         <ion-toolbar>
-          <!-- Mon Profil -->
           <ion-menu-toggle auto-hide="false" *ngFor="let item of bottomItems">
             <ion-item
               [routerLink]="item.route"
@@ -80,7 +79,6 @@
             </ion-item>
           </ion-menu-toggle>
 
-          <!-- Déconnexion -->
           <ion-item
             lines="none"
             button
@@ -95,14 +93,14 @@
 
     </ion-menu>
 
-    <!-- MAIN CONTENT -->
+    <!-- ==================== MAIN CONTENT ==================== -->
     <div class="ion-page" id="agent-main-content">
       
-      <!-- NAVBAR -->
+      <!-- HEADER -->
       <ion-header>
         <ion-toolbar class="main-navbar-toolbar">
           <ion-buttons slot="start">
-            <ion-menu-button></ion-menu-button>
+            <ion-menu-button menu="agent-menu"></ion-menu-button>
           </ion-buttons>
 
           <div class="toolbar-center">
@@ -110,14 +108,14 @@
           </div>
 
           <ion-buttons slot="end">
-            <div class="navbar-avatar-btn" (click)="goToProfile()">
+            <div class="navbar-avatar-btn" (click)="goToProfile()" title="{{ username }}">
               {{ avatarInitials }}
             </div>
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
 
-      <!-- PAGE CONTENT -->
+      <!-- CONTENT -->
       <ion-content class="ion-padding">
         <router-outlet></router-outlet>
       </ion-content>

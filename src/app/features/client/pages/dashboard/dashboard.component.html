@@ -1,0 +1,115 @@
+<div class="dashboard">
+  
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1 class="hero-title">Bonjour, {{ userName || 'Client' }}</h1>
+        <p class="hero-subtitle">Voici le récapitulatif de vos activités récentes</p>
+      </div>
+      <div class="hero-stats">
+        <span class="hero-stat-value">{{ dashboard.totalTransactions || 0 }}</span>
+        <span class="hero-stat-label">Transferts</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cartes Statistiques -->
+  <div class="stats-wrapper">
+    <div class="stat-card">
+      <div class="stat-icon purple"></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ dashboard.totalTransactions || 0 }}</span>
+        <span class="stat-label">Total transferts</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon orange"></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ dashboard.pendingTransactions || 0 }}</span>
+        <span class="stat-label">En attente</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green"></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ dashboard.acceptedTransactions || 0 }}</span>
+        <span class="stat-label">Finalisés</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carte Montant Total -->
+  <div class="total-card">
+    <div class="total-content">
+      <div class="total-text">
+        <span class="total-label">Montant total transféré</span>
+        <h2 class="total-value">{{ (dashboard.totalAmount || 0) | number:'1.2-2' }} €</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline et Transferts récents -->
+  <div class="double-grid">
+    
+    <!-- Timeline Card -->
+    <div class="card timeline-card">
+      <div class="card-header">
+        <h3>Timeline des transferts</h3>
+        <span class="card-badge">{{ timelineTransactions.length }} événements</span>
+      </div>
+      <div class="timeline">
+        <div *ngFor="let item of timelineTransactions" class="timeline-node" (click)="viewTransferDetails(item)">
+          <div class="timeline-marker" [class]="item.statusClass"></div>
+          <div class="timeline-content">
+            <div class="timeline-head">
+              <span class="timeline-status" [class]="item.statusClass">{{ item.statusText }}</span>
+              <span class="timeline-date">{{ item.dateFormatted }}</span>
+            </div>
+            <div class="timeline-amount">{{ item.amount | number:'1.2-2' }} {{ item.currency }}</div>
+            <div class="timeline-user">{{ item.beneficiaryName }}</div>
+            <div class="timeline-time">{{ item.timeAgo }}</div>
+          </div>
+        </div>
+        <div *ngIf="timelineTransactions.length === 0" class="empty-timeline">
+          <p>Aucune activité récente</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transferts Récents Card -->
+    <div class="card transfers-card">
+      <div class="card-header">
+        <h3>Transferts récents</h3>
+        <button class="view-all" routerLink="/client/history">Voir tout →</button>
+      </div>
+      <div class="transfers-list">
+        <div *ngFor="let t of dashboard.recentTransactions.slice(0, 4)" class="transfer-row" (click)="goToTracking(t.uetr)">
+          <div class="transfer-avatar">
+            <span>{{ (t.creditorName || t.debtorName || '?').charAt(0) }}</span>
+          </div>
+          <div class="transfer-info">
+            <div class="transfer-name">{{ t.creditorName || t.debtorName || '-' }}</div>
+            <div class="transfer-id">{{ t.uetr | slice:0:12 }}...</div>
+          </div>
+          <div class="transfer-right">
+            <div class="transfer-amount">{{ t.amount | number:'1.2-2' }} {{ t.currency || '€' }}</div>
+            <span class="status-chip" [class]="t.status">{{ getStatusLabel(t.status) }}</span>
+          </div>
+        </div>
+        <div *ngIf="dashboard.recentTransactions.length === 0" class="empty-transfers">
+          <p>Aucun transfert récent</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions Rapides -->
+  <div class="actions-card">
+    <button class="action-btn primary" routerLink="/client/tracking">Suivre un transfert</button>
+    <button class="action-btn secondary" routerLink="/client/history">Consulter l'historique</button>
+  </div>
+
+</div>

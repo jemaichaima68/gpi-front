@@ -108,14 +108,53 @@ export const routes: Routes = [
     ]
   },
 
-  // ── Pages communes ────────────────────────────────────────────────────────
+  // ── CLIENT ────────────────────────────────────────────────────────────────
   {
-    path: 'access-denied',
+    path: 'client',
+    canActivate: [canActivateAuthRole('CLIENT')],
     loadComponent: () =>
-      import('./features/access-denied/access-denied.component')
-        .then(m => m.AccessDeniedComponent)
-  },
-
-  // ── Fallback ──────────────────────────────────────────────────────────────
-  { path: '**', redirectTo: '' }
+      import('./features/client/client-layout/client-layout.component')
+        .then(m => m.ClientLayoutComponent),
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/client/pages/dashboard/dashboard.component')
+            .then(m => m.DashboardComponent)
+      },
+      {
+        path: 'tracking',
+        loadComponent: () =>
+          import('./features/client/pages/tracking/tracking.component')
+            .then(m => m.TrackingComponent)
+      },
+      {
+        path: 'history',
+        loadComponent: () =>
+          import('./features/client/pages/history/history.component')
+            .then(m => m.HistoryComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/client/pages/profile/profile.component')
+            .then(m => m.ProfileComponent)
+      },
+      // ✅ NOUVELLE ROUTE - Détails transaction par ID
+      {
+        path: 'transaction/:id',
+        loadComponent: () =>
+          import('./features/client/pages/transaction-details/transaction-details.component')
+            .then(m => m.TransactionDetailsComponent)
+      },
+      // ✅ NOUVELLE ROUTE - Détails transaction par UETR
+      {
+        path: 'transaction/uetr/:uetr',
+        loadComponent: () =>
+          import('./features/client/pages/transaction-details/transaction-details.component')
+            .then(m => m.TransactionDetailsComponent)
+      }
+    ]
+  }
 ];

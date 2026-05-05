@@ -4,9 +4,14 @@ import Keycloak from 'keycloak-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly roleHomeRoutes: Record<string, string> = {
+    Admin: '/admin/dashboard',
+    BACK_OFFICE: '/agent/dashboard',
+    CLIENT: '/client/tracking'
+  };
 
   private keycloak = inject(Keycloak);
-  private router   = inject(Router);
+  private router = inject(Router);
 
   isLoggedIn(): boolean {
     return !!this.keycloak.authenticated;
@@ -21,30 +26,35 @@ export class AuthService {
   }
 
   getFullName(): string {
-    const p = this.keycloak.tokenParsed as any;
-    const first = p?.['given_name']  ?? '';
-    const last  = p?.['family_name'] ?? '';
-    return `${first} ${last}`.trim() || this.getUsername();
+    const payload = this.keycloak.tokenParsed as any;
+    const firstName = payload?.['given_name'] ?? '';
+    const lastName = payload?.['family_name'] ?? '';
+
+    return `${firstName} ${lastName}`.trim() || this.getUsername();
   }
 
   getRoles(): string[] {
-    const p = this.keycloak.tokenParsed as any;
-    return p?.['realm_access']?.['roles'] ?? [];
+    const payload = this.keycloak.tokenParsed as any;
+    return payload?.['realm_access']?.['roles'] ?? [];
   }
 
   hasRole(role: string): boolean {
     return this.getRoles().includes(role);
   }
 
-  redirectByRole(): void {
-    const roles = this.getRoles();
-    
-    // ✅ Changer l'ordre : d'abord Admin, puis BACK_OFFICE, puis CLIENT
-    if (roles.includes('Admin'))       { this.router.navigate(['/admin/dashboard']);  return; }
-    if (roles.includes('BACK_OFFICE')) { this.router.navigate(['/agent/dashboard']);  return; }
-    if (roles.includes('CLIENT'))      { this.router.navigate(['/client/dashboard']); return; }
-    
-    this.router.navigate(['/access-denied']);
+  getHomeRoute(roles: string[] = this.getRoles()): string | null {
+    for (const role of ['Admin', 'BACK_OFFICE', 'CLIENT']) {
+      if (roles.includes(role)) {
+        return this.roleHomeRoutes[role];
+      }
+    }
+
+    return null;
+  }
+
+  redirectByRole(roles: string[] = this.getRoles()): void {
+    const target = this.getHomeRoute(roles) ?? '/access-denied';
+    this.router.navigate([target]);
   }
 
   login(): Promise<void> {
