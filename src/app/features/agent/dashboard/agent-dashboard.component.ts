@@ -1,40 +1,49 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { environment } from '../../../../environments/environment';
-import { forkJoin } from 'rxjs';
-import { filter, Subscription } from 'rxjs';
+import Chart from 'chart.js/auto';
 
-export interface DashboardStats {
-  totalTransactions: number;
+export interface DashboardStatsV2 {
   enAttente: number;
-  acceptees: number;
-  rejetees: number;
-  signalees: number;
-  montantTotal: number;
-  montantMoyen: number;
+  totalTraitees: number;
+  tauxAcceptation: number;
+  alertesCritiques: number;
+  alertesAttention: number;
 }
 
-export interface RecentTransaction {
+export interface TodayActivityStats {
+  traitees: number;
+  acceptees: number;
+  rejetees: number;
+}
+
+export interface Transaction {
   id: number;
   msgId: string;
+  messageType: string;
   uetr: string;
   amount: number;
   currency: string;
   debtorName: string;
   creditorName: string;
+  debtorCountry: string;
   creditorCountry: string;
   status: string;
+  alerte?: string;
+  motifAlerte?: string;
   receivedAt: string;
+  rejectionReason?: string;
 }
 
 @Component({
@@ -45,141 +54,258 @@ export interface RecentTransaction {
     FormsModule,
     ButtonModule,
     CardModule,
-    ChartModule,
     TableModule,
     TagModule,
-    ToastModule
+    ToastModule,
+    DialogModule,
+    TooltipModule
   ],
   providers: [MessageService],
   templateUrl: './agent-dashboard.component.html',
   styleUrls: ['./agent-dashboard.component.css']
 })
-export class AgentDashboardComponent implements OnInit, OnDestroy {
+export class AgentDashboardComponent implements OnInit, OnDestroy, AfterViewInit {
+  
+  @ViewChild('activityChart') chartCanvas!: ElementRef;
+  private chartInstance: Chart | null = null;
 
   loading = false;
+  selectedPeriod: 'week' | 'month' = 'week';
   
-  stats: DashboardStats = {
-    totalTransactions: 0,
+  stats: DashboardStatsV2 = {
     enAttente: 0,
-    acceptees: 0,
-    rejetees: 0,
-    signalees: 0,
-    montantTotal: 0,
-    montantMoyen: 0
+    totalTraitees: 0,
+    tauxAcceptation: 0,
+    alertesCritiques: 0,
+    alertesAttention: 0
   };
-
-  recentTransactions: RecentTransaction[] = [];
-  chartData: any;
-  chartOptions: any;
-
+  
+  todayStats: TodayActivityStats = {
+    traitees: 0,
+    acceptees: 0,
+    rejetees: 0
+  };
+  
+  recentTransactions: Transaction[] = [];
+  pendingTransactions: Transaction[] = [];
+  
   private readonly API = `${environment.apiUrl}/api/agent`;
-  private routerSubscription: Subscription;
+  private refreshInterval: any;
 
   constructor(
     private http: HttpClient,
     private router: Router,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
-  ) {
-    this.initChart();
-    
-    this.routerSubscription = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.loadData();
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
-    // ✅ SUPPRIMER setTimeout - Appel direct
-    this.loadData();
+    this.loadAllData();
+    // Rafraîchissement automatique toutes les 30 secondes
+    this.refreshInterval = setInterval(() => {
+      if (!this.loading) {
+        this.loadAllData(true);
+      }
+    }, 30000);
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.loadChartData();
+    }, 500);
   }
 
   ngOnDestroy(): void {
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
     }
   }
 
-  loadData(): void {
-    console.log('Loading dashboard data...');
-    forkJoin({
-      stats: this.http.get<DashboardStats>(`${this.API}/dashboard/stats`),
-      transactions: this.http.get<RecentTransaction[]>(`${this.API}/messages/recent?limit=5`)
-    }).subscribe({
-      next: (results) => {
-        console.log('Data loaded:', results);
-        this.stats = results.stats;
-        this.recentTransactions = results.transactions;
-        this.initChart();
-        this.cdr.detectChanges();
+  loadAllData(silent: boolean = false): void {
+    if (!silent) this.loading = true;
+    
+    Promise.all([
+      this.loadStats(),
+      this.loadPendingTransactions(),
+      this.loadRecentTransactions(),
+      this.loadTodayActivity()
+    ]).finally(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
+  }
+
+  private loadStats(): Promise<void> {
+    return new Promise((resolve) => {
+      this.http.get<DashboardStatsV2>(`${this.API}/dashboard/stats-v2`).subscribe({
+        next: (data) => {
+          this.stats = data;
+          resolve();
+        },
+        error: (err) => {
+          console.error('Erreur chargement stats:', err);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private loadPendingTransactions(): Promise<void> {
+    return new Promise((resolve) => {
+      this.http.get<Transaction[]>(`${this.API}/messages/pending?limit=10`).subscribe({
+        next: (data) => {
+          this.pendingTransactions = data;
+          resolve();
+        },
+        error: (err) => {
+          console.error('Erreur chargement pending:', err);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private loadRecentTransactions(): Promise<void> {
+    return new Promise((resolve) => {
+      this.http.get<Transaction[]>(`${this.API}/messages/recent-processed?limit=5`).subscribe({
+        next: (data) => {
+          this.recentTransactions = data;
+          resolve();
+        },
+        error: (err) => {
+          console.error('Erreur chargement recent:', err);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private loadTodayActivity(): Promise<void> {
+    return new Promise((resolve) => {
+      this.http.get<TodayActivityStats>(`${this.API}/dashboard/today-stats`).subscribe({
+        next: (data) => {
+          this.todayStats = data;
+          resolve();
+        },
+        error: (err) => {
+          console.error('Erreur chargement today stats:', err);
+          resolve();
+        }
+      });
+    });
+  }
+
+  loadChartData(): void {
+    this.http.get<any>(`${this.API}/dashboard/activity?period=${this.selectedPeriod}`).subscribe({
+      next: (data) => {
+        this.renderChart(data.labels, data.values);
       },
-      error: (error) => {
-        console.error('Erreur:', error);
-        this.cdr.detectChanges();
+      error: (err) => {
+        console.error('Erreur chargement chart:', err);
+        const demoLabels = this.selectedPeriod === 'week' 
+          ? ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+          : ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'];
+        const demoValues = [12, 19, 15, 17, 14, 10, 8];
+        this.renderChart(demoLabels, demoValues.slice(0, demoLabels.length));
       }
     });
   }
 
-  initChart(): void {
-    this.chartData = {
-      labels: ['En attente', 'Acceptées', 'Rejetées', 'Signalées'],
-      datasets: [{
-        data: [
-          this.stats.enAttente,
-          this.stats.acceptees,
-          this.stats.rejetees,
-          this.stats.signalees
-        ],
-        backgroundColor: ['#f59e0b', '#10b981', '#ef4444', '#6366f1'],
-        hoverBackgroundColor: ['#d97706', '#059669', '#dc2626', '#4f46e5'],
-        borderWidth: 0
-      }]
-    };
-
-    this.chartOptions = {
-      plugins: {
-        legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 12 } } },
-        tooltip: {
-          callbacks: {
-            label: (context: any) => {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const total = this.stats.totalTransactions;
-              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-              return `${label}: ${value} (${percentage}%)`;
-            }
+  private renderChart(labels: string[], values: number[]): void {
+    if (!this.chartCanvas) return;
+    
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
+    }
+    
+    this.chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Transactions traitées',
+            data: values,
+            backgroundColor: 'rgba(79, 70, 229, 0.75)',
+            borderRadius: 8,
+            barPercentage: 0.65,
+            categoryPercentage: 0.8
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { 
+            backgroundColor: '#1f2937',
+            titleColor: '#f3f4f6',
+            bodyColor: '#9ca3af',
+            padding: 10,
+            cornerRadius: 8
+          }
+        },
+        scales: {
+          y: { 
+            beginAtZero: true,
+            grid: { color: '#e5e7eb' },
+            ticks: { stepSize: 1, precision: 0, color: '#6b7280' }
+          },
+          x: { 
+            grid: { display: false },
+            ticks: { color: '#6b7280' }
           }
         }
-      },
-      responsive: true,
-      maintainAspectRatio: false
-    };
+      }
+    });
   }
 
-  viewAllTransactions(): void {
-    this.router.navigate(['/agent/logs']);
+  changePeriod(period: 'week' | 'month'): void {
+    this.selectedPeriod = period;
+    this.loadChartData();
   }
 
-  viewTransaction(id: number): void {
-    this.router.navigate(['/agent/transactions', id]);
+  // Navigation READ-ONLY - Pas d'actions directes
+  goToTransactions(): void {
+    this.router.navigate(['/agent/transactions/recus']);
+  }
+
+  goToPendingTransactions(): void {
+    this.router.navigate(['/agent/transactions/recus']);
   }
 
   getStatusSeverity(status: string): "success" | "secondary" | "info" | "warn" | "danger" {
     switch (status) {
-      case 'EN_ATTENTE': return 'warn';
-      case 'ACCEPTE': return 'success';
-      case 'REJETE': return 'danger';
-      case 'SIGNALE': return 'info';
-      default: return 'secondary';
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'success';
+      case 'REJETE':
+      case 'RJCT':
+        return 'danger';
+      case 'EN_ATTENTE':
+      case 'PDNG':
+        return 'warn';
+      case 'SIGNALE':
+        return 'info';
+      default:
+        return 'secondary';
     }
   }
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'EN_ATTENTE': return 'En attente';
       case 'ACCEPTE': return 'Accepté';
+      case 'ACCP': return 'Accepté';
       case 'REJETE': return 'Rejeté';
+      case 'RJCT': return 'Rejeté';
+      case 'EN_ATTENTE': return 'En attente';
+      case 'PDNG': return 'En attente';
       case 'SIGNALE': return 'Signalé';
       default: return status;
     }

@@ -74,6 +74,11 @@ export class TransactionDetailComponent implements OnInit {
       .subscribe({
         next: (data: any) => {
           this.transaction = data;
+          console.log('=== DÉTAIL TRANSACTION ===');
+          console.log('Statut reçu:', data.status);
+          console.log('Type de statut:', typeof data.status);
+          console.log('Transaction complète:', data);
+          console.log('needsAgentAction?', this.needsAgentAction(data.status));
           this.loading = false;
           this.cdr.detectChanges();
         },
@@ -97,35 +102,25 @@ export class TransactionDetailComponent implements OnInit {
   private beautifyXml(xml: string): string {
     if (!xml) return '';
     
-    // Supprimer les espaces blancs inutiles
     let formatted = xml.trim();
-    
-    // Remplacer les > par >\n
     formatted = formatted.replace(/>/g, '>\n');
-    
-    // Remplacer les < par \n<
     formatted = formatted.replace(/</g, '\n<');
     
-    // Diviser en lignes
     let lines = formatted.split('\n');
     let result: string[] = [];
     let indentLevel = 0;
     
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i].trim();
-      
       if (line.length === 0) continue;
       
-      // Détecter les balises de fermeture
       if (line.match(/^<\/[^>]+>$/)) {
         indentLevel = Math.max(0, indentLevel - 1);
       }
       
-      // Ajouter l'indentation
       let indentation = '  '.repeat(indentLevel);
       result.push(indentation + line);
       
-      // Détecter les balises d'ouverture (non auto-fermantes)
       if (line.match(/^<[^?!/][^>]*[^/]>$/) && !line.match(/<[^>]*\/>/)) {
         indentLevel++;
       }
@@ -134,7 +129,6 @@ export class TransactionDetailComponent implements OnInit {
     return result.join('\n');
   }
 
-  // Télécharger le fichier XML
   downloadXmlFile() {
     if (!this.transaction || !this.transaction.id) {
       this.messageService.add({
@@ -172,7 +166,6 @@ export class TransactionDetailComponent implements OnInit {
     });
   }
 
-  // Visualiser le contenu XML
   viewXmlContent() {
     if (!this.transaction || !this.transaction.id) {
       this.messageService.add({
@@ -200,7 +193,6 @@ export class TransactionDetailComponent implements OnInit {
     });
   }
 
-  // Copier le XML dans le presse-papier
   copyXmlToClipboard() {
     if (this.rawXmlContent) {
       navigator.clipboard.writeText(this.rawXmlContent);
@@ -272,49 +264,84 @@ export class TransactionDetailComponent implements OnInit {
   }
 
   needsAgentAction(status: string): boolean {
-    return status === 'EN_ATTENTE' || status === 'SIGNALE' || status === 'PDNG';
+    // Version améliorée avec plus de cas
+    if (!status) return false;
+    
+    const statusNormalized = status.toUpperCase();
+    
+    return statusNormalized === 'EN_ATTENTE' || 
+           statusNormalized === 'SIGNALE' || 
+           statusNormalized === 'PDNG' ||
+           statusNormalized.includes('PDNG') ||
+           statusNormalized.includes('EN_ATTENTE');
   }
 
   getStatusSeverity(status: string): "success" | "danger" | "warn" | "secondary" | "info" {
-    switch (status) {
-      case 'ACCEPTE': return 'success';
-      case 'REJETE': return 'danger';
-      case 'EN_ATTENTE': return 'warn';
-      case 'EN_ATTENTE_CONFIRMATION': return 'info';
-      case 'PDNG': return 'warn';
-      case 'ACCP': return 'success';
-      case 'RJCT': return 'danger';
-      default: return 'secondary';
+    const statusNormalized = status?.toUpperCase() || '';
+    
+    switch (statusNormalized) {
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'success';
+      case 'REJETE':
+      case 'RJCT':
+        return 'danger';
+      case 'EN_ATTENTE':
+      case 'PDNG':
+        return 'warn';
+      case 'SIGNALE':
+        return 'info';
+      default:
+        return 'secondary';
     }
   }
 
   getStatusLabel(status: string): string {
-    switch (status) {
-      case 'EN_ATTENTE': return 'PDNG (En attente)';
-      case 'EN_ATTENTE_CONFIRMATION': return 'PDNG (Attente confirmation)';
-      case 'ACCEPTE': return 'ACCP (Accepté)';
-      case 'ACTC': return 'ACTC (Validé techniquement)';
-      case 'ACSP': return 'ACSP (En cours de règlement)';
-      case 'REJETE': return 'RJCT (Rejeté)';
-      case 'PDNG': return 'PDNG (En attente)';
-      case 'ACCP': return 'ACCP (Accepté)';
-      case 'RJCT': return 'RJCT (Rejeté)';
-      default: return status;
+    const statusNormalized = status?.toUpperCase() || '';
+    
+    switch (statusNormalized) {
+      case 'EN_ATTENTE':
+        return 'PDNG (En attente)';
+      case 'PDNG':
+        return 'PDNG (En attente)';
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'ACCP (Accepté)';
+      case 'REJETE':
+      case 'RJCT':
+        return 'RJCT (Rejeté)';
+      case 'ACTC':
+        return 'ACTC (Validé techniquement)';
+      case 'ACSP':
+        return 'ACSP (En cours de règlement)';
+      case 'SIGNALE':
+        return 'PDNG (Signalé)';
+      default:
+        return status || '—';
     }
   }
 
   getStatusTooltip(status: string): string {
-    switch (status) {
-      case 'EN_ATTENTE': return 'PDNG - En attente de traitement';
-      case 'PDNG': return 'PDNG - En attente de traitement';
-      case 'EN_ATTENTE_CONFIRMATION': return 'PDNG - En attente de confirmation bancaire';
-      case 'ACCEPTE': return 'ACCP - Transaction acceptée par la banque';
-      case 'ACCP': return 'ACCP - Transaction acceptée par la banque';
-      case 'ACTC': return 'ACTC - Transaction validée techniquement';
-      case 'ACSP': return 'ACSP - En cours de règlement';
-      case 'REJETE': return 'RJCT - Transaction rejetée';
-      case 'RJCT': return 'RJCT - Transaction rejetée';
-      default: return status;
+    const statusNormalized = status?.toUpperCase() || '';
+    
+    switch (statusNormalized) {
+      case 'EN_ATTENTE':
+      case 'PDNG':
+        return 'PDNG - En attente de traitement';
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'ACCP - Transaction acceptée par la banque';
+      case 'REJETE':
+      case 'RJCT':
+        return 'RJCT - Transaction rejetée';
+      case 'ACTC':
+        return 'ACTC - Transaction validée techniquement';
+      case 'ACSP':
+        return 'ACSP - En cours de règlement';
+      case 'SIGNALE':
+        return 'PDNG - Transaction signalée, nécessite une attention';
+      default:
+        return status || '';
     }
   }
 
@@ -323,7 +350,7 @@ export class TransactionDetailComponent implements OnInit {
       case 'OK': return '✓ Transaction conforme';
       case 'ATTENTION': return '⚠️ Alerte - À vérifier';
       case 'GRAVE': return '🔴 Alerte critique - Bloquer';
-      default: return alerte;
+      default: return alerte || '—';
     }
   }
 

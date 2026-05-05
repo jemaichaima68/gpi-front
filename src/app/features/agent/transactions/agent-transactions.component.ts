@@ -29,10 +29,20 @@ export interface SwiftMessage {
   uetr: string;
   amount: number;
   currency: string;
-  debtorName: string;
-  creditorName: string;
-  debtorCountry: string;
-  creditorCountry: string;
+
+  debtorName?: string;
+  creditorName?: string;
+  debtorCountry?: string;
+  creditorCountry?: string;
+
+  debtorIban?: string;
+  creditorIban?: string;
+
+  instructingAgentBic?: string;
+  instructedAgentBic?: string;
+  debtorAgentBic?: string;
+  creditorAgentBic?: string;
+
   status: string;
   alerte?: string;
   motifAlerte?: string;
@@ -40,6 +50,7 @@ export interface SwiftMessage {
   rejectionReason?: string;
   originalMsgId?: string;
   groupStatus?: string;
+  direction?: string;
 }
 
 @Component({
@@ -71,45 +82,45 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   loading = false;
   pageTitle = 'Transactions';
   transactions: SwiftMessage[] = [];
-  
-  // Filtrage par date
-  selectedPeriod: string = 'all';
-  customStartDate: string = '';
-  customEndDate: string = '';
-  showCustomDatePicker: boolean = false;
-  dateFilterInfo: string = '';
-  
-  // Filtrage par recherche
-  searchQuery: string = '';
-  selectedType: string = '';
-  selectedStatusFilter: string = '';
-  
-  showRejectDialog = false;
-  selectedTransactionId: number | null = null;
-  rejectMotif = '';
+
+  selectedPeriod = 'all';
+  customStartDate = '';
+  customEndDate = '';
+  showCustomDatePicker = false;
+  dateFilterInfo = '';
+
+  searchQuery = '';
+  selectedType = '';
+  selectedStatusFilter = '';
+
   showDetailDialog = false;
   selectedTransaction: SwiftMessage | null = null;
 
-  // Dialogue de traitement principal
   showProcessDialog = false;
   currentTransaction: SwiftMessage | null = null;
-  selectedProcessStatus: string = '';
+  selectedProcessStatus = '';
 
-  // Sous-dialogue pour le motif de rejet
   showRejectionReasonDialog = false;
-  rejectionReasonText: string = '';
+  rejectionReasonText = '';
   pendingTransactionId: number | null = null;
-  pendingTransactionMsgId: string = '';
+  pendingTransactionMsgId = '';
+
+  selectedStatus: { [key: number]: string } = {};
+  rejectionReason: { [key: number]: string } = {};
+  showMotifInput: { [key: number]: boolean } = {};
+
+  private readonly API = `${environment.apiUrl}/api/agent/messages`;
+  private routerSubscription: Subscription;
+  private currentType = '';
 
   statusOptions = [
     { label: ' ACCP - Accepté', value: 'ACCP', description: 'Transaction acceptée, le paiement sera traité normalement.', color: '#10b981' },
     { label: ' RJCT - Rejeté', value: 'RJCT', description: 'Transaction rejetée. Un motif doit être fourni.', color: '#ef4444' },
     { label: ' PDNG - En attente', value: 'PDNG', description: 'Transaction mise en attente pour vérification supplémentaire.', color: '#f59e0b' },
     { label: ' ACTC - Validé technique', value: 'ACTC', description: 'Validation technique OK, en attente de traitement.', color: '#3b82f6' },
-    { label: ' ACSP - En cours de règlement', value: 'ACSP', description: 'Acceptée, transfert en cours d\'exécution.', color: '#8b5cf6' }
+    { label: ' ACSP - En cours de règlement', value: 'ACSP', description: 'Acceptée, transfert en cours d’exécution.', color: '#8b5cf6' }
   ];
 
-  // Options pour les filtres
   typeFilterOptions = [
     { label: 'Tous les types', value: '' },
     { label: 'PACS008 - Client', value: 'PACS008' },
@@ -122,22 +133,16 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     { label: 'EN_ATTENTE', value: 'EN_ATTENTE' },
     { label: 'ACCEPTE', value: 'ACCEPTE' },
     { label: 'REJETE', value: 'REJETE' },
-    { label: 'SIGNALE', value: 'SIGNALE' }
+    { label: 'SIGNALE', value: 'SIGNALE' },
+    { label: 'ENVOYE', value: 'ENVOYE' },
+    { label: 'ACTC', value: 'ACTC' },
+    { label: 'ACSP', value: 'ACSP' }
   ];
 
-  // Options d'export
   exportOptions = [
     { label: 'CSV', icon: 'pi pi-file-excel', command: () => this.exportCsv() },
     { label: 'PDF', icon: 'pi pi-file-pdf', command: () => this.exportPdf() }
   ];
-  
-  selectedStatus: { [key: number]: string } = {};
-  rejectionReason: { [key: number]: string } = {};
-  showMotifInput: { [key: number]: boolean } = {};
-
-  private readonly API = `${environment.apiUrl}/api/agent/messages`;
-  private routerSubscription: Subscription;
-  private currentType: string = '';
 
   constructor(
     private http: HttpClient,
@@ -148,9 +153,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   ) {
     this.routerSubscription = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.loadCurrentView();
-    });
+    ).subscribe(() => this.loadCurrentView());
   }
 
   ngOnInit(): void {
@@ -158,9 +161,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
-    }
+    this.routerSubscription?.unsubscribe();
   }
 
   loadCurrentView(): void {
@@ -188,17 +189,16 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   }
 
   loadData(type: string): void {
-    console.log('Loading transactions for type:', type);
     this.loading = true;
-    
+
     this.http.get<SwiftMessage[]>(`${this.API}/all`).subscribe({
       next: (data) => {
-        console.log('Transactions loaded:', data.length);
         let filtered = this.filterByTransactionType(data, type);
         filtered = this.applyDateFilter(filtered);
         filtered = this.applySearchFilter(filtered);
         filtered = this.applyTypeFilter(filtered);
         filtered = this.applyStatusFilter(filtered);
+
         this.transactions = filtered;
         this.loading = false;
         this.cdr.detectChanges();
@@ -214,19 +214,22 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   filterByTransactionType(data: SwiftMessage[], type: string): SwiftMessage[] {
     switch (type) {
       case 'recus':
-        return data.filter(tx => 
+        return data.filter(tx =>
           (tx.messageType === 'PACS008' || tx.messageType === 'PACS009') &&
-          (tx.status === 'EN_ATTENTE' || tx.status === 'PDNG')
+          (tx.status === 'EN_ATTENTE' || tx.status === 'PDNG' || tx.status === 'SIGNALE')
         );
+
       case 'emis':
-        return data.filter(tx => 
-          tx.status === 'ACCEPTE' || tx.status === 'REJETE' ||
-          tx.status === 'ACTC' || tx.status === 'ACSP'
+        return data.filter(tx =>
+          tx.direction === 'OUT' || tx.status === 'ENVOYE'
         );
+
       case 'traitees':
-        return data.filter(tx => 
-          tx.status === 'ACCEPTE' || tx.status === 'REJETE' || tx.status === 'SIGNALE'
+        return data.filter(tx =>
+          (tx.messageType === 'PACS008' || tx.messageType === 'PACS009') &&
+          (tx.status === 'ACCEPTE' || tx.status === 'REJETE' || tx.status === 'ACTC' || tx.status === 'ACSP')
         );
+
       default:
         return data;
     }
@@ -234,12 +237,16 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
 
   applySearchFilter(transactions: SwiftMessage[]): SwiftMessage[] {
     if (!this.searchQuery.trim()) return transactions;
+
     const query = this.searchQuery.toLowerCase();
-    return transactions.filter(tx => 
+
+    return transactions.filter(tx =>
       tx.msgId?.toLowerCase().includes(query) ||
       tx.uetr?.toLowerCase().includes(query) ||
       tx.debtorName?.toLowerCase().includes(query) ||
-      tx.creditorName?.toLowerCase().includes(query)
+      tx.creditorName?.toLowerCase().includes(query) ||
+      tx.instructingAgentBic?.toLowerCase().includes(query) ||
+      tx.instructedAgentBic?.toLowerCase().includes(query)
     );
   }
 
@@ -258,21 +265,24 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       this.dateFilterInfo = 'Toutes les transactions';
       return transactions;
     }
-    
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     return transactions.filter(tx => {
       const txDate = new Date(tx.receivedAt);
       const txDateOnly = new Date(txDate.getFullYear(), txDate.getMonth(), txDate.getDate());
-      
+
       switch (this.selectedPeriod) {
         case 'today':
           return txDateOnly.getTime() === today.getTime();
-        case 'yesterday':
+
+        case 'yesterday': {
           const yesterday = new Date(today);
           yesterday.setDate(today.getDate() - 1);
           return txDateOnly.getTime() === yesterday.getTime();
+        }
+
         case 'thisWeek': {
           const weekStart = new Date(today);
           const dayOfWeek = today.getDay();
@@ -280,35 +290,24 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
           weekStart.setDate(today.getDate() - diffToMonday);
           return txDate >= weekStart;
         }
-        case 'lastWeek': {
-          const weekStart = new Date(today);
-          const dayOfWeek = today.getDay();
-          const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-          weekStart.setDate(today.getDate() - diffToMonday - 7);
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 6);
-          weekEnd.setHours(23, 59, 59);
-          return txDate >= weekStart && txDate <= weekEnd;
-        }
+
         case 'thisMonth': {
           const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
           return txDate >= monthStart;
         }
-        case 'lastMonth': {
-          const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-          const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-          lastMonthEnd.setHours(23, 59, 59);
-          return txDate >= lastMonthStart && txDate <= lastMonthEnd;
-        }
+
         case 'custom':
           if (this.customStartDate && this.customEndDate) {
             const start = new Date(this.customStartDate);
             start.setHours(0, 0, 0, 0);
+
             const end = new Date(this.customEndDate);
             end.setHours(23, 59, 59, 999);
+
             return txDate >= start && txDate <= end;
           }
           return true;
+
         default:
           return true;
       }
@@ -324,14 +323,23 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
 
   updateDateFilterInfo(): void {
     switch (this.selectedPeriod) {
-      case 'today': this.dateFilterInfo = "Aujourd'hui"; break;
-      case 'yesterday': this.dateFilterInfo = 'Hier'; break;
-      case 'thisWeek': this.dateFilterInfo = 'Cette semaine'; break;
-      case 'lastWeek': this.dateFilterInfo = 'La semaine dernière'; break;
-      case 'thisMonth': this.dateFilterInfo = 'Ce mois-ci'; break;
-      case 'lastMonth': this.dateFilterInfo = 'Le mois dernier'; break;
-      case 'custom': this.dateFilterInfo = 'Période personnalisée'; break;
-      default: this.dateFilterInfo = 'Toutes les transactions';
+      case 'today':
+        this.dateFilterInfo = "Aujourd'hui";
+        break;
+      case 'yesterday':
+        this.dateFilterInfo = 'Hier';
+        break;
+      case 'thisWeek':
+        this.dateFilterInfo = 'Cette semaine';
+        break;
+      case 'thisMonth':
+        this.dateFilterInfo = 'Ce mois-ci';
+        break;
+      case 'custom':
+        this.dateFilterInfo = 'Période personnalisée';
+        break;
+      default:
+        this.dateFilterInfo = 'Toutes les transactions';
     }
   }
 
@@ -339,6 +347,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     if (this.customStartDate && this.customEndDate) {
       const start = new Date(this.customStartDate);
       const end = new Date(this.customEndDate);
+
       if (start > end) {
         this.messageService.add({
           severity: 'warn',
@@ -348,6 +357,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
         });
         return;
       }
+
       this.refreshCurrentView();
     } else {
       this.messageService.add({
@@ -372,19 +382,74 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   }
 
   get hasActiveFilters(): boolean {
-    return !!(this.selectedPeriod !== 'all' || this.searchQuery || this.selectedType || this.selectedStatusFilter);
+    return !!(
+      this.selectedPeriod !== 'all' ||
+      this.searchQuery ||
+      this.selectedType ||
+      this.selectedStatusFilter
+    );
   }
 
   refreshCurrentView(): void {
     this.loadData(this.currentType);
   }
 
+  getDebtorDisplay(tx: SwiftMessage | null): string {
+    if (!tx) return '—';
+
+    if (tx.messageType === 'PACS009') {
+      return tx.instructingAgentBic || '—';
+    }
+
+    return tx.debtorName || '—';
+  }
+
+  getCreditorDisplay(tx: SwiftMessage | null): string {
+    if (!tx) return '—';
+
+    if (tx.messageType === 'PACS009') {
+      return tx.instructedAgentBic || '—';
+    }
+
+    return tx.creditorName || '—';
+  }
+
+  getCountryDisplay(tx: SwiftMessage | null): string {
+    if (!tx) return '—';
+
+    if (tx.messageType === 'PACS009') {
+      return '—';
+    }
+
+    return tx.creditorCountry || '—';
+  }
+
+  getDebtorLabel(tx: SwiftMessage | null): string {
+    if (!tx) return 'Débiteur';
+    return tx.messageType === 'PACS009' ? 'Banque émettrice (BIC)' : 'Débiteur';
+  }
+
+  getCreditorLabel(tx: SwiftMessage | null): string {
+    if (!tx) return 'Créditeur';
+    return tx.messageType === 'PACS009' ? 'Banque réceptrice (BIC)' : 'Créditeur';
+  }
+
   exportCsv(): void {
     const headers = [
-      'ID', 'Type', 'MsgId', 'UETR', 'Montant', 'Devise',
-      'Débiteur', 'Créditeur', 'Pays', 'Statut', 'Alerte', 'Date réception'
+      'ID',
+      'Type',
+      'MsgId',
+      'UETR',
+      'Montant',
+      'Devise',
+      'Débiteur / Banque émettrice',
+      'Créditeur / Banque réceptrice',
+      'Pays',
+      'Statut',
+      'Alerte',
+      'Date réception'
     ];
-    
+
     const rows = this.transactions.map(tx => [
       tx.id,
       tx.messageType,
@@ -392,9 +457,9 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       tx.uetr || '',
       tx.amount,
       tx.currency,
-      tx.debtorName || '',
-      tx.creditorName || '',
-      tx.creditorCountry || '',
+      this.getDebtorDisplay(tx),
+      this.getCreditorDisplay(tx),
+      this.getCountryDisplay(tx),
       this.getStatusLabel(tx.status),
       tx.alerte || 'OK',
       new Date(tx.receivedAt).toLocaleString('fr-FR')
@@ -404,7 +469,10 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
       .join('\n');
 
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;'
+    });
+
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -421,10 +489,20 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
 
   exportPdf(): void {
     const headers = [[
-      'ID', 'Type', 'MsgId', 'UETR', 'Montant', 'Devise',
-      'Débiteur', 'Créditeur', 'Pays', 'Statut', 'Alerte', 'Date'
+      'ID',
+      'Type',
+      'MsgId',
+      'UETR',
+      'Montant',
+      'Devise',
+      'Débiteur/Banque',
+      'Créditeur/Banque',
+      'Pays',
+      'Statut',
+      'Alerte',
+      'Date'
     ]];
-    
+
     const rows = this.transactions.map(tx => [
       tx.id.toString(),
       tx.messageType,
@@ -432,9 +510,9 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       tx.uetr || '',
       `${tx.amount} ${tx.currency}`,
       tx.currency,
-      tx.debtorName || '',
-      tx.creditorName || '',
-      tx.creditorCountry || '',
+      this.getDebtorDisplay(tx),
+      this.getCreditorDisplay(tx),
+      this.getCountryDisplay(tx),
       this.getStatusLabel(tx.status),
       tx.alerte || 'OK',
       new Date(tx.receivedAt).toLocaleString('fr-FR')
@@ -453,25 +531,15 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       startY: 35,
       theme: 'striped',
       styles: { fontSize: 7, cellPadding: 2 },
-      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 15 },
-        1: { cellWidth: 20 },
-        2: { cellWidth: 35 },
-        3: { cellWidth: 45 },
-        4: { cellWidth: 25 },
-        5: { cellWidth: 15 },
-        6: { cellWidth: 35 },
-        7: { cellWidth: 35 },
-        8: { cellWidth: 15 },
-        9: { cellWidth: 30 },
-        10: { cellWidth: 20 },
-        11: { cellWidth: 35 }
+      headStyles: {
+        fillColor: [99, 102, 241],
+        textColor: 255,
+        fontStyle: 'bold'
       }
     });
 
     doc.save(`transactions_${new Date().toISOString().slice(0, 10)}.pdf`);
-    
+
     this.messageService.add({
       severity: 'success',
       summary: 'Export réussi',
@@ -480,7 +548,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Dialogue de traitement principal
   openProcessDialog(transaction: SwiftMessage): void {
     this.currentTransaction = transaction;
     this.selectedProcessStatus = '';
@@ -493,10 +560,9 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     this.selectedProcessStatus = '';
   }
 
-  // Quand l'utilisateur confirme le statut dans le dialogue principal
   confirmStatusSelection(): void {
     if (!this.currentTransaction) return;
-    
+
     if (!this.selectedProcessStatus) {
       this.messageService.add({
         severity: 'warn',
@@ -506,8 +572,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
-    // Si le statut est RJCT, ouvrir le sous-dialogue pour le motif
+
     if (this.selectedProcessStatus === 'RJCT') {
       this.pendingTransactionId = this.currentTransaction.id;
       this.pendingTransactionMsgId = this.currentTransaction.msgId;
@@ -515,38 +580,56 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       this.showProcessDialog = false;
       this.showRejectionReasonDialog = true;
     } else {
-      // Pour les autres statuts, envoyer directement
-      this.sendDecision(this.currentTransaction.id, this.currentTransaction.msgId, this.selectedProcessStatus, '');
+      this.sendDecision(
+        this.currentTransaction.id,
+        this.currentTransaction.msgId,
+        this.selectedProcessStatus,
+        ''
+      );
       this.closeProcessDialog();
     }
   }
 
-  // Envoyer la décision au backend
   sendDecision(transactionId: number, msgId: string, status: string, motif: string): void {
-    this.http.put(`${this.API}/${transactionId}/confirmation`, { status, motif })
-      .subscribe({
-        next: () => {
-          const statusLabel = this.statusOptions.find(s => s.value === status)?.label || status;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Décision enregistrée',
-            detail: `Transaction ${msgId} → ${statusLabel}`,
-            life: 4000
-          });
-          this.refreshCurrentView();
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: err.error || "Impossible d'enregistrer la décision",
-            life: 5000
-          });
-        }
-      });
+    this.http.put(
+      `${this.API}/${transactionId}/confirmation`,
+      { status, motif },
+      { responseType: 'blob' }
+    ).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = `pacs.002_${msgId}_${Date.now()}.xml`;
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+
+        const statusLabel = this.statusOptions.find(s => s.value === status)?.label || status;
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Décision enregistrée',
+          detail: `Transaction ${msgId} → ${statusLabel} - Fichier PACS002 téléchargé automatiquement`,
+          life: 5000
+        });
+
+        this.refreshCurrentView();
+        this.closeProcessDialog();
+      },
+      error: (err) => {
+        console.error('Erreur:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: err.error?.message || "Impossible d'enregistrer la décision",
+          life: 5000
+        });
+      }
+    });
   }
 
-  // Confirmation du rejet avec motif (sous-dialogue)
   confirmRejectionWithReason(): void {
     if (!this.rejectionReasonText.trim()) {
       this.messageService.add({
@@ -557,11 +640,16 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     if (this.pendingTransactionId && this.pendingTransactionMsgId) {
-      this.sendDecision(this.pendingTransactionId, this.pendingTransactionMsgId, 'RJCT', this.rejectionReasonText);
+      this.sendDecision(
+        this.pendingTransactionId,
+        this.pendingTransactionMsgId,
+        'RJCT',
+        this.rejectionReasonText
+      );
     }
-    
+
     this.closeRejectionReasonDialog();
   }
 
@@ -584,7 +672,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
 
   sendConfirmation(id: number, msgId: string): void {
     const status = this.selectedStatus[id];
-    
+
     if (!status) {
       this.messageService.add({
         severity: 'warn',
@@ -594,9 +682,9 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     const motif = this.rejectionReason[id] || '';
-    
+
     if (status === 'RJCT' && !motif) {
       this.messageService.add({
         severity: 'warn',
@@ -606,7 +694,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     this.http.put(`${this.API}/${id}/confirmation`, { status, motif })
       .subscribe({
         next: () => {
@@ -616,18 +704,18 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
             detail: `Transaction ${msgId} → ${status}`,
             life: 3000
           });
-          
+
           delete this.selectedStatus[id];
           delete this.rejectionReason[id];
           delete this.showMotifInput[id];
-          
+
           this.refreshCurrentView();
         },
         error: (err) => {
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: err.error || "Impossible d'envoyer",
+            detail: err.error || 'Impossible d’envoyer',
             life: 3000
           });
         }
@@ -635,51 +723,109 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   }
 
   onStatusChange(id: number, status: string): void {
-    this.showMotifInput[id] = (status === 'RJCT');
+    this.showMotifInput[id] = status === 'RJCT';
+
     if (status !== 'RJCT') {
       this.rejectionReason[id] = '';
     }
   }
 
-  getStatusSeverity(status: string): "success" | "secondary" | "info" | "warn" | "danger" {
+  getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' {
     switch (status) {
-      case 'EN_ATTENTE': return 'warn';
-      case 'EN_ATTENTE_CONFIRMATION': return 'info';
-      case 'ACCEPTE': return 'success';
-      case 'ACTC': return 'info';
-      case 'ACSP': return 'info';
+      case 'EN_ATTENTE':
+      case 'PDNG':
+        return 'warn';
+
+      case 'ENVOYE':
+      case 'EN_ATTENTE_CONFIRMATION':
+      case 'ACTC':
+      case 'ACSP':
+        return 'info';
+
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'success';
+
       case 'REJETE':
-      case 'REJETE_AUTO': return 'danger';
-      case 'SIGNALE': return 'warn';
-      default: return 'secondary';
+      case 'REJETE_AUTO':
+      case 'RJCT':
+        return 'danger';
+
+      case 'SIGNALE':
+        return 'warn';
+
+      default:
+        return 'secondary';
     }
   }
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'EN_ATTENTE': return 'PDNG (En attente)';
-      case 'EN_ATTENTE_CONFIRMATION': return 'PDNG (Attente confirmation)';
-      case 'ACCEPTE': return 'ACCP (Accepté)';
-      case 'ACTC': return 'ACTC (Validé techniquement)';
-      case 'ACSP': return 'ACSP (En cours de règlement)';
+      case 'EN_ATTENTE':
+      case 'PDNG':
+        return 'PDNG (En attente)';
+
+      case 'EN_ATTENTE_CONFIRMATION':
+        return 'PDNG (Attente confirmation)';
+
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'ACCP (Accepté)';
+
+      case 'ACTC':
+        return 'ACTC (Validé techniquement)';
+
+      case 'ACSP':
+        return 'ACSP (En cours de règlement)';
+
       case 'REJETE':
-      case 'REJETE_AUTO': return 'RJCT (Rejeté)';
-      case 'SIGNALE': return 'PDNG (Signalé)';
-      default: return status;
+      case 'REJETE_AUTO':
+      case 'RJCT':
+        return 'RJCT (Rejeté)';
+
+      case 'SIGNALE':
+        return 'PDNG (Signalé)';
+
+      case 'ENVOYE':
+        return 'ENVOYÉ';
+
+      default:
+        return status;
     }
   }
 
   getStatusTooltip(status: string): string {
     switch (status) {
-      case 'EN_ATTENTE': return 'PDNG - En attente de traitement';
-      case 'EN_ATTENTE_CONFIRMATION': return 'PDNG - En attente de confirmation bancaire';
-      case 'ACCEPTE': return 'ACCP - Transaction acceptée par la banque';
-      case 'ACTC': return 'ACTC - Transaction validée techniquement';
-      case 'ACSP': return 'ACSP - Transaction acceptée, en cours de règlement';
+      case 'EN_ATTENTE':
+      case 'PDNG':
+        return 'PDNG - En attente de traitement';
+
+      case 'EN_ATTENTE_CONFIRMATION':
+        return 'PDNG - En attente de confirmation bancaire';
+
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'ACCP - Transaction acceptée par la banque';
+
+      case 'ACTC':
+        return 'ACTC - Transaction validée techniquement';
+
+      case 'ACSP':
+        return 'ACSP - Transaction acceptée, en cours de règlement';
+
       case 'REJETE':
-      case 'REJETE_AUTO': return 'RJCT - Transaction rejetée par la banque';
-      case 'SIGNALE': return 'PDNG - Transaction signalée, nécessite une attention';
-      default: return status;
+      case 'REJETE_AUTO':
+      case 'RJCT':
+        return 'RJCT - Transaction rejetée par la banque';
+
+      case 'SIGNALE':
+        return 'PDNG - Transaction signalée, nécessite une attention';
+
+      case 'ENVOYE':
+        return 'Message émis';
+
+      default:
+        return status;
     }
   }
 
@@ -687,30 +833,51 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     return status === 'EN_ATTENTE' || status === 'SIGNALE' || status === 'PDNG';
   }
 
-  getAlerteSeverity(alerte: string): "success" | "warn" | "danger" | "info" {
+  getAlerteSeverity(alerte: string): 'success' | 'warn' | 'danger' | 'info' {
     switch (alerte) {
-      case 'OK': return 'success';
-      case 'ATTENTION': return 'warn';
-      case 'GRAVE': return 'danger';
-      default: return 'info';
+      case 'OK':
+        return 'success';
+
+      case 'ATTENTION':
+        return 'warn';
+
+      case 'GRAVE':
+        return 'danger';
+
+      default:
+        return 'info';
     }
   }
 
   getAlerteLabel(alerte: string): string {
     switch (alerte) {
-      case 'OK': return '✓ Conforme';
-      case 'ATTENTION': return '⚠️ Attention';
-      case 'GRAVE': return '🔴 Critique';
-      default: return alerte;
+      case 'OK':
+        return '✓ Conforme';
+
+      case 'ATTENTION':
+        return '⚠️ Attention';
+
+      case 'GRAVE':
+        return '🔴 Critique';
+
+      default:
+        return alerte;
     }
   }
 
   getAlerteIcon(alerte: string): string {
     switch (alerte) {
-      case 'OK': return 'pi-check-circle';
-      case 'ATTENTION': return 'pi-exclamation-triangle';
-      case 'GRAVE': return 'pi-ban';
-      default: return 'pi-info-circle';
+      case 'OK':
+        return 'pi-check-circle';
+
+      case 'ATTENTION':
+        return 'pi-exclamation-triangle';
+
+      case 'GRAVE':
+        return 'pi-ban';
+
+      default:
+        return 'pi-info-circle';
     }
   }
 }

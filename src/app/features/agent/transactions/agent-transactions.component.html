@@ -105,11 +105,6 @@
         [severity]="selectedPeriod === 'thisMonth' ? 'primary' : 'secondary'"
         [text]="selectedPeriod !== 'thisMonth'"
         (onClick)="onPeriodChange('thisMonth')" />
-      <p-button 
-        label="Personnalisé" 
-        [severity]="selectedPeriod === 'custom' ? 'primary' : 'secondary'"
-        [text]="selectedPeriod !== 'custom'"
-        (onClick)="onPeriodChange('custom')" />
     </div>
 
     <div *ngIf="showCustomDatePicker" class="custom-date-range">
@@ -179,9 +174,9 @@
           <td>{{ tx.msgId }}</td>
           <td class="uetr-cell">{{ tx.uetr }}</td>
           <td><strong>{{ tx.amount | number:'1.2-2' }}</strong> {{ tx.currency }}</td>
-          <td>{{ tx.debtorName }}</td>
-          <td>{{ tx.creditorName }}</td>
-          <td><span class="country-badge">{{ tx.creditorCountry }}</span></td>
+          <td>{{ getDebtorDisplay(tx) }}</td>
+          <td>{{ getCreditorDisplay(tx) }}</td>
+          <td><span class="country-badge">{{ getCountryDisplay(tx) }}</span></td>
           <td>{{ tx.receivedAt | date:'dd/MM/yyyy' }}</td>
           <td>
             <p-tag 
@@ -292,12 +287,12 @@
           <span class="summary-value"><strong>{{ currentTransaction.amount | number:'1.2-2' }} {{ currentTransaction.currency }}</strong></span>
         </div>
         <div class="summary-item">
-          <span class="summary-label">Débiteur :</span>
-          <span class="summary-value">{{ currentTransaction.debtorName }}</span>
+          <span class="summary-label">{{ getDebtorLabel(currentTransaction) }} :</span>
+          <span class="summary-value">{{ getDebtorDisplay(currentTransaction) }}</span>
         </div>
         <div class="summary-item">
-          <span class="summary-label">Créditeur :</span>
-          <span class="summary-value">{{ currentTransaction.creditorName }}</span>
+          <span class="summary-label">{{ getCreditorLabel(currentTransaction) }} :</span>
+          <span class="summary-value">{{ getCreditorDisplay(currentTransaction) }}</span>
         </div>
         <div class="summary-item" *ngIf="currentTransaction.creditorCountry">
           <span class="summary-label">Pays créditeur :</span>
@@ -348,10 +343,10 @@
             <span>Aucune alerte détectée. Cette transaction peut être traitée normalement.</span>
           </ng-container>
           <ng-container *ngSwitchCase="'ATTENTION'">
-            <span>⚠️ Transaction à surveiller. Vérifiez les informations avant de prendre une décision. Un rejet peut être approprié si les informations ne correspondent pas.</span>
+            <span> Transaction à surveiller. Vérifiez les informations avant de prendre une décision. Un rejet peut être approprié si les informations ne correspondent pas.</span>
           </ng-container>
           <ng-container *ngSwitchCase="'GRAVE'">
-            <span>🔴 Transaction critique ! Forte recommandation de <strong>REJETER</strong> cette transaction après vérification approfondie. Contactez le département conformité si nécessaire.</span>
+            <span> Transaction critique ! Forte recommandation de <strong>REJETER</strong> cette transaction après vérification approfondie. Contactez le département conformité si nécessaire.</span>
           </ng-container>
           <ng-container *ngSwitchDefault>
             <span>Veuillez examiner attentivement cette transaction avant de prendre une décision.</span>
@@ -381,7 +376,7 @@
 
 <!-- SOUS-DIALOGUE POUR LE MOTIF DE REJET -->
 <p-dialog 
-  header="❌ Motif du rejet"
+  header="Motif du rejet"
   [(visible)]="showRejectionReasonDialog" 
   [modal]="true" 
   [style]="{ width: '550px' }"
@@ -476,16 +471,16 @@ Exemples :
         <span class="detail-value"><strong>{{ selectedTransaction.amount | number:'1.2-2' }} {{ selectedTransaction.currency }}</strong></span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Débiteur :</span>
-        <span class="detail-value">{{ selectedTransaction.debtorName }}</span>
+        <span class="detail-label">{{ getDebtorLabel(selectedTransaction) }} :</span>
+        <span class="detail-value">{{ getDebtorDisplay(selectedTransaction) }}</span>
       </div>
       <div class="detail-row">
-        <span class="detail-label">Créditeur :</span>
-        <span class="detail-value">{{ selectedTransaction.creditorName }}</span>
+        <span class="detail-label">{{ getCreditorLabel(selectedTransaction) }} :</span>
+        <span class="detail-value">{{ getCreditorDisplay(selectedTransaction) }}</span>
       </div>
       <div class="detail-row">
         <span class="detail-label">Pays bénéficiaire :</span>
-        <span class="detail-value">{{ selectedTransaction.creditorCountry }}</span>
+        <span class="detail-value">{{ getCountryDisplay(selectedTransaction) }}</span>
       </div>
       <div class="detail-row">
         <span class="detail-label">Date réception :</span>

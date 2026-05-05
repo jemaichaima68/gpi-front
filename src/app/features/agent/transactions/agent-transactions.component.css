@@ -29,7 +29,8 @@
 
   display: block;
   padding: 36px 40px;
-  min-height: 100vh;
+  min-height: auto;
+  overflow: visible;
   font-family: var(--font);
   background: var(--bg-page);
   color: var(--txt-body);
@@ -53,7 +54,6 @@
   margin: 0 auto;
 }
 
-/* ─── HEADER ─── */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -99,65 +99,6 @@
   margin: 5px 0 0;
 }
 
-/* ─── TABS ─── */
-.tabs-container {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 20px;
-  padding: 5px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  width: fit-content;
-  box-shadow: var(--shadow-card);
-}
-
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 18px;
-  background: transparent;
-  border: none;
-  border-radius: 10px;
-  font-family: var(--font);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--txt-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab-btn i {
-  font-size: 0.9rem;
-}
-
-.tab-btn .badge {
-  background: rgba(15,76,117,0.08);
-  color: var(--brand-mid);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-
-.tab-btn:hover {
-  background: var(--brand-light);
-  color: var(--brand-mid);
-}
-
-.tab-btn.active {
-  background: var(--brand);
-  color: white;
-  box-shadow: 0 2px 10px rgba(15,76,117,0.25);
-}
-
-.tab-btn.active .badge {
-  background: rgba(255,255,255,0.2);
-  color: white;
-}
-
-/* ─── CARD ─── */
 .card {
   background: var(--bg-card);
   border-radius: var(--radius-xl);
@@ -167,106 +108,39 @@
   overflow-x: auto;
 }
 
-/* ─── TABLEAU FIXE - PAS DE MOUVEMENT ─── */
 .p-datatable {
   table-layout: fixed;
   width: 100%;
 }
 
-/* Largeurs fixes des colonnes */
-.p-datatable thead th:nth-child(1) { width: 70px; }  /* Type */
-.p-datatable thead th:nth-child(2) { width: 150px; } /* Référence */
-.p-datatable thead th:nth-child(3) { width: 220px; } /* UETR */
-.p-datatable thead th:nth-child(4) { width: 100px; } /* Montant */
-.p-datatable thead th:nth-child(5) { width: 140px; } /* Débiteur */
-.p-datatable thead th:nth-child(6) { width: 140px; } /* Créditeur */
-.p-datatable thead th:nth-child(7) { width: 60px; }  /* Pays */
-.p-datatable thead th:nth-child(8) { width: 110px; } /* Statut */
-.p-datatable thead th:nth-child(9) { width: 90px; }  /* Alerte */
-.p-datatable thead th:nth-child(10) { width: 250px; } /* Actions - PLUS LARGE pour éviter les variations */
+.p-datatable thead th:nth-child(1) { width: 70px; }
+.p-datatable thead th:nth-child(2) { width: 150px; }
+.p-datatable thead th:nth-child(3) { width: 220px; }
+.p-datatable thead th:nth-child(4) { width: 100px; }
+.p-datatable thead th:nth-child(5) { width: 140px; }
+.p-datatable thead th:nth-child(6) { width: 140px; }
+.p-datatable thead th:nth-child(7) { width: 60px; }
+.p-datatable thead th:nth-child(8) { width: 90px; }
+.p-datatable thead th:nth-child(9) { width: 110px; }
+.p-datatable thead th:nth-child(10) { width: 90px; }
+.p-datatable thead th:nth-child(11) { width: 200px !important; }
 
-/* Cellules avec largeur fixe */
 .p-datatable tbody td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* UETR - permettre le retour à la ligne */
 .p-datatable tbody td:nth-child(3) {
   white-space: normal;
   word-break: break-all;
   line-height: 1.3;
 }
 
-/* Actions container - largeur fixe */
-.action-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 220px;
-  width: 220px;
-}
-
-.status-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-/* Dropdown avec largeur fixe */
-.status-select,
-.p-select {
-  width: 100% !important;
-  min-width: 200px !important;
-}
-
-.p-select .p-select-label {
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.motif-input {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  font-size: 0.75rem;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.motif-input:focus {
-  outline: none;
-  border-color: var(--brand-mid);
-  box-shadow: 0 0 0 2px rgba(27,108,168,0.2);
-}
-
-.send-btn {
-  width: 100%;
-}
-
-.send-btn .p-button {
-  width: 100%;
-  justify-content: center;
-}
-
-/* Désactiver TOUS les mouvements au hover */
 .p-datatable-tbody > tr:hover {
   background-color: var(--brand-light) !important;
-  transform: none !important;
-  transition: none !important;
 }
 
-.p-datatable-tbody > tr {
-  transition: none !important;
-  transform: none !important;
-}
-
-/* Pagination fixe */
 .p-paginator {
   margin-top: 20px;
   background: transparent;
@@ -274,7 +148,6 @@
   padding: 8px 0;
 }
 
-/* UETR cell */
 .uetr-cell {
   font-family: var(--font-mono);
   font-size: 0.73rem;
@@ -292,7 +165,6 @@
   border-radius: 20px;
   font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
   display: inline-block;
   white-space: nowrap;
 }
@@ -304,11 +176,6 @@
   font-size: 0.85rem;
 }
 
-.empty-alerte {
-  color: var(--txt-muted);
-  font-size: 0.8rem;
-}
-
 .alerte-cell {
   display: flex;
   align-items: center;
@@ -316,356 +183,6 @@
   flex-wrap: wrap;
 }
 
-.detail-btn,
-.accept-btn,
-.reject-btn {
-  border-radius: 8px !important;
-  font-size: 0.78rem !important;
-}
-
-/* Dialog styles */
-.detail-dialog-content {
-  padding: 0 0 8px;
-}
-
-.detail-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.detail-row:last-child {
-  border-bottom: none;
-}
-
-.detail-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--txt-muted);
-  width: 38%;
-  flex-shrink: 0;
-  padding-top: 1px;
-}
-
-.detail-value {
-  font-size: 0.85rem;
-  color: var(--txt-body);
-  width: 62%;
-  word-break: break-word;
-  text-align: right;
-}
-
-/* Alert cards */
-.alert-card {
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  margin-bottom: 18px;
-  border: 1px solid transparent;
-}
-
-.alert-grave {
-  background: rgba(224,82,82,0.06);
-  border-color: rgba(224,82,82,0.2);
-  border-left: 4px solid var(--danger);
-}
-
-.alert-attention {
-  background: var(--warn-soft);
-  border-color: rgba(244,162,74,0.2);
-  border-left: 4px solid var(--warn);
-}
-
-.alert-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.alert-header i {
-  font-size: 1rem;
-}
-
-.alert-grave .alert-header i   { color: var(--danger); }
-.alert-attention .alert-header i { color: var(--warn); }
-
-.alert-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.alert-grave .alert-title     { color: var(--danger); }
-.alert-attention .alert-title { color: #c47a1a; }
-
-.alert-message {
-  font-size: 0.8rem;
-  color: var(--txt-body);
-  line-height: 1.5;
-  padding-left: 22px;
-}
-
-.reject-dialog-content p {
-  font-size: 0.85rem;
-  color: var(--txt-body);
-  margin: 0 0 10px;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.dialog-actions .status-select {
-  width: 200px !important;
-}
-
-/* Responsive */
-@media (max-width: 1080px) {
-  :host { padding: 24px 28px; }
-  .card { overflow-x: auto; }
-}
-
-@media (max-width: 640px) {
-  :host { padding: 16px; }
-  .page-title { font-size: 1.5rem; }
-  .tabs-container { flex-wrap: wrap; width: 100%; }
-  .card { overflow-x: auto; }
-  .p-datatable { min-width: 900px; }
-}
-/* ============================================================
-   CORRECTION : Empêcher le déplacement de la pagination
-   ============================================================ */
-
-/* Fixer la hauteur minimale du tableau pour éviter les reflows */
-.p-datatable-wrapper {
-  overflow-x: auto;
-  overflow-y: visible !important;
-  min-height: 400px;
-}
-
-/* Empêcher le dropdown panel de pousser le contenu */
-.p-select-panel {
-  position: fixed !important;
-  top: auto !important;
-  bottom: auto !important;
-  max-height: 250px !important;
-  overflow-y: auto !important;
-  z-index: 1000 !important;
-}
-
-/* Ou alternative : positionner le panel en absolute par rapport au dropdown */
-.p-select {
-  position: relative !important;
-}
-
-.p-select-panel {
-  position: absolute !important;
-  transform: translateY(0) !important;
-  margin-top: 4px !important;
-}
-
-/* Fixer la hauteur de la ligne de pagination */
-.p-paginator {
-  position: relative !important;
-  min-height: 56px !important;
-  height: 56px !important;
-  background: transparent;
-  border: none;
-  margin-top: 16px;
-  z-index: 1;
-}
-
-/* Désactiver tout changement de hauteur */
-.p-datatable {
-  height: auto !important;
-}
-
-.p-datatable-tbody {
-  display: table-row-group;
-}
-
-/* Empêcher le scroll du body quand le dropdown est ouvert */
-body.p-overflow-hidden {
-  overflow: auto !important;
-}
-
-/* Fixer la position du dropdown panel pour qu'il ne pousse pas la page */
-.cdk-overlay-container {
-  position: fixed !important;
-  z-index: 1000 !important;
-}
-
-.cdk-overlay-connected-position-bounding-box {
-  position: fixed !important;
-}
-
-/* Version encore plus radicale - forcer le dropdown à ne pas affecter la page */
-.p-select-panel {
-  position: fixed !important;
-  transform-origin: top left !important;
-}
-/* ==================== FILTRES PAR DATE ==================== */
-
-.filters-card {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-card);
-}
-
-.filters-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: var(--txt-h);
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.filters-header i {
-  color: var(--brand-mid);
-  font-size: 1.1rem;
-}
-
-.filters-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.custom-date-range {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 16px;
-  padding: 16px;
-  background: var(--brand-light);
-  border-radius: var(--radius-md);
-  margin-top: 8px;
-}
-
-.date-picker-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.date-picker-group label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--txt-muted);
-}
-
-.date-picker-group :host ::ng-deep .p-calendar {
-  width: 160px;
-}
-
-.filter-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: rgba(79, 70, 229, 0.08);
-  border-radius: 20px;
-  font-size: 0.75rem;
-  color: var(--brand-mid);
-}
-
-.filter-info i:first-child {
-  font-size: 0.7rem;
-}
-
-.clear-filter {
-  margin-left: auto;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.clear-filter:hover {
-  opacity: 1;
-}
-/* Styles pour les inputs date natifs */
-.date-input {
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.85rem;
-  background: white;
-  transition: all 0.2s;
-}
-
-.date-input:focus {
-  outline: none;
-  border-color: var(--brand-mid);
-  box-shadow: 0 0 0 2px rgba(27,108,168,0.1);
-}
-
-.date-input:hover {
-  border-color: var(--brand-mid);
-}
-/* ==================== HEADER ACTIONS ==================== */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-:host ::ng-deep .p-splitbutton .p-button.p-button-outlined {
-  border: 1px solid #6366f1 !important;
-  background: white !important;
-  color: #6366f1 !important;
-  border-radius: 40px !important;
-  padding: 8px 16px;
-  transition: all 0.25s;
-}
-
-:host ::ng-deep .p-splitbutton .p-button.p-button-outlined:hover {
-  background: rgba(99, 102, 241, 0.08) !important;
-  border-color: #4f46e5 !important;
-  color: #4f46e5 !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-}
-
-:host ::ng-deep .p-splitbutton-menu {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f4 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 12px 32px rgba(15,23,42,0.12) !important;
-  overflow: hidden;
-}
-
-:host ::ng-deep .p-splitbutton-menu .p-menuitem-link {
-  color: #334155 !important;
-  font-family: 'DM Sans', sans-serif;
-  padding: 10px 16px !important;
-  font-size: 0.875rem;
-  gap: 8px;
-}
-
-:host ::ng-deep .p-splitbutton-menu .p-menuitem-link:hover {
-  background: rgba(99,102,241,0.06) !important;
-  color: #6366f1 !important;
-}
-
-/* ==================== FILTRES ==================== */
 .filters-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
@@ -722,24 +239,11 @@ body.p-overflow-hidden {
   border: 1px solid #e2e8f4;
   border-radius: 10px;
   padding: 0 12px;
-  transition: all 0.2s;
 }
 
-.filter-select-wrapper:hover {
-  border-color: #6366f1;
-  background: #ffffff;
-}
-
-.filter-icon {
-  color: #6366f1;
-  font-size: 0.9rem;
-}
-
-.filter-select-wrapper .filter-select,
 .filter-select-wrapper .p-select {
   border: none !important;
   background: transparent !important;
-  box-shadow: none !important;
   min-width: 160px;
 }
 
@@ -769,12 +273,6 @@ body.p-overflow-hidden {
   gap: 6px;
 }
 
-.date-picker-group label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--txt-muted);
-}
-
 .date-input {
   padding: 8px 12px;
   border: 1px solid var(--border);
@@ -799,12 +297,6 @@ body.p-overflow-hidden {
 .clear-filter {
   margin-left: auto;
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.clear-filter:hover {
-  opacity: 1;
 }
 
 .count-badge {
@@ -814,8 +306,6 @@ body.p-overflow-hidden {
   padding: 4px 12px;
   border-radius: 20px;
   font-weight: 700;
-  white-space: nowrap;
-  border: 1px solid rgba(99,102,241,0.15);
 }
 
 .table-header {
@@ -824,164 +314,330 @@ body.p-overflow-hidden {
   margin-bottom: 12px;
 }
 
-/* ==================== STATUS SELECT SMALL ==================== */
-.status-select-sm {
-  min-width: 100px !important;
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.status-select-sm .p-select-label {
+/* ============================================
+   BOUTON TRAITER - GROS ET ORANGE
+   ============================================ */
+
+.action-buttons-new {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  min-width: 160px !important;
+}
+
+/* Force le bouton "Traiter" à être grand et orange */
+.action-buttons-new .p-button.p-button-primary,
+.p-button.p-button-primary {
+  background: #ea580c !important;
+  background-color: #ea580c !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+  padding: 12px 20px !important;
+  border-radius: 40px !important;
+  width: 100% !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4) !important;
+}
+
+.action-buttons-new .p-button.p-button-primary:hover,
+.p-button.p-button-primary:hover {
+  background: #c2410c !important;
+  background-color: #c2410c !important;
+  transform: scale(1.02) !important;
+  box-shadow: 0 6px 16px rgba(234, 88, 12, 0.5) !important;
+}
+
+.action-buttons-new .p-button.p-button-primary .p-button-icon,
+.p-button.p-button-primary .p-button-icon {
+  font-size: 1.1rem !important;
+  margin-right: 6px !important;
+}
+
+/* Bouton Voir détails - reste discret */
+.action-buttons-new .p-button.p-button-secondary {
+  background: rgba(15, 76, 117, 0.08) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--brand-mid) !important;
+  border-radius: 30px !important;
+  padding: 6px 12px !important;
+  font-size: 0.7rem !important;
+  width: 100% !important;
+}
+
+.p-datatable tbody td:nth-child(11) {
+  padding: 10px 8px !important;
+}
+
+/* Responsive */
+@media (max-width: 1080px) {
+  :host { padding: 24px 28px; }
+  .card { overflow-x: auto; }
+}
+
+@media (max-width: 640px) {
+  :host { padding: 16px; }
+  .page-title { font-size: 1.5rem; }
+  .p-datatable { min-width: 900px; }
+}
+/* ============================================
+   BOUTONS DU DIALOGUE DE TRAITEMENT
+   ============================================ */
+
+/* Conteneur des boutons en bas du dialogue */
+.dialog-footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 16px !important;
+  margin-top: 24px !important;
+  padding-top: 20px !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+/* Bouton Annuler */
+.dialog-footer .p-button.p-button-secondary {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+  padding: 10px 24px !important;
+  border-radius: 40px !important;
+  font-size: 0.85rem !important;
+}
+
+.dialog-footer .p-button.p-button-secondary:hover {
+  background: #e2e8f0 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Bouton Confirmer la décision */
+.dialog-footer .p-button.p-button-primary {
+  background: #ea580c !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 700 !important;
+  padding: 10px 28px !important;
+  border-radius: 40px !important;
+  font-size: 0.85rem !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3) !important;
+}
+
+.dialog-footer .p-button.p-button-primary:hover {
+  background: #c2410c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4) !important;
+}
+
+/* Cas particulier pour RJCT (bouton danger) */
+.dialog-footer .p-button.p-button-danger {
+  background: #dc2626 !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 700 !important;
+  padding: 10px 28px !important;
+  border-radius: 40px !important;
+}
+
+.dialog-footer .p-button.p-button-danger:hover {
+  background: #b91c1c !important;
+  transform: translateY(-1px) !important;
+}
+/* ============================================
+   OPTIONS DE STATUT - RENDU CLAIR ET CLIQUABLE
+   ============================================ */
+
+/* Chaque option de statut */
+.status-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 14px 18px !important;
+  background: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-left-width: 4px !important;
+  border-radius: 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-bottom: 10px !important;
+}
+
+/* Effet au survol */
+.status-option:hover {
+  background: #f8fafc !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Option sélectionnée */
+.status-option.selected {
+  background: #f0fdf4 !important;
+  border-color: #22c55e !important;
+  box-shadow: 0 2px 12px rgba(34, 197, 94, 0.15) !important;
+}
+
+/* Radio personnalisé */
+.custom-radio {
+  width: 22px !important;
+  height: 22px !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s !important;
+}
+
+.custom-radio.checked {
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+}
+
+.custom-radio.checked i {
+  color: white !important;
   font-size: 0.75rem !important;
-  padding: 4px 8px !important;
 }
 
-.motif-input-sm {
-  width: 120px;
-  padding: 4px 8px;
-  font-size: 0.7rem;
-  border-radius: 6px;
+/* Label du statut */
+.status-label {
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 4px !important;
 }
-/* ==================== NOUVEAUX STYLES POUR LE DIALOGUE DE TRAITEMENT ==================== */
 
-/* Conteneur principal */
+/* Description du statut */
+.status-description {
+  font-size: 0.7rem !important;
+  color: #64748b !important;
+}
+
+/* Zone de sélection */
+.status-selection {
+  margin: 20px 0 !important;
+}
+
+.selection-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  color: #1e293b !important;
+  margin-bottom: 16px !important;
+}
+/* ============================================
+   DIALOGUE DE TRAITEMENT - VERSION SIMPLE
+   ============================================ */
+
+/* Conteneur du dialogue */
 .process-dialog-content {
-  padding: 4px 0 8px 0;
+  padding: 8px 0;
 }
 
-/* Récapitulatif de la transaction */
+/* Récapitulatif - style simple */
 .transaction-summary {
-  background: #f8fafc;
-  border-radius: 14px;
+  background: #f8f9fa;
+  border-radius: 12px;
   padding: 16px;
   margin-bottom: 24px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e9ecef;
 }
 
 .summary-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.85rem;
-  color: #1e293b;
+  color: #495057;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.summary-header i {
-  color: #4f46e5;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .summary-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .summary-item {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
   font-size: 0.85rem;
 }
 
 .summary-label {
-  font-weight: 600;
-  color: #64748b;
+  font-weight: 500;
+  color: #6c757d;
 }
 
 .summary-value {
-  color: #1e293b;
-  text-align: right;
-  word-break: break-word;
-  max-width: 60%;
+  color: #212529;
+  font-weight: 500;
 }
 
-.alert-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-
-.alert-critical {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.alert-warning {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-/* Sélection du statut */
+/* Options de statut - style simple */
 .status-selection {
-  margin-bottom: 24px;
+  margin: 20px 0;
 }
 
 .selection-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 14px;
-}
-
-.selection-header i {
-  color: #4f46e5;
+  color: #495057;
+  margin-bottom: 16px;
 }
 
 .status-options-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .status-option {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-left-width: 4px;
-  border-radius: 14px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
 .status-option:hover {
-  background: #f8fafc;
-  transform: translateX(2px);
+  background: #f8f9fa;
+  border-color: #adb5bd;
 }
 
 .status-option.selected {
-  background: #f0fdf4;
-  border-color: #22c55e;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
+  background: #e7f5ff;
+  border-color: #4dabf7;
 }
 
+/* Radio simple */
 .custom-radio {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #cbd5e1;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #adb5bd;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
 }
 
 .custom-radio.checked {
-  background: #22c55e;
-  border-color: #22c55e;
+  background: #4dabf7;
+  border-color: #4dabf7;
 }
 
 .custom-radio.checked i {
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
 }
 
 .status-info {
@@ -989,782 +645,133 @@ body.p-overflow-hidden {
 }
 
 .status-label {
-  font-weight: 700;
-  font-size: 0.9rem;
-  margin-bottom: 3px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #212529;
+  margin-bottom: 2px;
 }
 
 .status-description {
   font-size: 0.7rem;
-  color: #64748b;
+  color: #6c757d;
 }
 
-/* Section motif de rejet (améliorée) */
-.rejection-section {
-  background: #fef2f2;
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid #fecaca;
-  margin-bottom: 16px;
-}
-
-.rejection-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #dc2626;
-  margin-bottom: 14px;
-}
-
-.rejection-header .required {
-  color: #dc2626;
-  font-size: 0.75rem;
-}
-
-.rejection-textarea {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1.5px solid #fecaca;
-  background: #ffffff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem;
-  resize: vertical;
-  transition: all 0.2s;
-}
-
-.rejection-textarea:focus {
-  outline: none;
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-}
-
-.rejection-textarea.has-content {
-  border-color: #dc2626;
-  background: #fff;
-}
-
-.rejection-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px 14px;
-  background: #fff8f0;
-  border-radius: 10px;
-  margin-top: 12px;
-  font-size: 0.7rem;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
-
-.rejection-hint i {
-  color: #f59e0b;
-  font-size: 0.75rem;
-  margin-top: 1px;
-}
-
-/* Message de confirmation */
-.confirmation-message {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  background: #ecfdf5;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  color: #065f46;
-  margin-bottom: 16px;
-  border: 1px solid #a7f3d0;
-}
-
-.confirmation-message i {
-  font-size: 1rem;
-  color: #10b981;
-}
-
-/* Pied du dialogue */
+/* Boutons en bas */
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  padding: 8px 0 0 0;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
 }
 
-/* Actions dans le tableau */
-.action-buttons-new {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 100px;
+.dialog-footer .p-button.p-button-secondary {
+  background: #f8f9fa !important;
+  border: 1px solid #dee2e6 !important;
+  color: #495057 !important;
+  padding: 8px 20px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
 }
 
-:host ::ng-deep .p-dialog .p-dialog-header {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  color: white;
-  padding: 18px 24px;
-  border-radius: 16px 16px 0 0;
+.dialog-footer .p-button.p-button-primary {
+  background: #4dabf7 !important;
+  border: none !important;
+  color: white !important;
+  padding: 8px 24px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
 }
 
-:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-title {
-  font-weight: 700;
-  font-size: 1.1rem;
+.dialog-footer .p-button.p-button-primary:hover {
+  background: #339af0 !important;
 }
 
-:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon {
-  color: white;
-  background: rgba(255,255,255,0.2);
+/* Message pour RJCT */
+.rjct-info-message {
+  background: #fff3bf;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #e67700;
+  margin-top: 12px;
 }
+/* ============================================
+   OPTIONS DE STATUT - SANS COULEURS
+   SIMPLE ET PROPRE
+   ============================================ */
 
-:host ::ng-deep .p-dialog .p-dialog-content {
-  padding: 24px;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-footer {
-  padding: 16px 24px 24px;
-  border-top: 1px solid #e2e8f0;
-}
-/* ==================== NOUVEAUX STYLES POUR LE DIALOGUE DE TRAITEMENT ==================== */
-
-.process-dialog-content {
-  padding: 4px 0 8px 0;
-}
-
-.transaction-summary {
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 24px;
-  border: 1px solid #e2e8f0;
-}
-
-.summary-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.summary-header i {
-  color: #4f46e5;
-}
-
-.summary-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.summary-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 0.85rem;
-}
-
-.summary-label {
-  font-weight: 600;
-  color: #64748b;
-}
-
-.summary-value {
-  color: #1e293b;
-  text-align: right;
-  word-break: break-word;
-  max-width: 60%;
-}
-
-.alert-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-
-.alert-critical {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.alert-warning {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-selection {
-  margin-bottom: 24px;
-}
-
-.selection-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 14px;
-}
-
-.selection-header i {
-  color: #4f46e5;
-}
-
-.status-options-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+/* Supprimer toutes les couleurs des status-option */
 .status-option {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-left-width: 4px;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px 16px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-bottom: 8px !important;
 }
 
+/* Au survol - seulement un fond gris très clair */
 .status-option:hover {
-  background: #f8fafc;
-  transform: translateX(2px);
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
 }
 
+/* Option sélectionnée - seulement une bordure grise plus foncée */
 .status-option.selected {
-  background: #f0fdf4;
-  border-color: #22c55e;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
 }
 
+/* Radio - gris neutre */
 .custom-radio {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #cbd5e1;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
+  width: 18px !important;
+  height: 18px !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: white !important;
 }
 
+/* Radio coché - gris foncé (pas de vert) */
 .custom-radio.checked {
-  background: #22c55e;
-  border-color: #22c55e;
+  background: #475569 !important;
+  border-color: #475569 !important;
 }
 
 .custom-radio.checked i {
-  color: white;
-  font-size: 0.7rem;
+  color: white !important;
+  font-size: 0.65rem !important;
 }
 
-.status-info {
-  flex: 1;
-}
-
+/* Label du statut - noir simple */
 .status-label {
-  font-weight: 700;
-  font-size: 0.9rem;
-  margin-bottom: 3px;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  color: #1e293b !important;
+  margin-bottom: 2px !important;
 }
 
+/* Description - gris clair */
 .status-description {
-  font-size: 0.7rem;
-  color: #64748b;
+  font-size: 0.7rem !important;
+  color: #64748b !important;
 }
 
-.rejection-section {
-  background: #fef2f2;
-  border-radius: 14px;
-  padding: 16px;
-  border: 1px solid #fecaca;
-  margin-bottom: 16px;
+/* Supprimer la couleur de bordure gauche spécifique */
+.status-option {
+  border-left-width: 1px !important;
+  border-left-color: #e2e8f0 !important;
 }
 
-.rejection-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #dc2626;
-  margin-bottom: 14px;
-}
-
-.rejection-header .required {
-  color: #dc2626;
-  font-size: 0.75rem;
-}
-
-.rejection-textarea {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1.5px solid #fecaca;
-  background: #ffffff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem;
-  resize: vertical;
-  transition: all 0.2s;
-}
-
-.rejection-textarea:focus {
-  outline: none;
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-}
-
-.rejection-textarea.has-content {
-  border-color: #dc2626;
-  background: #fff;
-}
-
-.rejection-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px 14px;
-  background: #fff8f0;
-  border-radius: 10px;
-  margin-top: 12px;
-  font-size: 0.7rem;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
-
-.rejection-hint i {
-  color: #f59e0b;
-  font-size: 0.75rem;
-  margin-top: 1px;
-}
-
-.confirmation-message {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  background: #ecfdf5;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  color: #065f46;
-  margin-bottom: 16px;
-  border: 1px solid #a7f3d0;
-}
-
-.confirmation-message i {
-  font-size: 1rem;
-  color: #10b981;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 8px 0 0 0;
-}
-
-.action-buttons-new {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 100px;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-header {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  color: white;
-  padding: 18px 24px;
-  border-radius: 16px 16px 0 0;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-title {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon {
-  color: white;
-  background: rgba(255,255,255,0.2);
-}
-
-:host ::ng-deep .p-dialog .p-dialog-content {
-  padding: 24px;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-footer {
-  padding: 16px 24px 24px;
-  border-top: 1px solid #e2e8f0;
-}
-/* ==================== STYLES POUR LE SOUS-DIALOGUE DE REJET ==================== */
-
-.rejection-dialog-content {
-  padding: 8px 0;
-}
-
-.rejection-warning {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #fef2f2;
-  border-radius: 12px;
-  border: 1px solid #fecaca;
-  margin-bottom: 20px;
-}
-
-.rejection-warning i {
-  font-size: 1.2rem;
-  color: #dc2626;
-}
-
-.rejection-warning span {
-  font-size: 0.85rem;
-  color: #991b1b;
-  font-weight: 500;
-}
-
-.rejection-form {
-  margin-bottom: 16px;
-}
-
-.rejection-label {
-  display: block;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 10px;
-}
-
-.rejection-label .required {
-  color: #dc2626;
-  font-size: 0.75rem;
-}
-
-.rejection-textarea {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1.5px solid #e2e8f0;
-  background: #ffffff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem;
-  resize: vertical;
-  transition: all 0.2s;
-}
-
-.rejection-textarea:focus {
-  outline: none;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.rejection-textarea.has-content {
-  border-color: #ef4444;
-}
-
-.rejection-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px 14px;
-  background: #fff8f0;
-  border-radius: 10px;
-  margin-top: 12px;
-  font-size: 0.7rem;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
-
-.rejection-hint i {
-  color: #f59e0b;
-  font-size: 0.75rem;
-  margin-top: 1px;
-}
-/* Message d'info pour RJCT */
-.rjct-info-message {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: #fef3c7;
-  border-radius: 12px;
-  margin-top: 16px;
-  border: 1px solid #fde68a;
-}
-
-.rjct-info-message i {
-  color: #f59e0b;
-  font-size: 1rem;
-}
-
-.rjct-info-message span {
-  font-size: 0.8rem;
-  color: #92400e;
-  font-weight: 500;
-}
-/* ==================== STYLES POUR LE SOUS-DIALOGUE DE REJET ==================== */
-
-.rejection-dialog-content {
-  padding: 8px 0;
-}
-
-.rejection-warning {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #fef2f2;
-  border-radius: 12px;
-  border: 1px solid #fecaca;
-  margin-bottom: 20px;
-}
-
-.rejection-warning i {
-  font-size: 1.2rem;
-  color: #dc2626;
-}
-
-.rejection-warning span {
-  font-size: 0.85rem;
-  color: #991b1b;
-  font-weight: 500;
-}
-
-.rejection-form {
-  margin-bottom: 16px;
-}
-
-.rejection-label {
-  display: block;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #1e293b;
-  margin-bottom: 10px;
-}
-
-.rejection-label .required {
-  color: #dc2626;
-  font-size: 0.75rem;
-}
-
-.rejection-textarea {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: 1.5px solid #e2e8f0;
-  background: #ffffff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem;
-  resize: vertical;
-  transition: all 0.2s;
-}
-
-.rejection-textarea:focus {
-  outline: none;
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-.rejection-textarea.has-content {
-  border-color: #ef4444;
-}
-
-.rejection-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px 14px;
-  background: #fff8f0;
-  border-radius: 10px;
-  margin-top: 12px;
-  font-size: 0.7rem;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
-
-.rejection-hint i {
-  color: #f59e0b;
-  font-size: 0.75rem;
-  margin-top: 1px;
-}
-
-/* Message d'info pour RJCT */
-.rjct-info-message {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: #fef3c7;
-  border-radius: 12px;
-  margin-top: 16px;
-  border: 1px solid #fde68a;
-}
-
-.rjct-info-message i {
-  color: #f59e0b;
-  font-size: 1rem;
-}
-
-.rjct-info-message span {
-  font-size: 0.8rem;
-  color: #92400e;
-  font-weight: 500;
-}
-/* Version pastel doux */
-:host ::ng-deep .p-dialog .p-dialog-header {
-  background: linear-gradient(135deg, #a5b4fc, #c4b5fd) !important;
-  /* Indigo très doux → mauve pastel */
-  color: #1e1b4b;
-  padding: 18px 24px;
-  border-radius: 16px 16px 0 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-title {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #1e1b4b;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon {
-  color: #4f46e5;
-  background: rgba(79, 70, 229, 0.1);
-  border-radius: 50%;
-}
-
-:host ::ng-deep .p-dialog .p-dialog-header .p-dialog-header-icon:hover {
-  background: rgba(79, 70, 229, 0.2);
-  color: #4f46e5;
-}
-/* ==================== BANDEAU D'ALERTE DANS LE DIALOGUE ==================== */
-
-.alert-banner-dialog {
-  border-radius: 14px;
-  padding: 16px 18px;
-  margin-bottom: 20px;
-  border-left: 4px solid;
-}
-
-.alert-grave-dialog {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  border-left-color: #dc2626;
-  border-bottom: 1px solid #fecaca;
-}
-
-.alert-attention-dialog {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border-left-color: #f59e0b;
-  border-bottom: 1px solid #fde68a;
-}
-
-.alert-header-dialog {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.alert-header-dialog i {
-  font-size: 1.2rem;
-}
-
-.alert-grave-dialog .alert-header-dialog i {
-  color: #dc2626;
-}
-
-.alert-attention-dialog .alert-header-dialog i {
-  color: #f59e0b;
-}
-
-.alert-title-dialog {
-  font-weight: 800;
-  font-size: 0.9rem;
-}
-
-.alert-grave-dialog .alert-title-dialog {
-  color: #991b1b;
-}
-
-.alert-attention-dialog .alert-title-dialog {
-  color: #92400e;
-}
-
-.alert-message-dialog {
-  font-size: 0.8rem;
-  color: #374151;
-  padding-left: 30px;
-  margin-bottom: 8px;
-}
-
-.alert-message-dialog strong {
-  font-weight: 700;
-}
-
-.alert-action-dialog {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: rgba(220, 38, 38, 0.08);
-  border-radius: 10px;
-  margin-top: 10px;
-  font-size: 0.75rem;
-  color: #991b1b;
-  border: 1px solid rgba(220, 38, 38, 0.15);
-}
-
-.alert-action-dialog i {
-  font-size: 0.9rem;
-  color: #dc2626;
-}
-
-/* ==================== BOÎTE DE RECOMMANDATION ==================== */
-
-.recommendation-box {
-  background: #f0fdf4;
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-top: 16px;
-  border: 1px solid #bbf7d0;
-}
-
-.recommendation-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-weight: 700;
-  font-size: 0.8rem;
-  color: #166534;
-}
-
-.recommendation-header i {
-  color: #f59e0b;
-  font-size: 0.9rem;
-}
-
-.recommendation-content {
-  font-size: 0.8rem;
-  color: #14532d;
-  line-height: 1.4;
-  padding-left: 28px;
-}
-
-.recommendation-content strong {
-  color: #dc2626;
-  font-weight: 800;
-}
-:host {
-  display: block;
-  padding: 36px 40px;
-  min-height: auto;  /* ← Changé : au lieu de min-height: 100vh */
-  overflow: visible;  /* ← Ajouté */
+/* Supprimer les couleurs des labels spécifiques */
+.status-label[style*="color"] {
+  color: #1e293b !important;
 }
