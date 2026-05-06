@@ -1,32 +1,38 @@
 <div class="notification-container">
-  <button class="notification-bell" (click)="togglePopup()">
-    🔔
-    <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
-  </button>
-
-  <div class="notification-dropdown" *ngIf="isOpen">
+  <!-- PAS DE CLOCHE ICI - La cloche est dans le layout parent -->
+  
+  <div class="notification-dropdown">
     <div class="dropdown-header">
-      <span>Notifications</span>
-      <button *ngIf="unreadCount > 0" class="mark-all" (click)="markAllAsRead()">
-        Tout marquer comme lu
-      </button>
+      <div class="header-left">
+        <span class="bell-icon">🔔</span>
+        <span>Notifications</span>
+        <span class="count-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="unreadCount > 0" class="mark-all" (click)="markAllAsRead($event)">
+          ✓ Tout lire
+        </button>
+        <button class="close-btn" (click)="closePopup()">✕</button>
+      </div>
     </div>
 
     <div class="dropdown-content">
       <div *ngIf="notifications.length === 0" class="empty">
-        Aucune notification
+        <div class="empty-icon">📭</div>
+        <span>Aucune notification</span>
       </div>
       
       <div *ngFor="let notif of notifications" 
            class="notification-item" 
-           [class.unread]="!notif.isRead"
-           (click)="markAsRead(notif.id, $event)">
+           [class.unread]="!notif.read"
+           (click)="onNotificationClick(notif)">
         <div class="notif-icon">{{ getTypeIcon(notif.type) }}</div>
         <div class="notif-content">
           <div class="notif-title">{{ notif.title }}</div>
           <div class="notif-message">{{ notif.message }}</div>
-          <div class="notif-time">{{ getTimeAgo(notif.createdAt) }}</div>
+          <div class="notif-time">{{ getTimeAgo(notif.date || notif.createdAt || '') }}</div>
         </div>
+        <button *ngIf="!notif.read" class="mark-read" (click)="markAsRead(notif.id, $event)">✓</button>
       </div>
     </div>
   </div>

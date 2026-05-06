@@ -46,17 +46,21 @@
             le {{ getStatusDate() }}
           </span>
         </div>
+        <div class="detail-item" *ngIf="transferDetails.uetr">
+          <span class="detail-label">UETR :</span>
+          <span class="detail-value uetr-code">{{ transferDetails.uetr }}</span>
+        </div>
       </div>
     </div>
 
-    <!-- Parcours SWIFT -->
-    <div class="card">
+    <!-- Parcours SWIFT (✅ Dynamique depuis le backend) -->
+    <div class="card" *ngIf="transferDetails.bankJourney && transferDetails.bankJourney.length > 0">
       <h2 class="card-title">🌍 Parcours du virement SWIFT GPI</h2>
       <div class="journey-list">
-        <div class="journey-item" *ngFor="let bank of journeyData.banks; let i = index">
-          <div class="journey-number">{{ i + 1 }}</div>
+        <div class="journey-item" *ngFor="let bank of transferDetails.bankJourney; let i = index">
+          <div class="journey-number">{{ bank.step || (i+1) }}</div>
           <div class="journey-content">
-            <div class="journey-bank">{{ bank.name }}</div>
+            <div class="journey-bank">{{ bank.bankName }}</div>
             <div class="journey-role">{{ bank.role }}</div>
             <div class="journey-fees" *ngIf="bank.fees">{{ bank.fees }}</div>
           </div>
@@ -73,17 +77,17 @@
       </div>
     </div>
 
-    <!-- Résumé des frais -->
+    <!-- Résumé des frais (✅ Dynamique depuis le backend) -->
     <div class="card fees-card">
       <h2 class="card-title">💰 Résumé des frais déduits</h2>
       <div class="fees-grid">
         <div class="fees-item">
           <span class="fees-label">Frais totaux :</span>
-          <span class="fees-amount">{{ journeyData.totalFees | number:'1.2-2' }} EUR</span>
+          <span class="fees-amount">{{ transferDetails.totalFees | number:'1.2-2' }} EUR</span>
         </div>
         <div class="fees-item highlight">
           <span class="fees-label">Montant net crédité :</span>
-          <span class="fees-amount">{{ journeyData.netAmount | number:'1.2-2' }} USD</span>
+          <span class="fees-amount">{{ transferDetails.netAmount | number:'1.2-2' }} {{ transferDetails.currency === 'EUR' ? 'USD' : transferDetails.currency || 'EUR' }}</span>
         </div>
       </div>
     </div>

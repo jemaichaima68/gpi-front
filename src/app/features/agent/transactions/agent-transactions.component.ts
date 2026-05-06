@@ -50,11 +50,7 @@ export interface SwiftMessage {
   rejectionReason?: string;
   originalMsgId?: string;
   groupStatus?: string;
-<<<<<<< Updated upstream
   direction?: string;
-=======
-  clientEmail?: string;
->>>>>>> Stashed changes
 }
 
 @Component({
@@ -478,11 +474,10 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     });
 
     const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.href = url;
+    link.href = URL.createObjectURL(blob);
     link.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(link.href);
 
     this.messageService.add({
       severity: 'success',
@@ -493,7 +488,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   }
 
   exportPdf(): void {
-<<<<<<< Updated upstream
     const headers = [[
       'ID',
       'Type',
@@ -509,10 +503,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       'Date'
     ]];
 
-=======
-    const headers = [['ID', 'Type', 'MsgId', 'UETR', 'Montant', 'Devise', 'Débiteur', 'Créditeur', 'Pays', 'Statut', 'Alerte', 'Date']];
-    
->>>>>>> Stashed changes
     const rows = this.transactions.map(tx => [
       tx.id.toString(),
       tx.messageType,
@@ -558,10 +548,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-<<<<<<< Updated upstream
-=======
-  // ✅ Dialogue principal
->>>>>>> Stashed changes
   openProcessDialog(transaction: SwiftMessage): void {
     this.currentTransaction = transaction;
     this.selectedProcessStatus = '';
@@ -574,10 +560,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     this.selectedProcessStatus = '';
   }
 
-<<<<<<< Updated upstream
-=======
-  // ✅ Confirmation du statut
->>>>>>> Stashed changes
   confirmStatusSelection(): void {
     if (!this.currentTransaction) return;
 
@@ -590,11 +572,7 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-<<<<<<< Updated upstream
 
-=======
-    
->>>>>>> Stashed changes
     if (this.selectedProcessStatus === 'RJCT') {
       this.pendingTransactionId = this.currentTransaction.id;
       this.pendingTransactionMsgId = this.currentTransaction.msgId;
@@ -602,21 +580,16 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       this.showProcessDialog = false;
       this.showRejectionReasonDialog = true;
     } else {
-<<<<<<< Updated upstream
       this.sendDecision(
         this.currentTransaction.id,
         this.currentTransaction.msgId,
         this.selectedProcessStatus,
         ''
       );
-=======
-      this.sendDecision(this.currentTransaction.id, this.currentTransaction.msgId, this.selectedProcessStatus, '');
->>>>>>> Stashed changes
       this.closeProcessDialog();
     }
   }
 
-<<<<<<< Updated upstream
   sendDecision(transactionId: number, msgId: string, status: string, motif: string): void {
     this.http.put(
       `${this.API}/${transactionId}/confirmation`,
@@ -657,42 +630,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-=======
-  // ✅ Envoi au backend (CORRIGÉ)
-  sendDecision(transactionId: number, msgId: string, status: string, motif: string): void {
-    const body: any = { status: status };
-    if (motif && motif.trim()) {
-      body.motif = motif;
-    }
-    
-    console.log('Sending decision:', { transactionId, body });
-    
-    this.http.put(`${this.API}/${transactionId}/confirmation`, body)
-      .subscribe({
-        next: () => {
-          const statusLabel = this.statusOptions.find(s => s.value === status)?.label || status;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Décision enregistrée',
-            detail: `Transaction ${msgId} → ${statusLabel}`,
-            life: 4000
-          });
-          this.refreshCurrentView();
-        },
-        error: (err) => {
-          console.error('Erreur détaillée:', err.error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: err.error?.message || "Impossible d'enregistrer la décision",
-            life: 5000
-          });
-        }
-      });
-  }
-
-  // ✅ Confirmation du rejet
->>>>>>> Stashed changes
   confirmRejectionWithReason(): void {
     if (!this.rejectionReasonText.trim()) {
       this.messageService.add({
@@ -757,7 +694,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       });
       return;
     }
-<<<<<<< Updated upstream
 
     this.http.put(`${this.API}/${id}/confirmation`, { status, motif })
       .subscribe({
@@ -784,14 +720,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
           });
         }
       });
-=======
-    
-    this.sendDecision(id, msgId, status, motif);
-    
-    delete this.selectedStatus[id];
-    delete this.rejectionReason[id];
-    delete this.showMotifInput[id];
->>>>>>> Stashed changes
   }
 
   onStatusChange(id: number, status: string): void {

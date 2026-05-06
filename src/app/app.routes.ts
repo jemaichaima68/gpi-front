@@ -141,20 +141,34 @@ export const routes: Routes = [
           import('./features/client/pages/profile/profile.component')
             .then(m => m.ProfileComponent)
       },
-      // ✅ NOUVELLE ROUTE - Détails transaction par ID
       {
         path: 'transaction/:id',
         loadComponent: () =>
           import('./features/client/pages/transaction-details/transaction-details.component')
             .then(m => m.TransactionDetailsComponent)
       },
-      // ✅ NOUVELLE ROUTE - Détails transaction par UETR
       {
         path: 'transaction/uetr/:uetr',
         loadComponent: () =>
           import('./features/client/pages/transaction-details/transaction-details.component')
             .then(m => m.TransactionDetailsComponent)
+      },
+      {
+        path: '**',
+        redirectTo: 'dashboard'
       }
     ]
+  },
+
+  {
+    path: 'access-denied',
+    loadComponent: () =>
+      import('./features/access-denied/access-denied.component')
+        .then(m => m.AccessDeniedComponent)
+  },
+
+  {
+    path: '**',
+    redirectTo: 'access-denied'
   }
 ];

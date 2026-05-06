@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { TransferService, ClientDashboardDto, RecentTransactionDto } from '../../services/transfer.service';
+import { TransferService, ClientDashboardDto } from '../../services/transfer.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
@@ -13,6 +13,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 })
 export class DashboardComponent implements OnInit {
   userName = '';
+  isLoading = true;
+  errorMessage = '';
+  
   dashboard: ClientDashboardDto = {
     totalTransactions: 0,
     pendingTransactions: 0,
@@ -23,6 +26,7 @@ export class DashboardComponent implements OnInit {
     recentTransactions: [],
     statusDistribution: {}
   };
+  
   timelineTransactions: any[] = [];
 
   constructor(
@@ -32,14 +36,17 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadData();
     this.loadProfile();
+    this.loadData();
   }
 
   loadData() {
+    this.isLoading = true;
+    this.errorMessage = '';
+    
     this.service.getDashboard().subscribe({
       next: (res) => {
-        console.log('Dashboard reçu:', res);
+        console.log('✅ Dashboard du backend:', res);
         this.dashboard = res;
         this.timelineTransactions = (res.recentTransactions || []).map(t => ({
           ...t,
@@ -49,72 +56,24 @@ export class DashboardComponent implements OnInit {
           timeAgo: this.getTimeAgo(t.receivedAt),
           beneficiaryName: t.creditorName || t.debtorName || 'Client'
         }));
+        this.isLoading = false;
       },
       error: (err) => {
-        console.error('Erreur chargement dashboard:', err);
-        
-        // ========== DONNÉES MOCKÉES POUR TEST ==========
-        this.dashboard = {
-          totalTransactions: 8,
-          pendingTransactions: 3,
-          acceptedTransactions: 5,
-          rejectedTransactions: 0,
-          totalAmount: 12500,
-          averageProcessingTimeHours: 2.5,
-          recentTransactions: [
-            { 
-              id: 1, 
-              uetr: 'GPI745893', 
-              amount: 1350, 
-              currency: 'EUR', 
-              status: 'PDNG', 
-              creditorName: 'Julia Laurent', 
-              debtorName: 'Julia Laurent',
-              creditorCountry: 'FR',
-              receivedAt: new Date().toISOString()
-            },
-            { 
-              id: 2, 
-              uetr: 'GPI584230', 
-              amount: 860, 
-              currency: 'EUR', 
-              status: 'ACSC', 
-              creditorName: 'Xavier Bernard', 
-              debtorName: 'Xavier Bernard',
-              creditorCountry: 'FR',
-              receivedAt: new Date(Date.now() - 86400000).toISOString()
-            },
-            { 
-              id: 3, 
-              uetr: 'GPI123456', 
-              amount: 2500, 
-              currency: 'EUR', 
-              status: 'ACSC', 
-              creditorName: 'Sophie Martin', 
-              debtorName: 'Sophie Martin',
-              creditorCountry: 'FR',
-              receivedAt: new Date(Date.now() - 172800000).toISOString()
-            }
-          ],
-          statusDistribution: { PDNG: 3, ACSC: 5 }
-        };
-        
-        this.timelineTransactions = this.dashboard.recentTransactions.map(t => ({
-          ...t,
-          statusText: this.getStatusLabel(t.status),
-          statusClass: this.getStatusClass(t.status),
-          dateFormatted: this.formatDate(t.receivedAt),
-          timeAgo: this.getTimeAgo(t.receivedAt),
-          beneficiaryName: t.creditorName || t.debtorName || 'Client'
-        }));
-        // ========== FIN DONNÉES MOCKÉES ==========
+        console.error('❌ Erreur backend:', err);
+        this.errorMessage = 'Impossible de charger vos données. Vérifiez que le backend est démarré.';
+        this.isLoading = false;
       }
     });
   }
 
   loadProfile() {
     try {
-      this.userName = this.authService.getFullName().split(' ')[0] || 'Client';
+      const fullName = this.authService.getFullName();
+      if (fullName && fullName !== ' ') {
+        this.userName = fullName.split(' ')[0];
+      } else {
+        this.userName = this.authService.getUsername() || 'Client';
+      }
     } catch (e) {
       this.userName = 'Client';
     }
@@ -173,5 +132,9 @@ export class DashboardComponent implements OnInit {
     if (item?.uetr) {
       this.router.navigate(['/client/tracking'], { queryParams: { uetr: item.uetr } });
     }
+  }
+
+  retryLoad() {
+    this.loadData();
   }
 }

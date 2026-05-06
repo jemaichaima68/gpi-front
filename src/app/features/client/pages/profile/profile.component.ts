@@ -280,7 +280,7 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadKeycloakProfile();
-    this.loadBackendProfile();
+    this.loadBackendProfile(); 
   }
 
   loadKeycloakProfile() {

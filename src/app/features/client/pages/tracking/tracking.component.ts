@@ -22,17 +22,6 @@ export class TrackingComponent implements OnInit {
   userInitials: string = 'HJ';
   currentDate: Date = new Date();
 
-  journeyData = {
-    banks: [
-      { name: 'STB Bank Tunis', role: 'Banque Émetteur', fees: 'Frais: 70,30 EUR - COM05 envoyé', status: 'Envoyé' },
-      { name: 'BNP Paribas Paris', role: 'Banque Correspondante 1', fees: 'Frais: 141,50 USD - STP CORR', status: 'En cours' },
-      { name: 'BNP Paribas Paris', role: 'Banque Correspondante 2', fees: 'Frais: YORK', status: 'Traitement' },
-      { name: 'Bank of America', role: 'Banque Bénéficiaire final', fees: '', status: 'Terminé' }
-    ],
-    totalFees: 186.80,
-    netAmount: 449683.50
-  };
-
   constructor(
     private route: ActivatedRoute,
     private service: TransferService
@@ -59,9 +48,10 @@ export class TrackingComponent implements OnInit {
     this.service.getTransferByUetr(this.uetrToSearch).subscribe({
       next: (res) => {
         this.transferDetails = res;
+        console.log('✅ Transfert trouvé:', res);
       },
       error: (err) => {
-        console.error('Erreur recherche:', err);
+        console.error('❌ Erreur recherche:', err);
         this.errorMessage = 'Aucun transfert trouvé avec cet UETR';
         this.transferDetails = null;
       }
@@ -69,7 +59,7 @@ export class TrackingComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    const map: any = {
+    const map: Record<string, string> = {
       'PDNG': 'En attente',
       'ACSC': 'Terminé',
       'RJCT': 'Rejeté',
@@ -81,15 +71,17 @@ export class TrackingComponent implements OnInit {
 
   getStatusDate(): string {
     if (this.transferDetails?.status === 'ACSC' && this.transferDetails?.updatedAt) {
-      return new Date(this.transferDetails.updatedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+      return new Date(this.transferDetails.updatedAt).toLocaleDateString('fr-FR', { 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+      });
     }
-    return new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-  }
-
-  clearError() {
-    this.errorMessage = '';
-    this.uetrToSearch = '';
-    this.transferDetails = null;
+    return new Date().toLocaleDateString('fr-FR', { 
+      day: '2-digit', 
+      month: 'long', 
+      year: 'numeric' 
+    });
   }
 
   // ========== EXPORT PDF ==========
@@ -136,8 +128,9 @@ export class TrackingComponent implements OnInit {
     doc.text('Parcours du virement SWIFT GPI', 14, finalY);
     finalY += 5;
     
-    const journeyBody = this.journeyData.banks.map(bank => [
-      bank.name,
+    // ✅ Utilisation des données dynamiques du backend
+    const journeyBody = (this.transferDetails.bankJourney || []).map(bank => [
+      bank.bankName,
       bank.role,
       bank.fees || '-',
       bank.status
@@ -160,8 +153,8 @@ export class TrackingComponent implements OnInit {
     autoTable(doc, {
       startY: finalY,
       body: [
-        ['Frais totaux', `${this.journeyData.totalFees} EUR`],
-        ['Montant net crédité', `${this.journeyData.netAmount} USD`]
+        ['Frais totaux', `${this.transferDetails.totalFees?.toFixed(2) || '0.00'} EUR`],
+        ['Montant net crédité', `${this.transferDetails.netAmount?.toFixed(2) || '0.00'} ${this.transferDetails.currency === 'EUR' ? 'USD' : this.transferDetails.currency || 'EUR'}`]
       ],
       theme: 'plain',
       margin: { left: 14, right: 14 }
@@ -189,17 +182,18 @@ export class TrackingComponent implements OnInit {
       { Field: 'Dernière mise à jour', Value: new Date(this.transferDetails.updatedAt).toLocaleString('fr-FR') }
     ];
     
-    const journeyData = this.journeyData.banks.map((bank, index) => ({
-      Etape: index + 1,
-      Banque: bank.name,
+    // ✅ Utilisation des données dynamiques du backend
+    const journeyData = (this.transferDetails.bankJourney || []).map((bank, index) => ({
+      Etape: bank.step || (index + 1),
+      Banque: bank.bankName,
       Rôle: bank.role,
       Frais: bank.fees || '-',
       Statut: bank.status
     }));
     
     const feesData = [
-      { Description: 'Frais totaux', Montant: `${this.journeyData.totalFees} EUR` },
-      { Description: 'Montant net crédité', Montant: `${this.journeyData.netAmount} USD` }
+      { Description: 'Frais totaux', Montant: `${this.transferDetails.totalFees?.toFixed(2) || '0.00'} EUR` },
+      { Description: 'Montant net crédité', Montant: `${this.transferDetails.netAmount?.toFixed(2) || '0.00'} ${this.transferDetails.currency === 'EUR' ? 'USD' : this.transferDetails.currency || 'EUR'}` }
     ];
     
     const wb = XLSX.utils.book_new();

@@ -19,18 +19,15 @@ export class HistoryComponent implements OnInit {
   consultationHistory: any[] = [];
   filteredHistory: any[] = [];
   displayedHistory: any[] = [];
-  isLoading: boolean = true;
+  isLoading: boolean = false;
   
-  // Pagination
   currentPage: number = 1;
   itemsPerPage: number = 10;
   totalPages: number = 1;
   
-  // Filtres
   filterDateDebut: string = '';
   filterDateFin: string = '';
   
-  // Modal confirmation
   showConfirmModal: boolean = false;
   itemToDelete: any = null;
   deleteMode: 'single' | 'all' = 'single';
@@ -45,20 +42,16 @@ export class HistoryComponent implements OnInit {
   }
 
   loadHistory() {
-    this.isLoading = true;
     this.service.getConsultationHistory().subscribe({
       next: (res) => {
         console.log('Historique reçu:', res);
         this.consultationHistory = res;
         this.filteredHistory = [...res];
         this.applyFilters();
-        this.isLoading = false;
       },
       error: (err) => {
         console.error('Erreur:', err);
-        // Données mockées pour test
         this.setMockData();
-        this.isLoading = false;
       }
     });
   }
@@ -147,9 +140,38 @@ export class HistoryComponent implements OnInit {
     return new Date(date).toLocaleString('fr-FR');
   }
 
+  // ✅ VIEW DETAILS - CORRIGÉ (un seul click)
+  viewDetails(item: any) {
+    console.log('🔍 viewDetails appelé avec:', item);
+    
+    if (!item) {
+      console.error('❌ Item est null/undefined');
+      return;
+    }
+    
+    if (item.id) {
+      console.log('✅ Navigation vers ID:', item.id);
+      this.router.navigate(['/client/transaction', item.id]).then(success => {
+        if (success) {
+          console.log('✅ Navigation réussie');
+        } else {
+          console.error('❌ Échec navigation');
+        }
+      });
+    } else if (item.uetr) {
+      console.log('✅ Navigation vers UETR:', item.uetr);
+      this.router.navigate(['/client/transaction/uetr', item.uetr]).then(success => {
+        if (success) {
+          console.log('✅ Navigation réussie');
+        } else {
+          console.error('❌ Échec navigation');
+        }
+      });
+    } else {
+      console.error('❌ Aucun ID ou UETR trouvé');
+    }
+  }
 
-  // ========== SUPPRESSION AVEC CONFIRMATION ==========
-  
   openDeleteConfirm(item: any) {
     this.itemToDelete = item;
     this.deleteMode = 'single';
@@ -173,59 +195,44 @@ export class HistoryComponent implements OnInit {
 
   confirmDelete() {
     if (this.deleteMode === 'single' && this.itemToDelete) {
-      // Suppression d'une consultation
       this.service.deleteConsultationHistory(this.itemToDelete.id).subscribe({
-        next: (res) => {
-          console.log('Succès suppression:', res);
+        next: () => {
           alert('✅ Consultation supprimée avec succès !');
           this.consultationHistory = this.consultationHistory.filter(h => h.id !== this.itemToDelete.id);
           this.applyFilters();
           this.closeModal();
         },
         error: (err) => {
-          console.error('Erreur suppression:', err);
-          
-          // Fallback: suppression locale si backend non disponible
           if (err.status === 404 || err.status === 0) {
-            alert('⚠️ Suppression effectuée localement (backend non disponible)');
+            alert('⚠️ Suppression effectuée localement');
             this.consultationHistory = this.consultationHistory.filter(h => h.id !== this.itemToDelete.id);
             this.applyFilters();
             this.closeModal();
           } else {
-            alert('❌ Erreur lors de la suppression: ' + (err.error?.message || err.message));
+            alert('❌ Erreur lors de la suppression');
           }
         }
       });
     } else if (this.deleteMode === 'all') {
-      // Suppression de toutes les consultations
       this.service.deleteAllConsultationHistory().subscribe({
-        next: (res) => {
-          console.log('Succès suppression totale:', res);
-          alert('✅ Toutes les consultations ont été supprimées avec succès !');
+        next: () => {
+          alert('✅ Toutes les consultations ont été supprimées !');
           this.consultationHistory = [];
           this.filteredHistory = [];
           this.updateDisplayedItems();
           this.closeModal();
         },
-        error: (err) => {
-          console.error('Erreur suppression totale:', err);
-          
-          // Fallback: suppression locale si backend non disponible
-          if (err.status === 404 || err.status === 0) {
-            alert('⚠️ Suppression effectuée localement (backend non disponible)');
-            this.consultationHistory = [];
-            this.filteredHistory = [];
-            this.updateDisplayedItems();
-            this.closeModal();
-          } else {
-            alert('❌ Erreur lors de la suppression: ' + (err.error?.message || err.message));
-          }
+        error: () => {
+          alert('⚠️ Suppression effectuée localement');
+          this.consultationHistory = [];
+          this.filteredHistory = [];
+          this.updateDisplayedItems();
+          this.closeModal();
         }
       });
     }
   }
 
-  // ========== EXPORTS ==========
   exportPdf() {
     if (this.filteredHistory.length === 0) {
       alert('Aucune donnée à exporter');
@@ -238,7 +245,6 @@ export class HistoryComponent implements OnInit {
     doc.setFontSize(18);
     doc.setTextColor(102, 126, 234);
     doc.text('Historique des consultations', pageWidth / 2, 20, { align: 'center' });
-    
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.text(`Exporté le: ${new Date().toLocaleString('fr-FR')}`, pageWidth - 20, 30, { align: 'right' });
@@ -284,12 +290,4 @@ export class HistoryComponent implements OnInit {
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, `historique_consultations_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
-  viewDetails(item: any) {
-  if (item.id) {
-    this.router.navigate(['/client/transaction', item.id]);
-  } else if (item.uetr) {
-    this.router.navigate(['/client/transaction/uetr', item.uetr]);
-  }
-}
-  
 }
