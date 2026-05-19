@@ -2,37 +2,56 @@
   
   <!-- Bouton menu mobile -->
   <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
-    ☰
+    <i class="menu-icon">☰</i>
   </button>
 
-  <!-- SIDEBAR -->
+  <!-- SIDEBAR VIOLET -->
   <aside class="sidebar" [class.mobile-open]="isMobileMenuOpen">
     <div class="sidebar-header">
       <div class="logo">
-         GPI Tracker
+        <div class="logo-icon">📍</div>
+        <div class="logo-text">
+          <span class="logo-title">GPI Tracker</span>
+          <span class="logo-subtitle">Client Space</span>
+        </div>
       </div>
-      <button class="close-menu" (click)="toggleMobileMenu()">✕</button>
+      <button class="close-menu" (click)="toggleMobileMenu()">
+        <i class="close-icon">✕</i>
+      </button>
     </div>
 
+    <!-- Navigation principale (sans icônes) -->
     <nav class="nav-menu">
-      <a routerLink="/client/dashboard" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
-         Tableau de bord
+      <a routerLink="/client/dashboard" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">
+        <span class="nav-label">Acceuil</span>
       </a>
-      <a routerLink="/client/tracking" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
-         Suivi
+      <a routerLink="/client/tracking" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">
+        <span class="nav-label">Suivi</span>
       </a>
-      <a routerLink="/client/history" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
-         Historique
-      </a>
-      <a routerLink="/client/profile" routerLinkActive="active" class="nav-item" (click)="isMobileMenuOpen=false">
-         Mon Profil
+      <a routerLink="/client/history" routerLinkActive="active" class="nav-item" (click)="closeMobileMenu()">
+        <span class="nav-label">Historique</span>
       </a>
     </nav>
 
+    <!-- Séparateur -->
+    <div class="sidebar-divider"></div>
+
+    <!-- Section Profil & Déconnexion en bas (avec icônes) -->
     <div class="sidebar-footer">
-      <a class="nav-item logout" (click)="logout()">
-         Déconnexion
+      <a routerLink="/client/profile" routerLinkActive="active" class="nav-item profile-item" (click)="closeMobileMenu()">
+        <div class="nav-icon">👤</div>
+        <span class="nav-label">Mon Profil</span>
       </a>
+      <a class="nav-item logout-item" (click)="logout()">
+        <div class="nav-icon">🚪</div>
+        <span class="nav-label">Déconnexion</span>
+      </a>
+      
+      <!-- Version app -->
+      <div class="version-info">
+        <span>Version 1.0</span>
+        <span>© 2026 GPI Tracker</span>
+      </div>
     </div>
   </aside>
 
@@ -43,23 +62,32 @@
   <main class="content">
     <div class="header">
       <div class="header-left">
-        <h1 class="page-title">Espace Client</h1>
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">Espace Client</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item active">{{ currentPageTitle }}</span>
+        </div>
+        <h1 class="page-title">{{ currentPageTitle }}</h1>
       </div>
       <div class="header-right">
         <div class="notification-bell" (click)="toggleNotifications()">
-          🔔
-          <span class="notification-badge" *ngIf="unreadCount > 0">{{unreadCount}}</span>
+          <span class="bell-icon">🔔</span>
+          <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
         </div>
         <div class="user-avatar" (click)="goToProfile()">
-          <span class="avatar-initials">{{userInitials}}</span>
+          <span class="avatar-initials">{{ userInitials }}</span>
         </div>
       </div>
     </div>
 
-    <div class="notification-popup" *ngIf="showNotifications">
-      <app-notification-popup (close)="toggleNotifications()"></app-notification-popup>
-    </div>
+<div class="notification-overlay" *ngIf="showNotifications" (click)="closeNotifications()"></div>
 
+<div class="notification-popup" *ngIf="showNotifications">
+  <app-notification-popup 
+    #notificationPopupRef
+    (close)="toggleNotifications()">
+  </app-notification-popup>
+</div>
     <div class="page-content">
       <router-outlet></router-outlet>
     </div>

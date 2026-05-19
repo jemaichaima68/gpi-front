@@ -1,51 +1,65 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';  // ✅ Correction : InputTextModule au lieu de InputTextareaModule
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { SelectModule } from 'primeng/select';  // ✅ Ajout pour le select
 
 @Component({
   selector: 'app-transaction-detail',
   standalone: true,
   imports: [
-    CommonModule, 
-    ButtonModule, 
-    CardModule, 
-    ToastModule, 
-    TagModule, 
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    CardModule,
+    ToastModule,
+    ConfirmDialogModule,
+    TagModule,
     TooltipModule,
-    DialogModule
+    DialogModule,
+    InputTextModule,      // ✅ Correction
+    RadioButtonModule,
+    SelectModule          // ✅ Ajout
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './transaction-detail.component.html',
   styleUrls: ['./transaction-detail.component.css']
 })
 export class TransactionDetailComponent implements OnInit {
   
   transaction: any = null;
+  relatedMessage: any = null;
   error: string = '';
   loading: boolean = true;
   
-  // Variables pour le dialogue XML
-  showXmlDialog: boolean = false;
-  rawXmlContent: string = '';
+  // Dialogue traitement
+  showProcessDialog: boolean = false;
+  selectedDecision: string = '';
+  rejectionReason: string = '';
   
-  get formattedXmlContent(): string {
-    return this.beautifyXml(this.rawXmlContent);
-  }
+  // Dialogue annulation
+  showCancelDialog: boolean = false;
+  cancelReasonCode: string = 'CUST';
+  cancelReasonText: string = '';
 
   constructor(
     private route: ActivatedRoute,
     private http: HttpClient,
     private router: Router,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -53,154 +67,60 @@ export class TransactionDetailComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
-        this.loadTransaction();
+        this.loadTransaction(id);
       } else {
         this.error = "Aucun ID de transaction fourni";
         this.loading = false;
-        this.cdr.detectChanges();
       }
     });
   }
 
-  loadTransaction() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) return;
-    
+  loadTransaction(id: string) {
     this.loading = true;
     this.error = '';
-    this.cdr.detectChanges();
     
-    this.http.get(`${environment.apiUrl}/api/agent/messages/${id}`)
+    this.http.get<any>(`${environment.apiUrl}/api/agent/messages/${id}`)  // ✅ Typage any explicite
       .subscribe({
         next: (data: any) => {
           this.transaction = data;
-          console.log('=== DÉTAIL TRANSACTION ===');
-          console.log('Statut reçu:', data.status);
-          console.log('Type de statut:', typeof data.status);
-          console.log('Transaction complète:', data);
-          console.log('needsAgentAction?', this.needsAgentAction(data.status));
+          this.loadRelatedMessage(data);
           this.loading = false;
           this.cdr.detectChanges();
         },
-        error: (err) => {
-          const errorMsg = err.error?.message || "Impossible de charger la transaction";
-          this.error = errorMsg;
+        error: (err: any) => {
+          this.error = err.error?.message || "Impossible de charger la transaction";
           this.loading = false;
           this.cdr.detectChanges();
           this.messageService.add({ 
             severity: 'error', 
             summary: 'Erreur', 
-            detail: errorMsg
+            detail: this.error
           });
         }
       });
   }
-
-  /**
-   * Formate le XML avec une indentation propre
-   */
-  private beautifyXml(xml: string): string {
-    if (!xml) return '';
-    
-    let formatted = xml.trim();
-    formatted = formatted.replace(/>/g, '>\n');
-    formatted = formatted.replace(/</g, '\n<');
-    
-    let lines = formatted.split('\n');
-    let result: string[] = [];
-    let indentLevel = 0;
-    
-    for (let i = 0; i < lines.length; i++) {
-      let line = lines[i].trim();
-      if (line.length === 0) continue;
-      
-      if (line.match(/^<\/[^>]+>$/)) {
-        indentLevel = Math.max(0, indentLevel - 1);
-      }
-      
-      let indentation = '  '.repeat(indentLevel);
-      result.push(indentation + line);
-      
-      if (line.match(/^<[^?!/][^>]*[^/]>$/) && !line.match(/<[^>]*\/>/)) {
-        indentLevel++;
-      }
-    }
-    
-    return result.join('\n');
+  retryLoad() {
+  const id = this.route.snapshot.paramMap.get('id');
+  if (id) {
+    this.loadTransaction(id);
   }
+}
 
-  downloadXmlFile() {
-    if (!this.transaction || !this.transaction.id) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Non disponible',
-        detail: 'Aucun fichier XML associé à cette transaction'
-      });
-      return;
-    }
-
-    this.http.get(`${environment.apiUrl}/api/agent/messages/${this.transaction.id}/download-xml`, {
-      responseType: 'blob'
-    }).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = this.transaction.fileName || `transaction_${this.transaction.id}.xml`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-        
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Téléchargement réussi',
-          detail: `Fichier ${this.transaction.fileName || 'XML'} téléchargé`
+  loadRelatedMessage(transaction: any) {
+    // Chercher le message associé (PACS002 pour une réponse, ou CAMT056/029)
+    if (transaction.originalMsgId || transaction.originalUetr) {
+      this.http.get<any[]>(`${environment.apiUrl}/api/agent/messages/all`)  // ✅ Typage explicite
+        .subscribe({
+          next: (messages: any[]) => {
+            // Chercher un message qui répond à cette transaction
+            this.relatedMessage = messages.find(msg => 
+              (msg.originalMsgId === transaction.msgId || 
+               msg.originalUetr === transaction.uetr) &&
+              msg.messageType !== transaction.messageType
+            );
+          },
+          error: () => {}
         });
-      },
-      error: (err: any) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Impossible de récupérer le fichier XML'
-        });
-      }
-    });
-  }
-
-  viewXmlContent() {
-    if (!this.transaction || !this.transaction.id) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Non disponible',
-        detail: 'Aucun fichier XML associé à cette transaction'
-      });
-      return;
-    }
-
-    this.http.get(`${environment.apiUrl}/api/agent/messages/${this.transaction.id}/xml`, {
-      responseType: 'text'
-    }).subscribe({
-      next: (xmlData: string) => {
-        this.rawXmlContent = xmlData;
-        this.showXmlDialog = true;
-      },
-      error: (err: any) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Impossible de charger le contenu XML'
-        });
-      }
-    });
-  }
-
-  copyXmlToClipboard() {
-    if (this.rawXmlContent) {
-      navigator.clipboard.writeText(this.rawXmlContent);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Copié !',
-        detail: 'Le contenu XML a été copié dans le presse-papier'
-      });
     }
   }
 
@@ -208,140 +128,123 @@ export class TransactionDetailComponent implements OnInit {
     this.router.navigate(['/agent/dashboard']);
   }
 
-  acceptTransaction() {
-    if (!this.transaction) return;
-    
-    this.http.put(`${environment.apiUrl}/api/agent/messages/${this.transaction.id}/accepter`, {})
-      .subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Acceptée',
-            detail: `Transaction ${this.transaction.msgId} acceptée`
-          });
-          setTimeout(() => this.goBackToDashboard(), 1500);
-        },
-        error: (err: any) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible d\'accepter'
-          });
-        }
-      });
-  }
-
-  rejectTransaction() {
-    if (!this.transaction) return;
-    
-    this.http.put(`${environment.apiUrl}/api/agent/messages/${this.transaction.id}/rejeter`, "Rejeté depuis le détail")
-      .subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Rejetée',
-            detail: `Transaction ${this.transaction.msgId} rejetée`
-          });
-          setTimeout(() => this.goBackToDashboard(), 1500);
-        },
-        error: (err: any) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de rejeter'
-          });
-        }
-      });
-  }
-
   copyToClipboard(text: string) {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     this.messageService.add({
-      severity: 'info',
+      severity: 'success',
       summary: 'Copié',
-      detail: 'UETR copié dans le presse-papier'
+      detail: 'Texte copié dans le presse-papier'
     });
   }
 
-  needsAgentAction(status: string): boolean {
-    // Version améliorée avec plus de cas
-    if (!status) return false;
-    
-    const statusNormalized = status.toUpperCase();
-    
-    return statusNormalized === 'EN_ATTENTE' || 
-           statusNormalized === 'SIGNALE' || 
-           statusNormalized === 'PDNG' ||
-           statusNormalized.includes('PDNG') ||
-           statusNormalized.includes('EN_ATTENTE');
+  viewRelatedMessage(id: number) {
+    this.router.navigate(['/agent/transaction', id]);
   }
 
-  getStatusSeverity(status: string): "success" | "danger" | "warn" | "secondary" | "info" {
-    const statusNormalized = status?.toUpperCase() || '';
-    
-    switch (statusNormalized) {
-      case 'ACCEPTE':
-      case 'ACCP':
-        return 'success';
-      case 'REJETE':
-      case 'RJCT':
-        return 'danger';
-      case 'EN_ATTENTE':
-      case 'PDNG':
-        return 'warn';
-      case 'SIGNALE':
-        return 'info';
-      default:
-        return 'secondary';
+  // ==================== TRAITEMENT (ACCEPTER/REJETER) ====================
+  
+  openProcessDialog(defaultDecision: string = 'ACCP') {
+    this.selectedDecision = defaultDecision;
+    this.rejectionReason = '';
+    this.showProcessDialog = true;
+  }
+
+  closeProcessDialog() {
+    this.showProcessDialog = false;
+    this.selectedDecision = '';
+    this.rejectionReason = '';
+  }
+
+  confirmProcess() {
+    if (!this.selectedDecision) {
+      this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Choisissez une décision' });
+      return;
     }
+
+    if (this.selectedDecision === 'RJCT' && !this.rejectionReason.trim()) {
+      this.messageService.add({ severity: 'warn', summary: 'Motif requis', detail: 'Saisissez un motif de rejet' });
+      return;
+    }
+
+    this.http.put(`${environment.apiUrl}/api/agent/messages/${this.transaction.id}/confirmation`, {
+      status: this.selectedDecision,
+      motif: this.rejectionReason
+    }, { responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        const decisionText = this.selectedDecision === 'ACCP' ? 'acceptée' : 'rejetée';
+        this.messageService.add({ 
+          severity: 'success', 
+          summary: 'Succès', 
+          detail: `Transaction ${decisionText} avec succès` 
+        });
+        this.closeProcessDialog();
+        setTimeout(() => this.loadTransaction(this.transaction.id), 1000);
+      },
+      error: (err: any) => {
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: err.error?.message || 'Impossible de traiter la transaction' 
+        });
+      }
+    });
+  }
+
+  // ==================== ANNULATION (CAMT.056) ====================
+
+  openCancelDialog() {
+    this.cancelReasonCode = 'CUST';
+    this.cancelReasonText = '';
+    this.showCancelDialog = true;
+  }
+
+  closeCancelDialog() {
+    this.showCancelDialog = false;
+  }
+
+  confirmCancellation() {
+    this.http.post(`${environment.apiUrl}/api/agent/messages/${this.transaction.id}/cancel`, {
+      reasonCode: this.cancelReasonCode,
+      reasonText: this.cancelReasonText
+    }, { responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        this.messageService.add({ 
+          severity: 'success', 
+          summary: 'Annulation demandée', 
+          detail: 'CAMT.056 généré avec succès' 
+        });
+        this.closeCancelDialog();
+        setTimeout(() => this.loadTransaction(this.transaction.id), 1000);
+      },
+      error: (err: any) => {
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: err.error?.message || 'Impossible de générer CAMT.056' 
+        });
+      }
+    });
+  }
+
+  // ==================== MÉTHODES UTILITAIRES ====================
+
+  needsAgentAction(status: string): boolean {
+    if (!status) return false;
+    return status === 'PDNG' || status === 'EN_ATTENTE';
   }
 
   getStatusLabel(status: string): string {
-    const statusNormalized = status?.toUpperCase() || '';
-    
-    switch (statusNormalized) {
-      case 'EN_ATTENTE':
-        return 'PDNG (En attente)';
-      case 'PDNG':
-        return 'PDNG (En attente)';
-      case 'ACCEPTE':
-      case 'ACCP':
-        return 'ACCP (Accepté)';
-      case 'REJETE':
-      case 'RJCT':
-        return 'RJCT (Rejeté)';
-      case 'ACTC':
-        return 'ACTC (Validé techniquement)';
-      case 'ACSP':
-        return 'ACSP (En cours de règlement)';
-      case 'SIGNALE':
-        return 'PDNG (Signalé)';
-      default:
-        return status || '—';
-    }
-  }
-
-  getStatusTooltip(status: string): string {
-    const statusNormalized = status?.toUpperCase() || '';
-    
-    switch (statusNormalized) {
-      case 'EN_ATTENTE':
-      case 'PDNG':
-        return 'PDNG - En attente de traitement';
-      case 'ACCEPTE':
-      case 'ACCP':
-        return 'ACCP - Transaction acceptée par la banque';
-      case 'REJETE':
-      case 'RJCT':
-        return 'RJCT - Transaction rejetée';
-      case 'ACTC':
-        return 'ACTC - Transaction validée techniquement';
-      case 'ACSP':
-        return 'ACSP - En cours de règlement';
-      case 'SIGNALE':
-        return 'PDNG - Transaction signalée, nécessite une attention';
-      default:
-        return status || '';
+    switch (status) {
+      case 'PDNG': return 'PDNG - En attente';
+      case 'EN_ATTENTE': return 'PDNG - En attente';
+      case 'ACCEPTE': return 'ACCP - Accepté';
+      case 'REJETE': return 'RJCT - Rejeté';
+      case 'ANNULEE': return 'Annulée';
+      case 'ENVOYE': return 'Envoyé';
+      case 'RECEIVED': return 'Reçu';
+      case 'TRAITE': return 'Traité';
+      default: return status || '-';
     }
   }
 
@@ -350,16 +253,7 @@ export class TransactionDetailComponent implements OnInit {
       case 'OK': return '✓ Transaction conforme';
       case 'ATTENTION': return '⚠️ Alerte - À vérifier';
       case 'GRAVE': return '🔴 Alerte critique - Bloquer';
-      default: return alerte || '—';
-    }
-  }
-
-  getAlerteSeverity(alerte: string): "success" | "warn" | "danger" | "info" {
-    switch (alerte) {
-      case 'OK': return 'success';
-      case 'ATTENTION': return 'warn';
-      case 'GRAVE': return 'danger';
-      default: return 'info';
+      default: return alerte || '-';
     }
   }
 

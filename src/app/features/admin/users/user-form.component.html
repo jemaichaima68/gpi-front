@@ -2,7 +2,7 @@
   [(visible)]="visible"
   [header]="isEdit ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'"
   [modal]="true"
-  [style]="{ width: '700px' }"
+  [style]="{ width: '750px' }"
   [closable]="true"
   [draggable]="false"
   [resizable]="false"
@@ -10,8 +10,12 @@
 
   <div class="form-container">
 
+    <!-- Message d'erreur global -->
     @if (errorMessage) {
-      <p-message severity="error" [text]="errorMessage" styleClass="mb-3" />
+      <div class="global-error">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
     }
 
     <!-- SECTION 1 : COMPTE -->
@@ -20,6 +24,7 @@
         <i class="pi pi-user-circle"></i>
         <span>Informations du compte</span>
       </div>
+
       <div class="form-row">
         <div class="form-field" [class.has-error]="hasError('username')">
           <label>Nom d'utilisateur <span class="required">*</span></label>
@@ -28,6 +33,7 @@
             <i class="pi pi-exclamation-triangle"></i> {{ getError('username') }}
           </small>
         </div>
+
         <div class="form-field" [class.has-error]="hasError('email')">
           <label>Email <span class="required">*</span></label>
           <input pInputText [(ngModel)]="formData.email" placeholder="ex: jean@exemple.com" maxlength="100" />
@@ -36,6 +42,7 @@
           </small>
         </div>
       </div>
+
       <div class="form-row">
         <div class="form-field" [class.has-error]="hasError('role')">
           <label>Rôle <span class="required">*</span></label>
@@ -50,6 +57,7 @@
             <i class="pi pi-exclamation-triangle"></i> {{ getError('role') }}
           </small>
         </div>
+
         <div class="form-field">
           <label>Statut</label>
           <p-select
@@ -61,22 +69,12 @@
             styleClass="w-full" />
         </div>
       </div>
+
+      <!-- Message info mot de passe automatique -->
       @if (!isEdit) {
-        <div class="form-field" [class.has-error]="hasError('password')">
-          <label>Mot de passe temporaire <span class="required">*</span></label>
-          <p-password
-            [(ngModel)]="formData.password"
-            placeholder="Mot de passe temporaire"
-            [feedback]="true"
-            [toggleMask]="true"
-            styleClass="w-full" />
-          <small class="error-message" *ngIf="hasError('password')">
-            <i class="pi pi-exclamation-triangle"></i> {{ getError('password') }}
-          </small>
-          <small class="hint">
-            <i class="pi pi-info-circle"></i>
-            Le client recevra ce mot de passe par email et devra le changer à la première connexion.
-          </small>
+        <div class="info-message">
+          <i class="pi pi-envelope"></i>
+          <span>Un mot de passe temporaire sécurisé sera généré automatiquement et envoyé par email.</span>
         </div>
       }
     </div>
@@ -87,6 +85,7 @@
         <i class="pi pi-id-card"></i>
         <span>Identité</span>
       </div>
+
       <div class="form-row">
         <div class="form-field" [class.has-error]="hasError('firstName')">
           <label>Prénom</label>
@@ -95,16 +94,19 @@
             <i class="pi pi-exclamation-triangle"></i> {{ getError('firstName') }}
           </small>
         </div>
+
         <div class="form-field">
           <label>Nom</label>
-          <input pInputText [(ngModel)]="formData.lastName" placeholder="Nom de famille" maxlength="50" />
+          <input pInputText [(ngModel)]="formData.lastName" placeholder="Nom" maxlength="50" />
         </div>
       </div>
+
       <div class="form-row">
         <div class="form-field">
           <label>Date de naissance</label>
           <input pInputText type="date" [(ngModel)]="formData.birthDate" />
         </div>
+
         <div class="form-field" [class.has-error]="hasError('phone')">
           <label>Téléphone</label>
           <input pInputText [(ngModel)]="formData.phone" placeholder="+216 XX XXX XXX" maxlength="20" />
@@ -121,20 +123,24 @@
         <i class="pi pi-map-marker"></i>
         <span>Adresse</span>
       </div>
+
       <div class="form-field">
-        <label>Rue / Adresse</label>
+        <label>Adresse</label>
         <input pInputText [(ngModel)]="formData.address" placeholder="N° et nom de rue" maxlength="255" />
       </div>
+
       <div class="form-row">
         <div class="form-field">
           <label>Ville</label>
           <input pInputText [(ngModel)]="formData.city" placeholder="Ville" maxlength="100" />
         </div>
+
         <div class="form-field">
           <label>Code postal</label>
-          <input pInputText [(ngModel)]="formData.postalCode" placeholder="1000" maxlength="20" />
+          <input pInputText [(ngModel)]="formData.postalCode" placeholder="Code postal" maxlength="20" />
         </div>
       </div>
+
       <div class="form-field">
         <label>Pays</label>
         <p-select
@@ -146,34 +152,82 @@
           placeholder="Sélectionner un pays"
           styleClass="w-full" />
       </div>
-      <!-- Champ supplémentaire pour "Autre" pays -->
+
       @if (showOtherCountryInput) {
         <div class="form-field" style="margin-top: 0.75rem;">
           <label>Précisez le pays</label>
-          <input 
-            pInputText 
-            [(ngModel)]="formData.otherCountry" 
-            placeholder="Ex: Allemagne, Italie, etc." 
-            maxlength="50" />
+          <input pInputText [(ngModel)]="formData.otherCountry" placeholder="Ex: Allemagne, Italie..." maxlength="50" />
           <small class="error-message" *ngIf="hasError('otherCountry')">
             <i class="pi pi-exclamation-triangle"></i> {{ getError('otherCountry') }}
           </small>
         </div>
       }
     </div>
+
+    <!-- SECTION 4 : INFORMATIONS BANCAIRES (UNIQUEMENT POUR LES CLIENTS) -->
+    <div class="form-section" *ngIf="formData.role === 'CLIENT'">
+      <div class="form-section-header">
+        <i class="pi pi-credit-card"></i>
+        <span>Informations bancaires</span>
+      </div>
+
+      <!-- Mode CRÉATION : champ editable avec verrouillage auto -->
+      <div class="form-field" *ngIf="!isEdit">
+        <label>IBAN <span class="required">*</span></label>
+        <input 
+          pInputText 
+          [(ngModel)]="formData.iban" 
+          placeholder="FR7612345000012345678901234"
+          maxlength="34"
+          [disabled]="ibanLocked"
+          (input)="onIbanInput()"
+          class="iban-input" />
+        
+        <small class="error-message" *ngIf="hasError('iban')">
+          <i class="pi pi-exclamation-triangle"></i> {{ getError('iban') }}
+        </small>
+        
+        <!-- Hint quand non verrouillé -->
+        <small class="hint" *ngIf="!ibanLocked">
+          <i class="pi pi-info-circle"></i>
+          L'IBAN sera automatiquement verrouillé après saisie des 34 caractères
+        </small>
+        
+        <!-- Hint quand verrouillé -->
+        <small class="hint locked" *ngIf="ibanLocked">
+          <i class="pi pi-lock"></i>
+          IBAN verrouillé : {{ formData.iban }}
+        </small>
+      </div>
+
+      <!-- Mode MODIFICATION : affichage en lecture seule -->
+      <div class="form-field" *ngIf="isEdit && originalIban">
+        <label>IBAN</label>
+        <div class="iban-readonly">
+          <i class="pi pi-lock"></i>
+          <span>{{ formData.iban || 'Non renseigné' }}</span>
+        </div>
+        <small class="hint readonly">
+          <i class="pi pi-shield"></i>
+          L'IBAN ne peut pas être modifié après la création du compte
+        </small>
+      </div>
+    </div>
   </div>
 
+  <!-- Footer avec boutons -->
   <ng-template pTemplate="footer">
-    <p-button
-      label="Annuler"
-      icon="pi pi-times"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="onCancel()" />
-    <p-button
-      [label]="isEdit ? 'Enregistrer' : 'Ajouter'"
-      icon="pi pi-check"
-      [loading]="loading"
-      (onClick)="onSave()" />
+    <button pButton 
+            label="Annuler" 
+            icon="pi pi-times" 
+            class="p-button-secondary"
+            (click)="onCancel()">
+    </button>
+    <button pButton 
+            [label]="isEdit ? 'Enregistrer' : 'Ajouter'" 
+            icon="pi pi-check" 
+            [loading]="loading"
+            (click)="onSave()">
+    </button>
   </ng-template>
 </p-dialog>

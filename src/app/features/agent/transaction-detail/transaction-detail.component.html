@@ -1,121 +1,305 @@
 <div class="detail-container">
   <p-toast />
-  
-  <div class="header">
-    <h2>📋 Détail de la transaction</h2>
-    <div class="header-buttons">
-      <p-button label="Retour" icon="pi pi-arrow-left" (onClick)="goBackToDashboard()" styleClass="p-button-outlined" />
+  <p-confirmDialog />
+
+  <!-- EN-TÊTE -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="back-btn" (click)="goBackToDashboard()">
+        <i class="pi pi-arrow-left"></i> Retour
+      </button>
+      <div>
+        <h1 class="page-title">Détail de la transaction</h1>
+        <p class="page-subtitle">Consultez les informations complètes et l'historique</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="status-badge" [class]="'status-' + transaction?.status">
+        {{ getStatusLabel(transaction?.status) }}
+      </span>
     </div>
   </div>
 
-  <p-card>
-    <!-- État chargement -->
-    <div *ngIf="loading && !transaction && !error" class="empty-state">
-      <i class="pi pi-spin pi-spinner"></i>
-      <p>Chargement en cours...</p>
-    </div>
+  <!-- ÉTAT CHARGEMENT -->
+  <div *ngIf="loading" class="loading-state">
+    <i class="pi pi-spin pi-spinner"></i>
+    <p>Chargement des détails...</p>
+  </div>
 
-    <!-- État erreur -->
-    <div *ngIf="error" class="error-state">
-      <i class="pi pi-exclamation-triangle"></i>
-      <h3>Erreur</h3>
-      <p>{{ error }}</p>
-      <p-button label="Réessayer" icon="pi pi-refresh" (onClick)="loadTransaction()" />
-    </div>
+  <!-- ÉTAT ERREUR -->
+  <div *ngIf="error" class="error-state">
+    <i class="pi pi-exclamation-triangle"></i>
+    <h3>Erreur</h3>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="retryLoad()">Réessayer</button>
+  </div>
 
-    <!-- Affichage des détails -->
-    <div *ngIf="transaction && !loading">
-      
-      <!-- Bandeau alerte -->
-      <div *ngIf="transaction.alerte && transaction.alerte !== 'OK'" 
-           class="alert-banner" 
-           [class.alert-grave]="transaction.alerte === 'GRAVE'"
-           [class.alert-attention]="transaction.alerte === 'ATTENTION'">
-        <i [class]="'pi ' + getAlerteIcon(transaction.alerte)"></i>
-        <div class="alert-content">
-          <strong>{{ getAlerteLabel(transaction.alerte) }}</strong>
-          <span *ngIf="transaction.motifAlerte">{{ transaction.motifAlerte }}</span>
-        </div>
-      </div>
-
-      <!-- Grille des détails -->
-      <div class="detail-grid">
-        <div class="detail-row">
-          <div class="detail-label">MsgId :</div>
-          <div class="detail-value"><code>{{ transaction.msgId || '-' }}</code></div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">Type :</div>
-          <div class="detail-value">
-            <p-tag [value]="transaction.messageType || '-'" severity="info" />
-          </div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">UETR :</div>
-          <div class="detail-value">
-            <code>{{ transaction.uetr || '-' }}</code>
-          </div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">Montant :</div>
-          <div class="detail-value amount">
-            <strong>{{ transaction.amount | number:'1.2-2' }} {{ transaction.currency }}</strong>
-          </div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">Débiteur :</div>
-          <div class="detail-value">{{ transaction.debtorName || '-' }}</div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">Créditeur :</div>
-          <div class="detail-value">{{ transaction.creditorName || '-' }}</div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">Pays bénéficiaire :</div>
-          <div class="detail-value">
-            <span class="country-badge">{{ transaction.creditorCountry || '-' }}</span>
-          </div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">Statut :</div>
-          <div class="detail-value">
-            <p-tag 
-              [value]="getStatusLabel(transaction.status)" 
-              [severity]="getStatusSeverity(transaction.status)" />
-          </div>
-        </div>
-        
-        <div class="detail-row">
-          <div class="detail-label">Reçu le :</div>
-          <div class="detail-value">{{ transaction.receivedAt | date:'dd/MM/yyyy HH:mm:ss' }}</div>
-        </div>
-        
-        <div class="detail-row" *ngIf="transaction.rejectionReason">
-          <div class="detail-label">Motif rejet :</div>
-          <div class="detail-value rejection-reason">{{ transaction.rejectionReason }}</div>
-        </div>
-      </div>
-
-      <!-- BOUTONS D'ACTION (Accepter/Rejeter) -->
-      <div class="action-buttons" *ngIf="needsAgentAction(transaction.status)">
-        <p-button 
-          label="Accepter" 
-          icon="pi pi-check" 
-          severity="success" 
-          (onClick)="acceptTransaction()" />
-        <p-button 
-          label="Rejeter" 
-          icon="pi pi-times" 
-          severity="danger" 
-          (onClick)="rejectTransaction()" />
+  <!-- CONTENU PRINCIPAL -->
+  <div *ngIf="transaction && !loading" class="detail-content">
+    
+    <!-- BANDEAU ALERTE (si présent) -->
+    <div *ngIf="transaction.alerte && transaction.alerte !== 'OK'" 
+         class="alert-banner" 
+         [class.alert-grave]="transaction.alerte === 'GRAVE'"
+         [class.alert-attention]="transaction.alerte === 'ATTENTION'">
+      <i [class]="'pi ' + getAlerteIcon(transaction.alerte)"></i>
+      <div class="alert-content">
+        <strong>{{ getAlerteLabel(transaction.alerte) }}</strong>
+        <span *ngIf="transaction.motifAlerte">{{ transaction.motifAlerte }}</span>
       </div>
     </div>
-  </p-card>
+
+    <!-- SECTION 1: INFORMATIONS GÉNÉRALES -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="pi pi-info-circle"></i> Informations générales</h3>
+      </div>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Message ID</label>
+          <span class="mono">{{ transaction.msgId || '-' }}</span>
+          <button class="copy-btn" (click)="copyToClipboard(transaction.msgId)"><i class="pi pi-copy"></i></button>
+        </div>
+        <div class="info-item">
+          <label>Type</label>
+          <span class="type-badge" [class]="'type-' + transaction.messageType">{{ transaction.messageType }}</span>
+        </div>
+        <div class="info-item full-width">
+          <label>UETR (identifiant unique)</label>
+          <span class="mono uetr">{{ transaction.uetr || '-' }}</span>
+          <button class="copy-btn" (click)="copyToClipboard(transaction.uetr)"><i class="pi pi-copy"></i></button>
+        </div>
+        <div class="info-item">
+          <label>Montant</label>
+          <span class="amount">{{ transaction.amount | number:'1.2-2' }} {{ transaction.currency }}</span>
+        </div>
+        <div class="info-item">
+          <label>Date de réception</label>
+          <span>{{ transaction.receivedAt | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+        </div>
+        <div class="info-item">
+          <label>Direction</label>
+          <span class="direction-badge" [class.in]="transaction.direction === 'IN'" [class.out]="transaction.direction === 'OUT'">
+            {{ transaction.direction === 'IN' ? '📥 Reçu' : '📤 Émis' }}
+          </span>
+        </div>
+        <div class="info-item" *ngIf="transaction.groupStatus">
+          <label>Code ISO</label>
+          <span class="iso-code">{{ transaction.groupStatus }}</span>
+          <small class="iso-hint">(ACCP=Accepté, RJCT=Rejeté, PDNG=En attente)</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: PARTIES PRENANTES -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="pi pi-users"></i> Parties prenantes</h3>
+      </div>
+      <div class="two-columns">
+        <!-- Débiteur -->
+        <div class="sub-card">
+          <div class="sub-card-header">
+            <i class="pi pi-user"></i> Débiteur (donneur d'ordre)
+          </div>
+          <div class="info-item"><label>Nom</label><span>{{ transaction.debtorName || '-' }}</span></div>
+          <div class="info-item"><label>IBAN</label><span class="mono">{{ transaction.debtorIban || '-' }}</span></div>
+          <div class="info-item"><label>BIC</label><span class="mono">{{ transaction.debtorAgentBic || '-' }}</span></div>
+          <div class="info-item"><label>Pays</label><span class="country">{{ transaction.debtorCountry || '-' }}</span></div>
+        </div>
+        <!-- Créditeur -->
+        <div class="sub-card">
+          <div class="sub-card-header">
+            <i class="pi pi-user"></i> Créditeur (bénéficiaire)
+          </div>
+          <div class="info-item"><label>Nom</label><span>{{ transaction.creditorName || '-' }}</span></div>
+          <div class="info-item"><label>IBAN</label><span class="mono">{{ transaction.creditorIban || '-' }}</span></div>
+          <div class="info-item"><label>BIC</label><span class="mono">{{ transaction.creditorAgentBic || '-' }}</span></div>
+          <div class="info-item"><label>Pays</label><span class="country">{{ transaction.creditorCountry || '-' }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: BANQUES INTERMÉDIAIRES (PACS009) -->
+    <div class="card" *ngIf="transaction.instructingAgentBic || transaction.instructedAgentBic">
+      <div class="card-header">
+        <h3><i class="pi pi-building"></i> Banques intermédiaires</h3>
+      </div>
+      <div class="two-columns">
+        <div class="sub-card">
+          <div class="sub-card-header">Banque donneuse d'ordre</div>
+          <div class="info-item"><label>BIC</label><span class="mono">{{ transaction.instructingAgentBic || '-' }}</span></div>
+        </div>
+        <div class="sub-card">
+          <div class="sub-card-header">Banque bénéficiaire</div>
+          <div class="info-item"><label>BIC</label><span class="mono">{{ transaction.instructedAgentBic || '-' }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: VALIDATION AGENT -->
+    <div class="card" *ngIf="transaction.validatedBy || transaction.validatedAt">
+      <div class="card-header">
+        <h3><i class="pi pi-check-circle"></i> Validation agent</h3>
+      </div>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Validé par</label>
+          <span>{{ transaction.validatedBy || '-' }}</span>
+        </div>
+        <div class="info-item">
+          <label>Validé le</label>
+          <span>{{ transaction.validatedAt ? (transaction.validatedAt | date:'dd/MM/yyyy HH:mm:ss') : '-' }}</span>
+        </div>
+        <div class="info-item" *ngIf="transaction.rejectionReason">
+          <label>Motif de rejet</label>
+          <span class="rejection-reason">{{ transaction.rejectionReason }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: MESSAGE ASSOCIÉ -->
+    <div class="card" *ngIf="relatedMessage">
+      <div class="card-header">
+        <h3><i class="pi pi-envelope"></i> Message associé</h3>
+      </div>
+      <div class="related-message">
+        <div class="msg-type" [class]="'type-' + relatedMessage.messageType">
+          {{ relatedMessage.messageType }}
+        </div>
+        <div class="msg-details">
+          <div><label>MsgId :</label><span class="mono">{{ relatedMessage.msgId }}</span></div>
+          <div><label>Statut :</label><span>{{ relatedMessage.groupStatus || relatedMessage.status }}</span></div>
+          <div><label>Date :</label><span>{{ relatedMessage.receivedAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+          <div *ngIf="relatedMessage.rejectionReason"><label>Motif :</label><span>{{ relatedMessage.rejectionReason }}</span></div>
+        </div>
+        <button class="action-icon view" (click)="viewRelatedMessage(relatedMessage.id)" title="Voir le détail">
+          <i class="pi pi-eye"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION 6: ACTIONS AGENT -->
+    <div class="actions-card" *ngIf="needsAgentAction(transaction.status)">
+      <h3><i class="pi pi-cog"></i> Action requise</h3>
+      <p class="action-hint">Cette transaction nécessite votre validation pour être acceptée ou rejetée.</p>
+      <div class="action-buttons">
+        <button class="action-btn accept" (click)="openProcessDialog('ACCP')">
+          <i class="pi pi-check-circle"></i> Accepter
+        </button>
+        <button class="action-btn reject" (click)="openProcessDialog('RJCT')">
+          <i class="pi pi-times-circle"></i> Rejeter
+        </button>
+      </div>
+    </div>
+
+    <div class="actions-card" *ngIf="transaction.status === 'ACCEPTE' && transaction.messageType !== 'CAMT056'">
+      <h3><i class="pi pi-ban"></i> Actions avancées</h3>
+      <div class="action-buttons">
+        <button class="action-btn cancel" (click)="openCancelDialog()">
+          <i class="pi pi-ban"></i> Demander l'annulation (CAMT.056)
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- DIALOGUE DE TRAITEMENT (ACCEPTER/REJETER) -->
+<p-dialog
+  header="Traitement de la transaction"
+  [(visible)]="showProcessDialog"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeProcessDialog()">
+  
+  <div class="dialog-content" *ngIf="transaction">
+    <div class="info-summary">
+      <div class="summary-row"><label>MsgId :</label><span class="mono">{{ transaction.msgId }}</span></div>
+      <div class="summary-row"><label>Montant :</label><span class="amount">{{ transaction.amount }} {{ transaction.currency }}</span></div>
+    </div>
+
+    <div class="decision-section">
+      <div class="decision-title">Votre décision</div>
+      <div class="decision-options">
+        <label class="decision-option" [class.selected]="selectedDecision === 'ACCP'">
+          <input type="radio" name="decision" value="ACCP" [(ngModel)]="selectedDecision">
+          <div>
+            <div class="option-label">Accepter</div>
+            <div class="option-desc">Valider cette transaction</div>
+          </div>
+        </label>
+        <label class="decision-option" [class.selected]="selectedDecision === 'RJCT'">
+          <input type="radio" name="decision" value="RJCT" [(ngModel)]="selectedDecision">
+          <div>
+            <div class="option-label">Rejeter</div>
+            <div class="option-desc">Refuser cette transaction</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div *ngIf="selectedDecision === 'RJCT'" class="motif-section">
+      <label>Motif du rejet <span class="required">*</span></label>
+      <textarea
+        [(ngModel)]="rejectionReason"
+        rows="4"
+        placeholder="Expliquez clairement le motif du rejet..."
+        class="motif-textarea"></textarea>
+      <small class="motif-hint">Ce motif sera communiqué au client.</small>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-secondary" (click)="closeProcessDialog()">Annuler</button>
+    <button class="btn-primary" (click)="confirmProcess()" [disabled]="!selectedDecision || (selectedDecision === 'RJCT' && !rejectionReason.trim())">
+      Confirmer
+    </button>
+  </ng-template>
+</p-dialog>
+
+<!-- DIALOGUE D'ANNULATION (CAMT.056) -->
+<p-dialog
+  header="Demande d'annulation CAMT.056"
+  [(visible)]="showCancelDialog"
+  [modal]="true"
+  [style]="{ width: '500px' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeCancelDialog()">
+  
+  <div class="dialog-content" *ngIf="transaction">
+    <div class="info-summary">
+      <div class="summary-row"><label>MsgId :</label><span class="mono">{{ transaction.msgId }}</span></div>
+      <div class="summary-row"><label>UETR :</label><span class="mono">{{ transaction.uetr }}</span></div>
+      <div class="summary-row"><label>Montant :</label><span>{{ transaction.amount }} {{ transaction.currency }}</span></div>
+    </div>
+
+    <div class="motif-section">
+      <label>Motif d'annulation</label>
+      <select [(ngModel)]="cancelReasonCode" class="motif-select">
+        <option value="CUST">CUST - Demandé par le client</option>
+        <option value="DUPL">DUPL - Paiement en double</option>
+        <option value="FRAD">FRAD - Origine frauduleuse</option>
+        <option value="CURR">CURR - Devise incorrecte</option>
+        <option value="AM09">AM09 - Montant incorrect</option>
+        <option value="TECH">TECH - Problème technique</option>
+      </select>
+    </div>
+
+    <div class="motif-section">
+      <label>Détails complémentaires</label>
+      <textarea
+        [(ngModel)]="cancelReasonText"
+        rows="3"
+        placeholder="Informations supplémentaires (optionnel)..."
+        class="motif-textarea"></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button class="btn-secondary" (click)="closeCancelDialog()">Annuler</button>
+    <button class="btn-danger" (click)="confirmCancellation()">Générer CAMT.056</button>
+  </ng-template>
+</p-dialog>

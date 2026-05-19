@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TransferService, ClientNotification } from '../../services/transfer.service';
@@ -14,17 +14,27 @@ import { Subscription } from 'rxjs';
 export class NotificationPopupComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
   
-  isOpen = true;  // ← Popup toujours ouverte quand affichée
+  isOpen = true;
   notifications: ClientNotification[] = [];
   unreadCount = 0;
   private subscriptions: Subscription[] = [];
 
   constructor(
     private transferService: TransferService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef  // ✅ Ajouter ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    console.log('🔔 Popup ouverte, chargement des notifications');
+    
+    // ✅ Charger les données immédiatement
+    this.loadNotifications();
+    this.loadUnreadCount();
+  }
+
+  refreshData(): void {
+    console.log('🔄 RefreshData appelé manuellement');
     this.loadNotifications();
     this.loadUnreadCount();
   }
@@ -33,18 +43,16 @@ export class NotificationPopupComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  // ✅ Cette méthode est appelée par la cloche dans le parent
-  // Mais dans ce composant, on n'a PAS de cloche
-  // La cloche est dans ClientLayoutComponent
-  
   closePopup() {
-    this.close.emit();  // ← Ferme la popup (cache le composant)
+    this.close.emit();
   }
 
   loadNotifications() {
+    console.log('📥 Chargement des notifications...');
     const sub = this.transferService.getNotifications().subscribe({
       next: (data: ClientNotification[]) => {
-        // Filtrer les doublons par UETR
+        console.log('✅ Notifications reçues:', data.length);
+        
         const uniqueMap = new Map<string, ClientNotification>();
         data.forEach(notif => {
           const key = notif.uetr || notif.id.toString();
@@ -54,22 +62,36 @@ export class NotificationPopupComponent implements OnInit, OnDestroy {
         });
         this.notifications = Array.from(uniqueMap.values());
         
-        // Trier par date décroissante
         this.notifications.sort((a, b) => {
           const dateA = new Date(a.createdAt || a.date || '');
           const dateB = new Date(b.createdAt || b.date || '');
           return dateB.getTime() - dateA.getTime();
         });
+        
+        console.log('📋 Notifications après traitement:', this.notifications.length);
+        this.cdr.detectChanges(); // ✅ Forcer la détection des changements
       },
-      error: (err: any) => console.error('Erreur chargement notifications', err)
+      error: (err: any) => {
+        console.error('Erreur chargement notifications', err);
+        this.notifications = [];
+        this.cdr.detectChanges();
+      }
     });
     this.subscriptions.push(sub);
   }
 
   loadUnreadCount() {
     const sub = this.transferService.getUnreadCount().subscribe({
-      next: (count: number) => this.unreadCount = count,
-      error: (err: any) => console.error('Erreur compteur', err)
+      next: (count: number) => {
+        console.log('🔔 Compte non lu:', count);
+        this.unreadCount = count;
+        this.cdr.detectChanges(); // ✅ Forcer la détection des changements
+      },
+      error: (err: any) => {
+        console.error('Erreur compteur', err);
+        this.unreadCount = 0;
+        this.cdr.detectChanges();
+      }
     });
     this.subscriptions.push(sub);
   }
@@ -83,6 +105,8 @@ export class NotificationPopupComponent implements OnInit, OnDestroy {
           this.notifications[index] = { ...this.notifications[index], read: true };
         }
         this.unreadCount = Math.max(0, this.unreadCount - 1);
+        console.log('✅ Notification marquée comme lue');
+        this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Erreur', err)
     });
@@ -95,23 +119,22 @@ export class NotificationPopupComponent implements OnInit, OnDestroy {
       next: () => {
         this.notifications = this.notifications.map(n => ({ ...n, read: true }));
         this.unreadCount = 0;
+        console.log('✅ Toutes les notifications marquées comme lues');
+        this.cdr.detectChanges();
       },
       error: (err: any) => console.error('Erreur', err)
     });
     this.subscriptions.push(sub);
   }
 
-  // ✅ Click sur une notification
   onNotificationClick(notif: ClientNotification) {
+    console.log('📌 Click sur notification:', notif.id);
     if (!notif.read) {
       this.markAsRead(notif.id, new Event('click'));
     }
-    if (notif.uetr) {
-      this.closePopup();  // ← Ferme la popup avant navigation
-      this.router.navigate(['/client/tracking'], { queryParams: { uetr: notif.uetr } });
-    }
+    this.closePopup();
   }
-
+  
   getTypeIcon(type: string): string {
     switch(type) {
       case 'success': return '✅';

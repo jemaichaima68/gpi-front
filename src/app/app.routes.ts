@@ -141,18 +141,9 @@ export const routes: Routes = [
           import('./features/client/pages/profile/profile.component')
             .then(m => m.ProfileComponent)
       },
-      {
-        path: 'transaction/:id',
-        loadComponent: () =>
-          import('./features/client/pages/transaction-details/transaction-details.component')
-            .then(m => m.TransactionDetailsComponent)
-      },
-      {
-        path: 'transaction/uetr/:uetr',
-        loadComponent: () =>
-          import('./features/client/pages/transaction-details/transaction-details.component')
-            .then(m => m.TransactionDetailsComponent)
-      },
+      // ⭐⭐⭐ ROUTES SUPPRIMÉES ⭐⭐⭐
+      // Les routes transaction/:id et transaction/uetr/:uetr sont supprimées
+      // Le client utilise uniquement /tracking pour voir les détails
       {
         path: '**',
         redirectTo: 'dashboard'

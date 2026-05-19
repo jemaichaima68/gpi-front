@@ -621,3 +621,196 @@
 :host ::ng-deep .filter-select .p-select-label .flex {
   gap: 12px;
 }
+/* Ajouter à la fin du fichier CSS existant */
+
+/* Style pour le champ IBAN désactivé */
+.disabled-field {
+  background-color: #f1f5f9 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75;
+}
+
+.form-field input.disabled-field:disabled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
+/* Hint spécial pour le mode édition */
+.hint.warning-hint {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.hint.warning-hint i {
+  color: #d97706;
+}
+/* Style pour le champ IBAN désactivé/verrouillé */
+.disabled-field {
+  background-color: #f1f5f9 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.form-field input.disabled-field:disabled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
+/* Hint spécial pour le mode verrouillé */
+.hint.warning-hint {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.hint.warning-hint i {
+  color: #d97706;
+}
+
+/* Style pour l'affichage du cadenas dans le hint */
+.hint i.pi-lock {
+  font-size: 0.7rem;
+  margin-right: 4px;
+}
+/* Ajoutez ces styles à la fin de votre fichier CSS existant */
+
+/* Message d'information pour le mot de passe */
+.info-message {
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border: 1px solid #7dd3fc;
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #0369a1;
+  font-size: 0.875rem;
+  margin-top: 16px;
+  font-weight: 500;
+}
+
+.info-message i {
+  font-size: 1.25rem;
+  color: #0284c7;
+}
+
+/* Style pour l'affichage IBAN non modifiable */
+.iban-display {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  font-family: 'DM Sans', monospace;
+  font-size: 0.875rem;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iban-display i {
+  color: #6366f1;
+  font-size: 0.9rem;
+}
+
+/* Hint spécial pour le mode verrouillé */
+.hint.warning-hint {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.hint.warning-hint i {
+  color: #d97706;
+}
+
+/* Style pour le champ IBAN désactivé */
+.disabled-field {
+  background-color: #f1f5f9 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75;
+}
+
+.form-field input.disabled-field:disabled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+/* Style pour le champ IBAN verrouillé */
+.disabled-field {
+  background-color: #f1f5f9 !important;
+  cursor: not-allowed !important;
+  color: #0f172a !important;
+  font-family: monospace !important;
+  font-size: 0.875rem !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Style pour l'affichage IBAN non modifiable */
+.iban-display {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iban-display i {
+  color: #10b981;
+  font-size: 0.9rem;
+}
+
+/* Hint pour IBAN verrouillé */
+.hint.locked-hint {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.hint.locked-hint i {
+  color: #10b981;
+}
+
+/* Hint normal */
+.hint {
+  font-size: 0.7rem;
+  color: #64748b;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #eef2ff;
+}
+
+.hint i {
+  color: #6366f1;
+  font-size: 0.75rem;
+  margin-top: 1px;
+}
+
+/* Message d'erreur */
+.error-message {
+  color: #f43f5e;
+  font-size: 0.7rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+/* Conteneur du champ IBAN */
+.form-field input {
+  font-family: monospace !important;
+  letter-spacing: 0.5px;
+}

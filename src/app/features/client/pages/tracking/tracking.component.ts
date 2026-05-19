@@ -1,91 +1,284 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-import { TransferResponse, TransferService } from '../../services/transfer.service';
+import { TransferResponse, TransferService, TransactionTimelineDto } from '../../services/transfer.service';
+import { ButtonModule } from 'primeng/button';
+import { SplitButtonModule } from 'primeng/splitbutton';
+import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-tracking',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ButtonModule, SplitButtonModule],
   templateUrl: './tracking.component.html',
   styleUrls: ['./tracking.component.css']
 })
 export class TrackingComponent implements OnInit {
-  uetrToSearch: string = '';
+  uetrToSearch = '';
   transferDetails: TransferResponse | null = null;
-  errorMessage: string = '';
-  userInitials: string = 'HJ';
-  currentDate: Date = new Date();
+  timeline: TransactionTimelineDto[] = [];
+  errorMessage = '';
+  isLoading = false;
+
+  exportOptions: MenuItem[] = [
+    { label: 'CSV', icon: 'pi pi-file-excel', command: () => this.exportCsv() },
+    { label: 'PDF', icon: 'pi pi-file-pdf', command: () => this.exportPdf() }
+  ];
 
   constructor(
     private route: ActivatedRoute,
-    private service: TransferService
+    private service: TransferService,
+    private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       if (params['uetr']) {
         this.uetrToSearch = params['uetr'];
         this.searchTransfer();
+      } else {
+        this.transferDetails = null;
+        this.timeline = [];
+        this.errorMessage = '';
+        this.cdr.detectChanges();
       }
     });
   }
 
-  searchTransfer() {
+  searchTransfer(): void {
     if (!this.uetrToSearch || this.uetrToSearch.trim() === '') {
       this.errorMessage = 'Veuillez entrer un UETR valide';
       this.transferDetails = null;
+      this.timeline = [];
+      this.cdr.detectChanges();
       return;
     }
 
     this.errorMessage = '';
-    
-    this.service.getTransferByUetr(this.uetrToSearch).subscribe({
+    this.transferDetails = null;
+    this.timeline = [];
+    this.isLoading = true;
+    this.cdr.detectChanges();
+
+    this.service.getTransferByUetr(this.uetrToSearch.trim()).subscribe({
       next: (res) => {
         this.transferDetails = res;
-        console.log('✅ Transfert trouvé:', res);
+        this.isLoading = false;
+
+        if (res.id) {
+          this.loadTimeline(res.id);
+        }
+
+        this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('❌ Erreur recherche:', err);
+      error: () => {
         this.errorMessage = 'Aucun transfert trouvé avec cet UETR';
         this.transferDetails = null;
+        this.timeline = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadTimeline(id: number): void {
+    this.service.getTransactionTimeline(id).subscribe({
+      next: (steps) => {
+        this.timeline = steps || [];
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.timeline = this.getLocalTimelineSteps();
+        this.cdr.detectChanges();
       }
     });
   }
 
   getStatusLabel(status: string): string {
-    const map: Record<string, string> = {
-      'PDNG': 'En attente',
-      'ACSC': 'Terminé',
-      'RJCT': 'Rejeté',
-      'ACTC': 'Validation technique',
-      'ACSP': 'En traitement'
-    };
-    return map[status] || status;
+    switch (status) {
+      case 'PDNG':
+      case 'EN_ATTENTE':
+        return ' En attente';
+      case 'ACCEPTE':
+      case 'ACCP':
+        return ' Acceptée';
+      case 'REJETE':
+      case 'RJCT':
+        return ' Rejetée';
+      case 'ANNULATION_EN_ATTENTE':
+        return ' Annulation en cours';
+      case 'ANNULEE':
+        return 'Annulée';
+      default:
+        return status || '-';
+    }
   }
 
-  getStatusDate(): string {
-    if (this.transferDetails?.status === 'ACSC' && this.transferDetails?.updatedAt) {
-      return new Date(this.transferDetails.updatedAt).toLocaleDateString('fr-FR', { 
-        day: '2-digit', 
-        month: 'long', 
-        year: 'numeric' 
-      });
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'ACCEPTE':
+      case 'ACCP':
+        return 'status-accepted';
+      case 'REJETE':
+      case 'RJCT':
+        return 'status-rejected';
+      case 'ANNULATION_EN_ATTENTE':
+        return 'status-cancel-pending';
+      case 'ANNULEE':
+        return 'status-cancelled';
+      default:
+        return 'status-pending';
     }
-    return new Date().toLocaleDateString('fr-FR', { 
-      day: '2-digit', 
-      month: 'long', 
-      year: 'numeric' 
+  }
+
+  getStatusIcon(status: string): string {
+    switch (status) {
+      case 'ACCEPTE':
+      case 'ACCP':
+        return '✅';
+      case 'REJETE':
+      case 'RJCT':
+        return '❌';
+      case 'ANNULATION_EN_ATTENTE':
+        return '🕓';
+      case 'ANNULEE':
+        return '🚫';
+      default:
+        return '⏳';
+    }
+  }
+
+  getFormattedDate(date: string | undefined): string {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 
-  // ========== EXPORT PDF ==========
-  exportPdf() {
+  iconToEmoji(icon: string): string {
+    switch (icon) {
+      case 'inbox': return '📥';
+      case 'check-circle': return '✅';
+      case 'times-circle': return '❌';
+      case 'hourglass': return '⏳';
+      case 'ban': return '🚫';
+      case 'clock': return '🕓';
+      default: return '•';
+    }
+  }
+
+  getTimelineSteps(): any[] {
+    if (this.timeline && this.timeline.length > 0) {
+      return this.timeline.map(step => ({
+        label: step.statusLabel,
+        description: step.description,
+        date: step.timestamp ? this.getFormattedDate(step.timestamp) : '',
+        completed: step.completed,
+        icon: this.iconToEmoji(step.icon)
+      }));
+    }
+
+    return this.getLocalTimelineSteps();
+  }
+
+  private getLocalTimelineSteps(): any[] {
+    const status = this.transferDetails?.status;
+    const updatedAt = this.transferDetails?.updatedAt;
+    const createdAt = this.transferDetails?.createdAt;
+    const rejectionReason = this.transferDetails?.rejectionReason;
+
+    const accepted = status === 'ACCEPTE' || status === 'ANNULATION_EN_ATTENTE' || status === 'ANNULEE';
+    const rejected = status === 'REJETE';
+    const cancelPending = status === 'ANNULATION_EN_ATTENTE';
+    const cancelled = status === 'ANNULEE';
+
+    return [
+      {
+        label: 'Transaction reçue',
+        description: 'PACS.008 reçu et enregistré dans le système',
+        date: this.getFormattedDate(createdAt),
+        completed: true,
+        icon: '📥'
+      },
+      {
+        label: accepted ? 'Transaction acceptée' : (rejected ? 'Transaction rejetée' : 'En attente'),
+        description: accepted
+          ? 'PACS.002 ACCP généré : la transaction est acceptée'
+          : rejected
+            ? `PACS.002 RJCT généré : ${rejectionReason || 'motif non spécifié'}`
+            : 'En attente de validation par notre équipe',
+        date: accepted || rejected ? this.getFormattedDate(updatedAt) : '',
+        completed: accepted || rejected,
+        icon: accepted ? '✅' : rejected ? '❌' : '⏳'
+      },
+      {
+        label: 'Demande d’annulation',
+        description: cancelPending || cancelled
+          ? 'CAMT.056 envoyé : demande d’annulation en cours'
+          : 'Aucune demande d’annulation pour le moment',
+        date: cancelPending || cancelled ? this.getFormattedDate(updatedAt) : '',
+        completed: cancelPending || cancelled,
+        icon: '🚫'
+      },
+      {
+        label: 'Réponse annulation',
+        description: cancelled
+          ? 'CAMT.029 CNCL reçu : la transaction est annulée'
+          : cancelPending
+            ? 'En attente de réponse CAMT.029'
+            : 'Aucune réponse CAMT.029',
+        date: cancelled ? this.getFormattedDate(updatedAt) : '',
+        completed: cancelled,
+        icon: cancelled ? '✅' : '🕓'
+      }
+    ];
+  }
+
+  exportCsv(): void {
+    if (!this.transferDetails) {
+      alert('Aucun transfert à exporter');
+      return;
+    }
+
+    const headers = [
+      'UETR', 'Montant', 'Devise', 'Statut', 'Bénéficiaire',
+      'Banque bénéficiaire', 'Donneur d’ordre', 'Date création',
+      'Dernière mise à jour', 'Motif de rejet'
+    ];
+
+    const row = [
+      this.transferDetails.uetr,
+      this.transferDetails.amount,
+      this.transferDetails.currency || 'EUR',
+      this.getStatusLabel(this.transferDetails.status),
+      this.transferDetails.beneficiaryName || '-',
+      this.transferDetails.beneficiaryBank || '-',
+      this.transferDetails.senderName || this.transferDetails.debtorName || '-',
+      this.getFormattedDate(this.transferDetails.createdAt),
+      this.getFormattedDate(this.transferDetails.updatedAt),
+      this.transferDetails.rejectionReason || '-'
+    ];
+
+    const csvContent = [headers, row]
+      .map(line => line.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+      .join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `transfert_${this.transferDetails.uetr.slice(0, 8)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  exportPdf(): void {
     if (!this.transferDetails) {
       alert('Aucun transfert à exporter');
       return;
@@ -93,21 +286,17 @@ export class TrackingComponent implements OnInit {
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    
+
     doc.setFontSize(20);
-    doc.setTextColor(102, 126, 234);
+    doc.setTextColor(26, 77, 140);
     doc.text('GPI Tracker - Détails du transfert', pageWidth / 2, 20, { align: 'center' });
-    
+
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Exporté le: ${new Date().toLocaleString('fr-FR')}`, pageWidth - 20, 30, { align: 'right' });
-    
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text('Informations du transfert', 14, 45);
-    
+    doc.text(`Exporté le : ${new Date().toLocaleString('fr-FR')}`, pageWidth - 20, 30, { align: 'right' });
+
     autoTable(doc, {
-      startY: 50,
+      startY: 45,
       head: [['Champ', 'Valeur']],
       body: [
         ['UETR', this.transferDetails.uetr],
@@ -115,100 +304,34 @@ export class TrackingComponent implements OnInit {
         ['Statut', this.getStatusLabel(this.transferDetails.status)],
         ['Bénéficiaire', this.transferDetails.beneficiaryName || '-'],
         ['Banque bénéficiaire', this.transferDetails.beneficiaryBank || '-'],
-        ['Date création', new Date(this.transferDetails.createdAt).toLocaleString('fr-FR')],
-        ['Dernière mise à jour', new Date(this.transferDetails.updatedAt).toLocaleString('fr-FR')]
+        ['Donneur d’ordre', this.transferDetails.senderName || this.transferDetails.debtorName || '-'],
+        ['Date création', this.getFormattedDate(this.transferDetails.createdAt)],
+        ['Dernière mise à jour', this.getFormattedDate(this.transferDetails.updatedAt)],
+        ['Motif de rejet', this.transferDetails.rejectionReason || '-']
       ],
       theme: 'striped',
-      headStyles: { fillColor: [102, 126, 234], textColor: 255 },
+      headStyles: { fillColor: [26, 77, 140], textColor: 255 },
       margin: { left: 14, right: 14 }
     });
-    
+
     let finalY = (doc as any).lastAutoTable.finalY + 10;
-    
-    doc.text('Parcours du virement SWIFT GPI', 14, finalY);
+    doc.setFontSize(14);
+    doc.text('Timeline PACS/CAMT', 14, finalY);
     finalY += 5;
-    
-    // ✅ Utilisation des données dynamiques du backend
-    const journeyBody = (this.transferDetails.bankJourney || []).map(bank => [
-      bank.bankName,
-      bank.role,
-      bank.fees || '-',
-      bank.status
-    ]);
-    
+
     autoTable(doc, {
       startY: finalY,
-      head: [['Banque', 'Rôle', 'Frais', 'Statut']],
-      body: journeyBody,
+      head: [['Étape', 'Description', 'État']],
+      body: this.getTimelineSteps().map(step => [
+        step.label,
+        step.description,
+        step.completed ? 'Terminé' : 'En attente'
+      ]),
       theme: 'striped',
-      headStyles: { fillColor: [102, 126, 234], textColor: 255 },
+      headStyles: { fillColor: [26, 77, 140], textColor: 255 },
       margin: { left: 14, right: 14 }
     });
-    
-    finalY = (doc as any).lastAutoTable.finalY + 10;
-    
-    doc.text('Résumé des frais déduits', 14, finalY);
-    finalY += 5;
-    
-    autoTable(doc, {
-      startY: finalY,
-      body: [
-        ['Frais totaux', `${this.transferDetails.totalFees?.toFixed(2) || '0.00'} EUR`],
-        ['Montant net crédité', `${this.transferDetails.netAmount?.toFixed(2) || '0.00'} ${this.transferDetails.currency === 'EUR' ? 'USD' : this.transferDetails.currency || 'EUR'}`]
-      ],
-      theme: 'plain',
-      margin: { left: 14, right: 14 }
-    });
-    
+
     doc.save(`transfert_${this.transferDetails.uetr.slice(0, 8)}.pdf`);
-  }
-
-  // ========== EXPORT EXCEL ==========
-  exportExcel() {
-    if (!this.transferDetails) {
-      alert('Aucun transfert à exporter');
-      return;
-    }
-
-    const data = [
-      { Field: 'UETR', Value: this.transferDetails.uetr },
-      { Field: 'Montant', Value: `${this.transferDetails.amount} ${this.transferDetails.currency || 'EUR'}` },
-      { Field: 'Statut', Value: this.getStatusLabel(this.transferDetails.status) },
-      { Field: 'Bénéficiaire', Value: this.transferDetails.beneficiaryName || '-' },
-      { Field: 'Compte bénéficiaire', Value: this.transferDetails.beneficiaryAccount || '-' },
-      { Field: 'Banque bénéficiaire', Value: this.transferDetails.beneficiaryBank || '-' },
-      { Field: 'Donneur d\'ordre', Value: this.transferDetails.senderName || '-' },
-      { Field: 'Date création', Value: new Date(this.transferDetails.createdAt).toLocaleString('fr-FR') },
-      { Field: 'Dernière mise à jour', Value: new Date(this.transferDetails.updatedAt).toLocaleString('fr-FR') }
-    ];
-    
-    // ✅ Utilisation des données dynamiques du backend
-    const journeyData = (this.transferDetails.bankJourney || []).map((bank, index) => ({
-      Etape: bank.step || (index + 1),
-      Banque: bank.bankName,
-      Rôle: bank.role,
-      Frais: bank.fees || '-',
-      Statut: bank.status
-    }));
-    
-    const feesData = [
-      { Description: 'Frais totaux', Montant: `${this.transferDetails.totalFees?.toFixed(2) || '0.00'} EUR` },
-      { Description: 'Montant net crédité', Montant: `${this.transferDetails.netAmount?.toFixed(2) || '0.00'} ${this.transferDetails.currency === 'EUR' ? 'USD' : this.transferDetails.currency || 'EUR'}` }
-    ];
-    
-    const wb = XLSX.utils.book_new();
-    
-    const ws1 = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws1, 'Informations');
-    
-    const ws2 = XLSX.utils.json_to_sheet(journeyData);
-    XLSX.utils.book_append_sheet(wb, ws2, 'Parcours SWIFT');
-    
-    const ws3 = XLSX.utils.json_to_sheet(feesData);
-    XLSX.utils.book_append_sheet(wb, ws3, 'Frais');
-    
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, `transfert_${this.transferDetails.uetr.slice(0, 8)}.xlsx`);
   }
 }

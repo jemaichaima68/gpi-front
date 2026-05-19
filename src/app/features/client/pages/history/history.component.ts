@@ -2,11 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-import { TransferService } from '../../services/transfer.service';
+import { TransferService, ConsultationHistoryDto } from '../../services/transfer.service';
 
 @Component({
   selector: 'app-history',
@@ -16,20 +12,19 @@ import { TransferService } from '../../services/transfer.service';
   styleUrls: ['./history.component.css']
 })
 export class HistoryComponent implements OnInit {
-  consultationHistory: any[] = [];
-  filteredHistory: any[] = [];
-  displayedHistory: any[] = [];
-  isLoading: boolean = false;
-  
-  currentPage: number = 1;
-  itemsPerPage: number = 10;
-  totalPages: number = 1;
-  
-  filterDateDebut: string = '';
-  filterDateFin: string = '';
-  
-  showConfirmModal: boolean = false;
-  itemToDelete: any = null;
+  consultationHistory: ConsultationHistoryDto[] = [];
+  filteredHistory: ConsultationHistoryDto[] = [];
+  displayedHistory: ConsultationHistoryDto[] = [];
+  isLoading = false;
+
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalPages = 1;
+
+  filterDate = '';
+
+  showConfirmModal = false;
+  itemToDelete: ConsultationHistoryDto | null = null;
   deleteMode: 'single' | 'all' = 'single';
 
   constructor(
@@ -37,77 +32,66 @@ export class HistoryComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadHistory();
   }
 
-  loadHistory() {
+  loadHistory(): void {
+    this.isLoading = true;
+
     this.service.getConsultationHistory().subscribe({
       next: (res) => {
-        console.log('Historique reçu:', res);
         this.consultationHistory = res;
         this.filteredHistory = [...res];
         this.applyFilters();
+        this.isLoading = false;
       },
-      error: (err) => {
-        console.error('Erreur:', err);
-        this.setMockData();
+      error: () => {
+        this.consultationHistory = [];
+        this.filteredHistory = [];
+        this.updateDisplayedItems();
+        this.isLoading = false;
       }
     });
   }
 
-  setMockData() {
-    this.consultationHistory = [
-      { id: 1, uetr: '70e3cf7a-7af0-48d9-856f-a5affa6b38de', consultedAt: new Date().toISOString(), status: 'ACSC', amount: 1250, currency: 'EUR' },
-      { id: 2, uetr: '97ed4827-7b6f-4491-a06f-b548d5a7512d', consultedAt: new Date(Date.now() - 86400000).toISOString(), status: 'PDNG', amount: 3500, currency: 'EUR' },
-      { id: 3, uetr: 'GPI584230-xxxx-xxxx-xxxx-xxxxxxxxxxxx', consultedAt: new Date(Date.now() - 172800000).toISOString(), status: 'ACSC', amount: 860, currency: 'EUR' }
-    ];
-    this.filteredHistory = [...this.consultationHistory];
-    this.applyFilters();
-  }
-
-  applyFilters() {
+  applyFilters(): void {
     let filtered = [...this.consultationHistory];
-    
-    if (this.filterDateDebut) {
-      const startDate = new Date(this.filterDateDebut);
-      startDate.setHours(0, 0, 0, 0);
+
+    if (this.filterDate) {
+      const selectedDate = new Date(this.filterDate);
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
       filtered = filtered.filter(item => {
         const itemDate = new Date(item.consultedAt);
-        return itemDate >= startDate;
+        return itemDate >= startOfDay && itemDate <= endOfDay;
       });
     }
-    
-    if (this.filterDateFin) {
-      const endDate = new Date(this.filterDateFin);
-      endDate.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(item => {
-        const itemDate = new Date(item.consultedAt);
-        return itemDate <= endDate;
-      });
-    }
-    
+
     this.filteredHistory = filtered;
     this.currentPage = 1;
     this.updateDisplayedItems();
   }
 
-  resetFilters() {
-    this.filterDateDebut = '';
-    this.filterDateFin = '';
+  resetFilters(): void {
+    this.filterDate = '';
     this.filteredHistory = [...this.consultationHistory];
     this.currentPage = 1;
     this.updateDisplayedItems();
   }
 
-  updateDisplayedItems() {
+  updateDisplayedItems(): void {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
     this.displayedHistory = this.filteredHistory.slice(start, end);
-    this.totalPages = Math.ceil(this.filteredHistory.length / this.itemsPerPage);
+    this.totalPages = Math.max(1, Math.ceil(this.filteredHistory.length / this.itemsPerPage));
   }
 
-  goToPage(page: number) {
+  goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
       this.updateDisplayedItems();
@@ -119,175 +103,132 @@ export class HistoryComponent implements OnInit {
     const maxVisible = 5;
     let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
     let end = Math.min(this.totalPages, start + maxVisible - 1);
-    
+
     if (end - start + 1 < maxVisible) {
       start = Math.max(1, end - maxVisible + 1);
     }
-    
+
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
+
     return pages;
   }
 
   getStatusLabel(status: string): string {
-    const map: any = { 'PDNG': 'En attente', 'ACSC': 'Finalisé', 'RJCT': 'Rejeté' };
+    const map: Record<string, string> = {
+      'PDNG': 'En attente',
+      'EN_ATTENTE': 'En attente',
+      'ACCEPTE': 'Acceptée',
+      'ACCP': 'Acceptée',
+      'REJETE': 'Rejetée',
+      'RJCT': 'Rejetée',
+      'ANNULATION_EN_ATTENTE': 'Annulation en cours',
+      'ANNULEE': 'Annulée'
+    };
+
     return map[status] || status;
+  }
+
+  getStatusIcon(status: string): string {
+    const map: Record<string, string> = {
+      'PDNG': '⏳',
+      'EN_ATTENTE': '⏳',
+      'ACCEPTE': '✅',
+      'ACCP': '✅',
+      'REJETE': '❌',
+      'RJCT': '❌',
+      'ANNULATION_EN_ATTENTE': '🕓',
+      'ANNULEE': '🚫'
+    };
+
+    return map[status] || '•';
+  }
+
+  getStatusClass(status: string): string {
+    if (status === 'ACCEPTE' || status === 'ACCP') return 'status-accepted';
+    if (status === 'REJETE' || status === 'RJCT') return 'status-rejected';
+    if (status === 'ANNULATION_EN_ATTENTE') return 'status-cancel-pending';
+    if (status === 'ANNULEE') return 'status-cancelled';
+    return 'status-pending';
   }
 
   formatDateTime(date: string): string {
     if (!date) return '';
-    return new Date(date).toLocaleString('fr-FR');
+    return new Date(date).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
-  // ✅ VIEW DETAILS - CORRIGÉ (un seul click)
-  viewDetails(item: any) {
-    console.log('🔍 viewDetails appelé avec:', item);
-    
-    if (!item) {
-      console.error('❌ Item est null/undefined');
-      return;
-    }
-    
-    if (item.id) {
-      console.log('✅ Navigation vers ID:', item.id);
-      this.router.navigate(['/client/transaction', item.id]).then(success => {
-        if (success) {
-          console.log('✅ Navigation réussie');
-        } else {
-          console.error('❌ Échec navigation');
-        }
-      });
-    } else if (item.uetr) {
-      console.log('✅ Navigation vers UETR:', item.uetr);
-      this.router.navigate(['/client/transaction/uetr', item.uetr]).then(success => {
-        if (success) {
-          console.log('✅ Navigation réussie');
-        } else {
-          console.error('❌ Échec navigation');
-        }
-      });
-    } else {
-      console.error('❌ Aucun ID ou UETR trouvé');
+  formatDateOnly(date: string): string {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  viewDetails(item: ConsultationHistoryDto): void {
+    if (item?.uetr) {
+      this.router.navigate(['/client/tracking'], { queryParams: { uetr: item.uetr } });
     }
   }
 
-  openDeleteConfirm(item: any) {
+  openDeleteConfirm(item: ConsultationHistoryDto): void {
     this.itemToDelete = item;
     this.deleteMode = 'single';
     this.showConfirmModal = true;
   }
 
-  openDeleteAllConfirm() {
+  openDeleteAllConfirm(): void {
     if (this.filteredHistory.length === 0) {
       alert('Aucune consultation à supprimer');
       return;
     }
+
     this.itemToDelete = null;
     this.deleteMode = 'all';
     this.showConfirmModal = true;
   }
 
-  closeModal() {
+  closeModal(): void {
     this.showConfirmModal = false;
     this.itemToDelete = null;
   }
 
-  confirmDelete() {
+  confirmDelete(): void {
     if (this.deleteMode === 'single' && this.itemToDelete) {
       this.service.deleteConsultationHistory(this.itemToDelete.id).subscribe({
         next: () => {
-          alert('✅ Consultation supprimée avec succès !');
-          this.consultationHistory = this.consultationHistory.filter(h => h.id !== this.itemToDelete.id);
+          this.consultationHistory = this.consultationHistory.filter(h => h.id !== this.itemToDelete?.id);
           this.applyFilters();
           this.closeModal();
         },
-        error: (err) => {
-          if (err.status === 404 || err.status === 0) {
-            alert('⚠️ Suppression effectuée localement');
-            this.consultationHistory = this.consultationHistory.filter(h => h.id !== this.itemToDelete.id);
-            this.applyFilters();
-            this.closeModal();
-          } else {
-            alert('❌ Erreur lors de la suppression');
-          }
+        error: () => {
+          alert('Erreur lors de la suppression');
         }
       });
-    } else if (this.deleteMode === 'all') {
+
+      return;
+    }
+
+    if (this.deleteMode === 'all') {
       this.service.deleteAllConsultationHistory().subscribe({
         next: () => {
-          alert('✅ Toutes les consultations ont été supprimées !');
           this.consultationHistory = [];
           this.filteredHistory = [];
           this.updateDisplayedItems();
           this.closeModal();
         },
         error: () => {
-          alert('⚠️ Suppression effectuée localement');
-          this.consultationHistory = [];
-          this.filteredHistory = [];
-          this.updateDisplayedItems();
-          this.closeModal();
+          alert('Erreur lors de la suppression');
         }
       });
     }
-  }
-
-  exportPdf() {
-    if (this.filteredHistory.length === 0) {
-      alert('Aucune donnée à exporter');
-      return;
-    }
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    doc.setFontSize(18);
-    doc.setTextColor(102, 126, 234);
-    doc.text('Historique des consultations', pageWidth / 2, 20, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Exporté le: ${new Date().toLocaleString('fr-FR')}`, pageWidth - 20, 30, { align: 'right' });
-    doc.text(`Total: ${this.filteredHistory.length} consultation(s)`, 14, 40);
-    
-    const tableData = this.filteredHistory.map(item => [
-      item.uetr,
-      this.getStatusLabel(item.status),
-      this.formatDateTime(item.consultedAt),
-      `${item.amount || '-'} ${item.currency || 'EUR'}`
-    ]);
-    
-    autoTable(doc, {
-      startY: 45,
-      head: [['UETR', 'Statut', 'Date consultation', 'Montant']],
-      body: tableData,
-      theme: 'striped',
-      headStyles: { fillColor: [102, 126, 234], textColor: 255 },
-      margin: { left: 14, right: 14 }
-    });
-    
-    doc.save(`historique_consultations_${new Date().toISOString().slice(0, 10)}.pdf`);
-  }
-
-  exportExcel() {
-    if (this.filteredHistory.length === 0) {
-      alert('Aucune donnée à exporter');
-      return;
-    }
-
-    const data = this.filteredHistory.map(item => ({
-      UETR: item.uetr,
-      Statut: this.getStatusLabel(item.status),
-      'Date consultation': this.formatDateTime(item.consultedAt),
-      Montant: `${item.amount || '-'} ${item.currency || 'EUR'}`
-    }));
-    
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, 'Historique');
-    
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, `historique_consultations_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 }

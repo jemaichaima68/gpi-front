@@ -1,114 +1,190 @@
 <div class="tracking-container">
-  
-  <h1 class="page-title">Suivi d'un transfert</h1>
 
-  <!-- Zone de recherche -->
+  <div class="tracking-header">
+    <div class="header-left">
+      <h1>📍 Suivi de transfert</h1>
+      <p>Entrez l'UETR de votre transaction pour suivre son état en temps réel</p>
+    </div>
+
+    <div class="header-right" *ngIf="transferDetails && !isLoading">
+      <p-splitButton
+        label="Exporter"
+        icon="pi pi-download"
+        [model]="exportOptions"
+        severity="primary"
+        styleClass="export-split-btn">
+      </p-splitButton>
+    </div>
+  </div>
+
   <div class="search-section">
-    <label class="uetr-label">UETR</label>
-    <div class="input-group">
-      <input 
-        type="text" 
+    <div class="search-card">
+      <input
+        type="text"
         [(ngModel)]="uetrToSearch"
-        placeholder="97ed4827-7bef-4491-a06f-858655712d"
-        class="uetr-input"
-        (keyup.enter)="searchTransfer()"
-      >
-      <button (click)="searchTransfer()" class="search-btn">
-        🔍 Rechercher
+        placeholder="Ex: 12345678-1234-1234-1234-123456789abc"
+        class="search-input"
+        (keyup.enter)="searchTransfer()">
+
+      <button
+        (click)="searchTransfer()"
+        class="search-btn"
+        [disabled]="isLoading">
+        {{ isLoading ? 'Recherche...' : '🔍 Rechercher' }}
       </button>
     </div>
-    <div class="search-footer">
-      <span>{{ currentDate | date:'dd MMM yyyy' }}</span>
-      <span class="initials">{{ userInitials }}</span>
-    </div>
   </div>
 
-  <!-- Erreur -->
-  <div *ngIf="errorMessage" class="error-message">
-    ⚠️ {{ errorMessage }}
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Chargement des détails...</p>
   </div>
 
-  <!-- Résultats -->
-  <div *ngIf="transferDetails" class="results">
-    
-    <!-- Détails du transfert -->
-    <div class="card">
-      <h2 class="card-title">📋 Détails du transfert</h2>
-      <div class="details-grid">
-        <div class="detail-item">
-          <span class="detail-label">Montant :</span>
-          <span class="detail-value">{{ transferDetails.amount | number:'1.2-2' }} {{ transferDetails.currency || 'EUR' }}</span>
+  <div *ngIf="errorMessage && !isLoading" class="error-message">
+    <span class="error-icon">⚠️</span>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="transferDetails && !isLoading" class="results-section">
+
+    <div class="info-card">
+      <div class="card-header">
+        <div class="header-icon">📄</div>
+
+        <div class="header-title">
+          <h2>Détails du transfert</h2>
+          <p>UETR : {{ transferDetails.uetr }}</p>
         </div>
-        <div class="detail-item">
-          <span class="detail-label">Statut :</span>
-          <span class="detail-value">{{ getStatusLabel(transferDetails.status) }}</span>
-          <span *ngIf="transferDetails.status === 'ACSC'" class="detail-date">
-            le {{ getStatusDate() }}
-          </span>
+
+        <div class="header-status" [class]="getStatusClass(transferDetails.status)">
+          <span class="status-icon">{{ getStatusIcon(transferDetails.status) }}</span>
+          <span class="status-text">{{ getStatusLabel(transferDetails.status) }}</span>
         </div>
-        <div class="detail-item" *ngIf="transferDetails.uetr">
-          <span class="detail-label">UETR :</span>
-          <span class="detail-value uetr-code">{{ transferDetails.uetr }}</span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">Montant</span>
+          <span class="info-value">{{ transferDetails.amount | number:'1.2-2' }} {{ transferDetails.currency || 'EUR' }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Bénéficiaire</span>
+          <span class="info-value">{{ transferDetails.beneficiaryName || '-' }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Banque bénéficiaire</span>
+          <span class="info-value">{{ transferDetails.beneficiaryBank || '-' }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Donneur d'ordre</span>
+          <span class="info-value">{{ transferDetails.senderName || transferDetails.debtorName || '-' }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Date de création</span>
+          <span class="info-value">{{ getFormattedDate(transferDetails.createdAt) }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Dernière mise à jour</span>
+          <span class="info-value">{{ getFormattedDate(transferDetails.updatedAt) }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="transferDetails.status === 'REJETE' && transferDetails.rejectionReason" class="rejection-box">
+        <div class="rejection-content">
+          <strong>Motif du rejet :</strong>
+          <p>{{ transferDetails.rejectionReason }}</p>
+        </div>
+      </div>
+
+      <div *ngIf="transferDetails.status === 'ANNULATION_EN_ATTENTE'" class="cancel-box">
+        <div class="cancel-icon">🕓</div>
+        <div class="cancel-content">
+          <strong>Annulation en cours :</strong>
+          <p>Une demande d’annulation CAMT.056 a été envoyée. La réponse CAMT.029 est en attente.</p>
+        </div>
+      </div>
+
+      <div *ngIf="transferDetails.status === 'ANNULEE'" class="cancelled-box">
+        <div class="cancel-icon">🚫</div>
+        <div class="cancel-content">
+          <strong>Transaction annulée :</strong>
+          <p>La demande d’annulation a été acceptée via CAMT.029.</p>
         </div>
       </div>
     </div>
 
-    <!-- Parcours SWIFT (✅ Dynamique depuis le backend) -->
-    <div class="card" *ngIf="transferDetails.bankJourney && transferDetails.bankJourney.length > 0">
-      <h2 class="card-title">🌍 Parcours du virement SWIFT GPI</h2>
+   <!-- Timeline simplifiée pour client -->
+<div class="timeline-card">
+  <div class="timeline-title">
+    <span>📋 État de votre transfert</span>
+  </div>
+
+  <div class="timeline-steps">
+    <div *ngFor="let step of getTimelineSteps(); let i = index" 
+         class="timeline-step" 
+         [class.completed]="step.completed">
+      
+      <div class="step-marker">
+        <span class="step-icon">{{ step.icon }}</span>
+        <div *ngIf="i < getTimelineSteps().length - 1" 
+             class="step-line" 
+             [class.completed]="step.completed">
+        </div>
+      </div>
+      
+      <div class="step-content">
+        <div class="step-label">{{ step.label }}</div>
+        <div class="step-description">{{ step.description }}</div>
+        <div class="step-date" *ngIf="step.date">{{ step.date }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div *ngIf="transferDetails.bankJourney && transferDetails.bankJourney.length > 0" class="journey-card">
+      <div class="journey-title">
+        <span>Parcours bancaire SWIFT</span>
+      </div>
+
       <div class="journey-list">
-        <div class="journey-item" *ngFor="let bank of transferDetails.bankJourney; let i = index">
-          <div class="journey-number">{{ bank.step || (i+1) }}</div>
-          <div class="journey-content">
+        <div *ngFor="let bank of transferDetails.bankJourney" class="journey-item">
+          <div class="journey-step">{{ bank.step }}</div>
+
+          <div class="journey-info">
             <div class="journey-bank">{{ bank.bankName }}</div>
             <div class="journey-role">{{ bank.role }}</div>
-            <div class="journey-fees" *ngIf="bank.fees">{{ bank.fees }}</div>
+            <div class="journey-bic">{{ bank.bankBic }}</div>
           </div>
-          <div class="journey-status">
-            <span class="status-badge" [ngClass]="{
-              'status-sent': bank.status === 'Envoyé',
-              'status-completed': bank.status === 'Terminé',
-              'status-pending': bank.status !== 'Envoyé' && bank.status !== 'Terminé'
-            }">
-              {{ bank.status }}
-            </span>
+
+          <div class="journey-fees">{{ bank.fees || 'Aucuns frais' }}</div>
+
+          <div class="journey-status" [class]="bank.status === 'Terminé' ? 'status-done' : 'status-pending'">
+            {{ bank.status }}
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Résumé des frais (✅ Dynamique depuis le backend) -->
-    <div class="card fees-card">
-      <h2 class="card-title">💰 Résumé des frais déduits</h2>
-      <div class="fees-grid">
-        <div class="fees-item">
-          <span class="fees-label">Frais totaux :</span>
-          <span class="fees-amount">{{ transferDetails.totalFees | number:'1.2-2' }} EUR</span>
+      <div class="fees-summary">
+        <div class="fee-item">
+          <span>Frais totaux</span>
+          <strong>{{ transferDetails.totalFees?.toFixed(2) || '0.00' }} EUR</strong>
         </div>
-        <div class="fees-item highlight">
-          <span class="fees-label">Montant net crédité :</span>
-          <span class="fees-amount">{{ transferDetails.netAmount | number:'1.2-2' }} {{ transferDetails.currency === 'EUR' ? 'USD' : transferDetails.currency || 'EUR' }}</span>
+
+        <div class="fee-item">
+          <span>Montant net</span>
+          <strong>{{ transferDetails.netAmount?.toFixed(2) || '0.00' }} {{ transferDetails.currency || 'EUR' }}</strong>
         </div>
       </div>
     </div>
-
-    <!-- Boutons export -->
-    <div class="export-buttons">
-      <button class="btn-export" (click)="exportPdf()">
-        📄 Exporter PDF
-      </button>
-      <button class="btn-export" (click)="exportExcel()">
-        📊 Exporter Excel
-      </button>
-    </div>
-
   </div>
 
-  <!-- État vide -->
-  <div *ngIf="!transferDetails && !errorMessage" class="empty-state">
-    <div class="empty-icon">🔍</div>
-    <h3>Recherchez un transfert</h3>
-    <p>Entrez un code UETR pour voir les détails de votre transaction</p>
+  <div *ngIf="!transferDetails && !isLoading && !errorMessage" class="empty-state">
+    <div class="empty-icon">🔎</div>
+    <h3>Rechercher un transfert</h3>
+    <p>Saisissez l’UETR fourni pour consulter l’état de votre transfert.</p>
   </div>
-
 </div>

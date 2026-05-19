@@ -1,132 +1,232 @@
-<div class="dashboard">
+<div class="dashboard-container">
   
-  <!-- Loading -->
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Chargement de votre tableau de bord...</p>
+  <!-- ==================== EN-TÊTE AVEC MESSAGE DE BIENVENUE ==================== -->
+  <div class="welcome-section">
+    <div class="welcome-card">
+      <div class="welcome-icon">🙏</div>
+      <div class="welcome-content">
+        <h1 class="welcome-title">Bonjour, {{ userName || 'Client' }}</h1>
+        <p class="welcome-message">
+          Merci de rejoindre <strong>GPI Tracker</strong> ! 
+          Nous vous aidons à suivre vos transferts internationaux 
+          en temps réel, simplement et en toute transparence.
+        </p>
+        <div class="welcome-badge">
+          <span class="badge-icon">✨</span>
+          <span>Plateforme de suivi SWIFT certifiée</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Error -->
-  <div *ngIf="errorMessage && !isLoading" class="error-state-dashboard">
-    <div class="error-icon">⚠️</div>
-    <h3>Erreur de chargement</h3>
-    <p>{{ errorMessage }}</p>
-    <button class="retry-btn" (click)="retryLoad()">Réessayer</button>
+  <!-- ==================== CARTE GPS SIMPLIFIÉE ==================== -->
+  <div class="gps-card" *ngIf="activeTransfer">
+    <div class="gps-header">
+      <div class="gps-title">
+        <span class="gps-icon">🗺️</span>
+        <h2>Parcours de votre transfert</h2>
+      </div>
+      <div class="gps-status" [class]="getPositionClass(activeTransfer.status)">
+        <span class="status-dot"></span>
+        <span>{{ getStatusLabel(activeTransfer.status, activeTransfer.agentValidated) }}</span>
+      </div>
+    </div>
+
+    <!-- Barre de progression -->
+    <div class="progress-bar-container">
+      <div class="progress-bar" [style.width]="getTimelineWidth()"></div>
+    </div>
+
+    <!-- Carte visuelle simplifiée -->
+    <div class="gps-map">
+      <!-- Point de départ -->
+      <div class="map-start">
+        <div class="location-marker start">
+          <span class="flag">{{ getSenderFlag(activeTransfer) }}</span>
+          <span class="city-name">{{ getSenderCity(activeTransfer) }}</span>
+          <span class="bank-name">{{ getSenderCountryName(activeTransfer) }}</span>
+        </div>
+      </div>
+
+      <!-- Trajet -->
+      <div class="map-journey">
+        <div class="journey-line"></div>
+        <div class="journey-point" [class]="getPointPosition(activeTransfer.status)">
+          <div class="pulse-ring"></div>
+          <span class="point-icon">📍</span>
+        </div>
+        <div class="journey-stops">
+          <div class="stop" [class.active]="isStepCompleted('VALIDATION')">
+            <div class="stop-dot"></div>
+            <span class="stop-label">Validation agent</span>
+          </div>
+          <div class="stop" [class.active]="isStepCompleted('BENEF')">
+            <div class="stop-dot"></div>
+            <span class="stop-label">Finalisation</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Point d'arrivée -->
+      <div class="map-end">
+        <div class="location-marker end">
+          <span class="flag">{{ getReceiverFlag(activeTransfer) }}</span>
+          <span class="city-name">{{ getReceiverCity(activeTransfer) }}</span>
+          <span class="bank-name">{{ getReceiverCountryName(activeTransfer) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message de rejet -->
+    <div class="rejection-message" *ngIf="activeTransfer.status === 'REJETE'" style="margin-top: 16px; padding: 12px; background: #fee2e2; border-radius: 12px; color: #991b1b;">
+      <strong> Motif du rejet :</strong> {{ getRejectionReason(activeTransfer) }}
+    </div>
   </div>
 
-  <!-- Dashboard Content -->
-  <div *ngIf="!isLoading && !errorMessage">
-    
-    <!-- Hero -->
-    <div class="hero-section">
-      <div class="hero-content">
-        <div class="hero-text">
-          <h1 class="hero-title">Bonjour, {{ userName || 'Client' }}</h1>
-          <p class="hero-subtitle">Voici le récapitulatif de vos activités récentes</p>
-        </div>
-        <div class="hero-stats">
-          <span class="hero-stat-value">{{ dashboard.totalTransactions || 0 }}</span>
-          <span class="hero-stat-label">Transferts</span>
-        </div>
+  <!-- Message si aucun transfert -->
+  <div class="gps-card" *ngIf="!activeTransfer && !isLoading">
+    <div class="empty-gps">
+      <div class="empty-gps-icon">🗺️</div>
+      <h3>Aucun transfert en cours</h3>
+      <p>Vos transferts apparaîtront ici une fois reçus.</p>
+      <button class="track-btn" (click)="goToTracking()">
+        📍 Suivre un transfert avec UETR
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== LISTE DES TRANSFERTS SIMPLIFIÉE ==================== -->
+  <div class="transfers-section">
+    <div class="section-header">
+      <h2>📦 Vos transferts récents</h2>
+      <button class="view-all-btn" routerLink="/client/history">
+        Voir tout <span class="arrow">→</span>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-skeleton">
+      <div class="skeleton-card" *ngFor="let i of [1,2,3]">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-wrapper">
-      <div class="stat-card">
-        <div class="stat-icon purple"></div>
-        <div class="stat-info">
-          <span class="stat-value">{{ dashboard.totalTransactions || 0 }}</span>
-          <span class="stat-label">Total transferts</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon orange"></div>
-        <div class="stat-info">
-          <span class="stat-value">{{ dashboard.pendingTransactions || 0 }}</span>
-          <span class="stat-label">En attente</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon green"></div>
-        <div class="stat-info">
-          <span class="stat-value">{{ dashboard.acceptedTransactions || 0 }}</span>
-          <span class="stat-label">Finalisés</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Total Amount -->
-    <div class="total-card">
-      <div class="total-content">
-        <div class="total-text">
-          <span class="total-label">Montant total transféré</span>
-          <h2 class="total-value">{{ (dashboard.totalAmount || 0) | number:'1.2-2' }} €</h2>
-        </div>
-      </div>
-    </div>
-
-    <!-- Timeline & Recent -->
-    <div class="double-grid">
-      
-      <!-- Timeline -->
-      <div class="card timeline-card">
+    <!-- Liste des transferts -->
+    <div *ngIf="!isLoading && dashboard.recentTransactions.length > 0" class="transfers-list">
+      <div 
+        *ngFor="let transfer of dashboard.recentTransactions.slice(0, 3)" 
+        class="transfer-card"
+        [class]="transfer.status"
+        (click)="goToDetails(transfer)">
+        
         <div class="card-header">
-          <h3>Timeline des transferts</h3>
-          <span class="card-badge">{{ timelineTransactions.length }} événements</span>
-        </div>
-        <div class="timeline">
-          <div *ngFor="let item of timelineTransactions" class="timeline-node" (click)="viewTransferDetails(item)">
-            <div class="timeline-marker" [class]="item.statusClass"></div>
-            <div class="timeline-content">
-              <div class="timeline-head">
-                <span class="timeline-status" [class]="item.statusClass">{{ item.statusText }}</span>
-                <span class="timeline-date">{{ item.dateFormatted }}</span>
-              </div>
-              <div class="timeline-amount">{{ item.amount | number:'1.2-2' }} {{ item.currency }}</div>
-              <div class="timeline-user">{{ item.beneficiaryName }}</div>
-              <div class="timeline-time">{{ item.timeAgo }}</div>
+          <div class="card-icon">
+            <span *ngIf="transfer.status === 'ACCEPTE' || transfer.status === 'ACSC'">✅</span>
+            <span *ngIf="transfer.status === 'EN_ATTENTE' || transfer.status === 'PDNG'">⏳</span>
+          </div>
+          <div class="card-info">
+            <div class="transfer-status" [class]="getStatusClass(transfer.status)">
+              {{ getStatusLabel(transfer.status, transfer.agentValidated) }}
+            </div>
+            <div class="transfer-amount">
+              {{ transfer.amount | number:'1.2-2' }} {{ transfer.currency || 'EUR' }}
             </div>
           </div>
-          <div *ngIf="timelineTransactions.length === 0" class="empty-timeline">
-            <p>Aucune activité récente</p>
+          <div class="card-date">
+            {{ transfer.receivedAt | date:'dd/MM/yyyy' }}
           </div>
         </div>
-      </div>
 
-      <!-- Recent Transfers -->
-      <div class="card transfers-card">
-        <div class="card-header">
-          <h3>Transferts récents</h3>
-          <button class="view-all" routerLink="/client/history">Voir tout →</button>
+        <div class="card-body">
+          <div class="transfer-detail">
+            <span class="detail-label">Bénéficiaire :</span>
+            <span class="detail-value">{{ transfer.creditorName || transfer.debtorName || '-' }}</span>
+          </div>
+          <div class="transfer-detail">
+            <span class="detail-label">Pays bénéficiaire :</span>
+            <span class="detail-value">
+              <span class="country-flag">{{ getFlagFromCountry(transfer.creditorCountry || '') }}</span>
+              {{ getReceiverCountryName(transfer) || '-' }}
+            </span>
+          </div>
+          <div class="transfer-detail">
+            <span class="detail-label">Pays émetteur :</span>
+            <span class="detail-value">
+              <span class="country-flag">{{ getFlagFromCountry(transfer.debtorCountry || '') }}</span>
+              {{ getSenderCountryName(transfer) || '-' }}
+            </span>
+          </div>
+          <div class="transfer-detail">
+            <span class="detail-label">UETR :</span>
+            <span class="detail-value uetr-code">{{ (transfer.uetr || '').slice(0, 20) }}...</span>
+          </div>
         </div>
-        <div class="transfers-list">
-          <div *ngFor="let t of dashboard.recentTransactions.slice(0, 4)" class="transfer-row" (click)="goToTracking(t.uetr)">
-            <div class="transfer-avatar">
-              <span>{{ (t.creditorName || t.debtorName || '?').charAt(0) }}</span>
+
+        <!-- Timeline simplifiée -->
+        <div class="card-timeline">
+          <div class="timeline-steps">
+            <div class="step" [class.active]="true">
+              <div class="step-dot"></div>
+              <span>Reçu</span>
             </div>
-            <div class="transfer-info">
-              <div class="transfer-name">{{ t.creditorName || t.debtorName || '-' }}</div>
-              <div class="transfer-id">{{ t.uetr | slice:0:12 }}...</div>
+            <div class="step-line" [class.active]="transfer.agentValidated === true"></div>
+            <div class="step" [class.active]="transfer.agentValidated === true">
+              <div class="step-dot"></div>
+              <span>Validé agent</span>
             </div>
-            <div class="transfer-right">
-              <div class="transfer-amount">{{ t.amount | number:'1.2-2' }} {{ t.currency || '€' }}</div>
-              <span class="status-chip" [class]="t.status">{{ getStatusLabel(t.status) }}</span>
+            <div class="step-line" [class.active]="transfer.status === 'ACCEPTE' || transfer.status === 'ACSC'"></div>
+            <div class="step" [class.active]="transfer.status === 'ACCEPTE' || transfer.status === 'ACSC'">
+              <div class="step-dot"></div>
+              <span>Finalisé</span>
             </div>
           </div>
-          <div *ngIf="dashboard.recentTransactions.length === 0" class="empty-transfers">
-            <p>Aucun transfert récent</p>
-          </div>
+        </div>
+
+        <!-- Message de rejet -->
+        <div class="rejection-detail" *ngIf="transfer.status === 'REJETE'" style="margin-top: 12px; padding: 8px 12px; background: #fee2e2; border-radius: 8px; color: #991b1b; font-size: 12px;">
+          <strong>Motif :</strong> {{ getRejectionReason(transfer) }}
+        </div>
+
+        <div class="card-footer">
+          <button class="track-btn" (click)="$event.stopPropagation(); goToTracking(transfer.uetr)">
+            <span>📍</span> Suivre
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="actions-card">
-      <button class="action-btn primary" routerLink="/client/tracking">Suivre un transfert</button>
-      <button class="action-btn secondary" routerLink="/client/history">Consulter l'historique</button>
+    <!-- État vide -->
+    <div *ngIf="!isLoading && dashboard.recentTransactions.length === 0" class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>Aucun transfert pour le moment</h3>
+      <p>Vos transferts apparaîtront ici dès qu'ils seront reçus.</p>
+      <button class="help-btn" (click)="goToTracking()">
+        🔍 Suivre un transfert avec UETR
+      </button>
     </div>
+  </div>
 
+  <!-- ==================== ACTION RAPIDE ==================== -->
+  <div class="search-section">
+    <div class="search-card">
+      <div class="search-icon">🔍</div>
+      <div class="search-content">
+        <h3>Suivre un transfert</h3>
+        <p>Besoin de suivre un autre transfert ? Entrez son UETR ci-dessous.</p>
+        <div class="search-input-group">
+          <input 
+            type="text" 
+            [(ngModel)]="uetrToSearch"
+            placeholder="Ex: 12345678-1234-1234-1234-123456789abc"
+            class="search-input">
+          <button (click)="goToTracking()" class="search-btn">
+            🔍 Rechercher
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>

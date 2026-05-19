@@ -1,119 +1,133 @@
 <div class="history-container">
-  
-  <!-- Header -->
+
   <div class="page-header">
     <h1 class="page-title">Historique des consultations</h1>
     <p class="page-subtitle">Retrouvez tous les transferts que vous avez consultés</p>
   </div>
 
-  <!-- Barre d'actions -->
   <div class="actions-bar">
     <div class="filters-simple">
       <div class="filter-group">
-        <label>Date début</label>
-        <input type="date" [(ngModel)]="filterDateDebut" class="filter-input" (change)="applyFilters()">
+        <label>Filtrer par date</label>
+        <input
+          type="date"
+          [(ngModel)]="filterDate"
+          class="filter-input"
+          (change)="applyFilters()">
       </div>
-      <div class="filter-group">
-        <label>Date fin</label>
-        <input type="date" [(ngModel)]="filterDateFin" class="filter-input" (change)="applyFilters()">
-      </div>
+
       <button class="btn-filter" (click)="applyFilters()">Filtrer</button>
       <button class="btn-reset" (click)="resetFilters()">Réinitialiser</button>
     </div>
-    
-    <div class="export-buttons">
-      <button class="btn-export" (click)="exportPdf()">PDF</button>
-      <button class="btn-export" (click)="exportExcel()">Excel</button>
-      <button class="btn-delete-all" (click)="openDeleteAllConfirm()">Tout supprimer</button>
+
+    <div class="action-buttons">
+      <button class="btn-delete-all" (click)="openDeleteAllConfirm()">🗑️ Tout supprimer</button>
     </div>
   </div>
 
-  <!-- Loading -->
   <div *ngIf="isLoading" class="loading-state">
     <div class="spinner"></div>
     <p>Chargement...</p>
   </div>
 
-  <!-- Liste des historiques -->
+  <div *ngIf="filterDate && !isLoading && filteredHistory.length > 0" class="filter-info">
+    <span>📅 Consultations du {{ formatDateOnly(filterDate) }}</span>
+    <button class="clear-filter" (click)="resetFilters()">✖</button>
+  </div>
+
   <div *ngIf="!isLoading && displayedHistory.length > 0" class="history-list">
     <div *ngFor="let item of displayedHistory" class="history-card">
       <div class="card-header">
         <div class="uetr-code">{{ item.uetr }}</div>
-        <div class="status-badge" [class]="item.status">
-          {{ getStatusLabel(item.status) }}
+
+        <div class="status-badge" [ngClass]="getStatusClass(item.status)">
+          {{ getStatusIcon(item.status) }} {{ getStatusLabel(item.status) }}
         </div>
       </div>
-      
+
       <div class="card-body">
         <div class="info-row">
-          <span class="info-label">Consulté le:</span>
+          <span class="info-label">Consulté le :</span>
           <span class="info-value">{{ formatDateTime(item.consultedAt) }}</span>
         </div>
+
         <div class="info-row">
-          <span class="info-label">Montant:</span>
+          <span class="info-label">Montant :</span>
           <span class="info-value">{{ item.amount | number:'1.2-2' }} {{ item.currency || 'EUR' }}</span>
         </div>
+
+        <div class="info-row" *ngIf="item.updatedAt">
+          <span class="info-label">Mise à jour :</span>
+          <span class="info-value">{{ formatDateTime(item.updatedAt) }}</span>
+        </div>
       </div>
+
       <div class="card-actions">
-  <button class="btn-view" (click)="viewDetails(item)">Détails</button>
-  <button class="btn-delete" (click)="openDeleteConfirm(item)">Supprimer</button>
-</div>
+        <button class="btn-delete" (click)="openDeleteConfirm(item)">🗑️ Supprimer</button>
+      </div>
     </div>
   </div>
 
-  <!-- Pagination -->
   <div *ngIf="!isLoading && filteredHistory.length > 0" class="pagination">
     <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">←</button>
-    <button *ngFor="let page of getPages()" class="page-btn" [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
+
+    <button
+      *ngFor="let page of getPages()"
+      class="page-btn"
+      [class.active]="page === currentPage"
+      (click)="goToPage(page)">
+      {{ page }}
+    </button>
+
     <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">→</button>
+
     <span class="page-info">{{ filteredHistory.length }} consultation(s)</span>
   </div>
 
-  <!-- Empty state -->
   <div *ngIf="!isLoading && filteredHistory.length === 0" class="empty-state">
     <div class="empty-icon">📭</div>
-    <h3>Aucun historique de consultation</h3>
-    <p>Utilisez la recherche pour suivre vos transferts</p>
-    <button routerLink="/client/tracking" class="empty-btn">Suivre un transfert</button>
+    <h3 *ngIf="filterDate">Aucune consultation pour cette date</h3>
+    <h3 *ngIf="!filterDate">Aucun historique de consultation</h3>
+    <p *ngIf="filterDate">Essayez une autre date ou réinitialisez le filtre</p>
+    <p *ngIf="!filterDate">Utilisez la recherche pour suivre vos transferts</p>
+    <button routerLink="/client/tracking" class="empty-btn">🔍 Suivre un transfert</button>
   </div>
 
-  <!-- Modal de confirmation -->
   <div class="modal-overlay" *ngIf="showConfirmModal" (click)="closeModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div class="modal-icon">⚠️</div>
         <h3>Confirmation de suppression</h3>
       </div>
+
       <div class="modal-body">
         <p *ngIf="deleteMode === 'single'">
           Êtes-vous sûr de vouloir supprimer cette consultation ?
         </p>
+
         <p *ngIf="deleteMode === 'all'">
-          Êtes-vous sûr de vouloir supprimer TOUTES les consultations ?
+          Êtes-vous sûr de vouloir supprimer toutes les consultations ?
           <br>
           <span class="modal-warning">Cette action est irréversible.</span>
         </p>
+
         <div *ngIf="deleteMode === 'single' && itemToDelete" class="modal-details">
           <div class="detail-line">
-            <span class="detail-label">UETR:</span>
+            <span class="detail-label">UETR :</span>
             <span class="detail-value">{{ itemToDelete.uetr }}</span>
           </div>
+
           <div class="detail-line">
-            <span class="detail-label">Date:</span>
+            <span class="detail-label">Date :</span>
             <span class="detail-value">{{ formatDateTime(itemToDelete.consultedAt) }}</span>
-          </div>
-          <div class="detail-line">
-            <span class="detail-label">Montant:</span>
-            <span class="detail-value">{{ itemToDelete.amount }} {{ itemToDelete.currency || 'EUR' }}</span>
           </div>
         </div>
       </div>
+
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="closeModal()">Annuler</button>
-        <button class="btn-confirm-delete" (click)="confirmDelete()">Confirmer suppression</button>
+        <button class="btn-reset" (click)="closeModal()">Annuler</button>
+        <button class="btn-delete-all" (click)="confirmDelete()">Confirmer</button>
       </div>
     </div>
   </div>
-  
-
 </div>

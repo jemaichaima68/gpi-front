@@ -1,9 +1,21 @@
+// auth.guard.ts - Version corrigée sans getHomeRoute
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 function redirectByRole(router: Router, authService: AuthService, roles: string[]): void {
-  const target = authService.getHomeRoute(roles) ?? '/access-denied';
+  // ✅ Déterminer la route cible directement ici
+  let target = '/access-denied';
+  
+  if (roles.includes('Admin')) {
+    target = '/admin/dashboard';
+  } else if (roles.includes('BACK_OFFICE')) {
+    target = '/agent/dashboard';
+  } else if (roles.includes('CLIENT')) {
+    target = '/client/dashboard';  // ← Dashboard, pas tracking !
+  }
+  
+  console.log('[Redirect] Roles:', roles, '→ Target:', target);
   router.navigate([target]);
 }
 

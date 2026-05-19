@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../../environments/environment';  // ← AJOUTE CETTE LIGNE
+import { environment } from '../../../../environments/environment';
 
 export interface TransferResponse {
+  id?: number;
   uetr: string;
   amount: number;
   currency: string;
@@ -14,6 +15,8 @@ export interface TransferResponse {
   debtorName?: string;
   creditorName?: string;
   creditorAgentBic?: string;
+  debtorCountry?: string;
+  creditorCountry?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -23,7 +26,7 @@ export interface TransferResponse {
   bankJourney?: BankJourney[];
   totalFees?: number;
   netAmount?: number;
-  timeline?: any[];
+  timeline?: TransactionTimelineDto[];
   statusHistory?: any[];
 }
 
@@ -50,18 +53,21 @@ export interface ClientDashboardDto {
 
 export interface RecentTransactionDto {
   id: number;
+  msgId?: string;
   uetr: string;
   amount: number;
   currency: string;
   debtorName?: string;
   creditorName?: string;
+  creditorCountry?: string;
+  debtorCountry?: string;
   status: string;
-  receivedAt: string;
+  receivedAt: Date;
   alerte?: string;
   motifAlerte?: string;
   messageType?: string;
-  debtorCountry?: string;
-  creditorCountry?: string;
+  agentValidated?: boolean;
+  rejectionReason?: string;
 }
 
 export interface ClientNotification {
@@ -98,16 +104,18 @@ export interface TransactionTimelineDto {
   providedIn: 'root'
 })
 export class TransferService {
-  private apiUrl = `${environment.apiUrl}/api/client`;  // ← MODIFIE CETTE LIGNE
+  private apiUrl = `${environment.apiUrl}/api/client`;
 
   constructor(private http: HttpClient) {}
 
-  // Dashboard
   getDashboard(): Observable<ClientDashboardDto> {
     return this.http.get<ClientDashboardDto>(`${this.apiUrl}/dashboard`);
   }
 
-  // Transferts
+  getClientDashboardData(): Observable<ClientDashboardDto> {
+    return this.http.get<ClientDashboardDto>(`${this.apiUrl}/dashboard/client`);
+  }
+
   getTransferByUetr(uetr: string): Observable<TransferResponse> {
     return this.http.get<TransferResponse>(`${this.apiUrl}/transfers/${uetr}`);
   }
@@ -124,7 +132,6 @@ export class TransferService {
     return this.http.get<{ rejectionReason: string }>(`${this.apiUrl}/transactions/${id}/rejection-reason`);
   }
 
-  // Historique
   getConsultationHistory(): Observable<ConsultationHistoryDto[]> {
     return this.http.get<ConsultationHistoryDto[]>(`${this.apiUrl}/history`);
   }
@@ -137,7 +144,6 @@ export class TransferService {
     return this.http.delete(`${this.apiUrl}/history`);
   }
 
-  // Notifications
   getNotifications(): Observable<ClientNotification[]> {
     return this.http.get<ClientNotification[]>(`${this.apiUrl}/notifications`);
   }
@@ -154,13 +160,11 @@ export class TransferService {
     return this.http.post(`${this.apiUrl}/notifications/read-all`, {});
   }
 
-  // Profil
   getProfile(): Observable<any> {
     return this.http.get(`${this.apiUrl}/profile`);
   }
 
-  // Filtres
-  filterTransactions(params: any): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/transactions/filter`, { params });
+  updateProfile(data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/profile`, data);
   }
 }
