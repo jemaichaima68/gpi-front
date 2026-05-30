@@ -153,7 +153,12 @@
                 <i class="pi pi-eye"></i>
               </button>
               
-              <button *ngIf="needsAgentAction(tx.status)" class="action-icon process" (click)="openProcessDialog(tx)" title="Traiter">
+              <!-- Bouton Traiter - toujours cliquable, la restriction est dans le dialogue -->
+              <button *ngIf="needsAgentAction(tx.status)" 
+                      class="action-icon process" 
+                      (click)="openProcessDialog(tx)"
+                      [pTooltip]="tx.alerte === 'GRAVE' ? '⚠️ Alerte GRAVE - Seul le rejet est possible' : 'Traiter'"
+                      title="Traiter">
                 <i class="pi pi-check-circle"></i>
               </button>
 
@@ -165,8 +170,8 @@
                 <i class="pi pi-reply"></i>
               </button>
             </div>
-          </td>
-        </tr>
+           </td>
+         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
@@ -331,24 +336,61 @@
     </div>
 
     <div *ngIf="currentTransaction.alerte && currentTransaction.alerte !== 'OK'" class="alert-section">
-      <div class="alert-title">Alerte</div>
-      <div class="alert-content">{{ getAlerteLabel(currentTransaction.alerte) }} - {{ currentTransaction.motifAlerte }}</div>
+      <div class="alert-title">
+        <i class="pi pi-exclamation-triangle"></i> Alerte {{ getAlerteLabel(currentTransaction.alerte) }}
+      </div>
+      <div class="alert-content">{{ currentTransaction.motifAlerte }}</div>
+    </div>
+
+    <!-- Message d'avertissement pour alerte GRAVE -->
+    <div *ngIf="currentTransaction.alerte === 'GRAVE'" class="warning-section">
+      <div class="warning-message">
+        <i class="pi pi-ban"></i>
+        <div>
+          <strong>⛔ Action non autorisée</strong><br>
+          Cette transaction a une alerte <strong class="text-red">GRAVE</strong>.<br>
+          Vous ne pouvez pas l'accepter, uniquement la rejeter.
+        </div>
+      </div>
     </div>
 
     <div class="decision-section">
       <div class="decision-title">Choisissez une décision</div>
       <div class="decision-options">
-        <div class="decision-option" [class.selected]="selectedProcessStatus === 'ACCP'" (click)="selectedProcessStatus = 'ACCP'">
-          <div class="option-radio"><div class="radio-inner" [class.checked]="selectedProcessStatus === 'ACCP'"></div></div>
-          <div><div class="option-label">ACCP - Accepter</div><div class="option-desc">Valider cette transaction</div></div>
+        
+        <!-- Option ACCP - Désactivée si alerte GRAVE -->
+        <div class="decision-option" 
+             [class.selected]="selectedProcessStatus === 'ACCP'" 
+             [class.disabled]="currentTransaction?.alerte === 'GRAVE'"
+             (click)="currentTransaction?.alerte !== 'GRAVE' && (selectedProcessStatus = 'ACCP')">
+          <div class="option-radio">
+            <div class="radio-inner" [class.checked]="selectedProcessStatus === 'ACCP'"></div>
+          </div>
+          <div>
+            <div class="option-label">ACCP - Accepter</div>
+            <div class="option-desc">Valider cette transaction</div>
+            <div *ngIf="currentTransaction?.alerte === 'GRAVE'" class="option-disabled-warning">
+              <i class="pi pi-lock"></i> Non disponible - Alerte grave
+            </div>
+          </div>
         </div>
-        <div class="decision-option" [class.selected]="selectedProcessStatus === 'RJCT'" (click)="selectedProcessStatus = 'RJCT'">
-          <div class="option-radio"><div class="radio-inner" [class.checked]="selectedProcessStatus === 'RJCT'"></div></div>
-          <div><div class="option-label">RJCT - Rejeter</div><div class="option-desc">Refuser cette transaction</div></div>
+        
+        <!-- Option RJCT - Toujours active -->
+        <div class="decision-option" 
+             [class.selected]="selectedProcessStatus === 'RJCT'"
+             (click)="selectedProcessStatus = 'RJCT'">
+          <div class="option-radio">
+            <div class="radio-inner" [class.checked]="selectedProcessStatus === 'RJCT'"></div>
+          </div>
+          <div>
+            <div class="option-label">RJCT - Rejeter</div>
+            <div class="option-desc">Refuser cette transaction</div>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Champ motif de rejet (obligatoire si RJCT sélectionné) -->
     <div *ngIf="selectedProcessStatus === 'RJCT'" class="motif-section">
       <div class="motif-title">Motif du rejet <span class="required">*</span></div>
       <textarea pInputTextarea [(ngModel)]="rejectionReasonText" rows="4" placeholder="Expliquez le motif du rejet..." class="motif-textarea"></textarea>
@@ -358,7 +400,11 @@
   <ng-template pTemplate="footer">
     <div class="dialog-footer">
       <button class="btn-secondary" (click)="closeProcessDialog()">Annuler</button>
-      <button class="btn-primary" (click)="confirmProcess()">Confirmer</button>
+      <button class="btn-primary" 
+              [disabled]="!selectedProcessStatus || (currentTransaction?.alerte === 'GRAVE' && selectedProcessStatus === 'ACCP')"
+              (click)="confirmProcess()">
+        Confirmer
+      </button>
     </div>
   </ng-template>
 </p-dialog>

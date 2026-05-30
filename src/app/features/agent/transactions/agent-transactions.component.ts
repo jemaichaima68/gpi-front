@@ -51,8 +51,6 @@ export interface SwiftMessage {
   cancellationReasonText?: string;
   validatedBy?: string;
   validatedAt?: string;
-
-  
 }
 
 @Component({
@@ -109,7 +107,6 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   cancelReasonCode = 'CUST';
   cancelReasonText = '';
 
-  // ==================== NOUVEAU : Dialogue pour répondre à CAMT.056 ====================
   showRespondToCancellationDialog = false;
   respondToCamt056: SwiftMessage | null = null;
   selectedResponseStatus = '';
@@ -139,16 +136,16 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     { label: 'CAMT029 - Réponse annulation', value: 'CAMT029' }
   ];
 
-  statusFilterOptions = [
-    { label: 'Tous les statuts', value: '' },
-    { label: 'PDNG - En attente', value: 'PDNG' },
-    { label: 'ACCP - Accepté', value: 'ACCEPTE' },
-    { label: 'RJCT - Rejeté', value: 'REJETE' },
-    { label: 'Annulation en attente', value: 'ANNULATION_EN_ATTENTE' },
-    { label: 'Annulée', value: 'ANNULEE' },
-    { label: 'Envoyé', value: 'ENVOYE' },
-    { label: 'Reçu', value: 'RECEIVED' }
-  ];
+ statusFilterOptions = [
+  { label: 'Tous les statuts', value: '' },
+  { label: 'EN_ATTENTE - En attente', value: 'EN_ATTENTE' },
+  { label: 'ACCP - Accepté', value: 'ACCEPTE' },
+  { label: 'RJCT - Rejeté', value: 'REJETE' },
+  { label: 'Annulation en attente', value: 'ANNULATION_EN_ATTENTE' },
+  { label: 'Annulée', value: 'ANNULEE' },
+  { label: 'Envoyé', value: 'ENVOYE' },
+  { label: 'Reçu', value: 'RECEIVED' }
+];
 
   cancelReasonOptions = [
     { label: 'CUST - Demandé par le client', value: 'CUST' },
@@ -194,6 +191,14 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
     this.setPageTitle(type);
     this.loadData(type);
   }
+
+canAcceptTransaction(tx: SwiftMessage): boolean {
+  // Si l'alerte est "GRAVE", on désactive l'acceptation
+  if (tx.alerte === 'GRAVE') {
+    return false;
+  }
+  return true;
+}
 
   refreshCurrentView(): void {
     this.loadData(this.currentType);
@@ -241,64 +246,73 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
       }
     });
   }
-    showDetail(tx: SwiftMessage) {
+  
+  showDetail(tx: SwiftMessage) {
     this.selectedTransaction = tx;
     this.showDetailDialog = true;
   }
+  // Vérifie si l'acceptation est autorisée
+isAcceptDisabled(tx: SwiftMessage): boolean {
+  return tx.alerte === 'GRAVE';
+}
 
-  // Fermer le dialogue de détail
+// Récupère le message d'outil pour le bouton Accepter
+getAcceptTooltip(tx: SwiftMessage): string {
+  if (tx.alerte === 'GRAVE') {
+    return '❌ Transaction avec alerte GRAVE - Acceptation impossible. Seul le rejet est autorisé.';
+  }
+  return 'Accepter cette transaction';
+}
+
+// Vérifie si le bouton Confirmer doit être désactivé dans le dialogue
+isConfirmDisabled(): boolean {
+  if (!this.currentTransaction) return true;
+  // Si alerte GRAVE, seule l'option RJCT est valide
+  if (this.currentTransaction.alerte === 'GRAVE') {
+    return this.selectedProcessStatus !== 'RJCT';
+  }
+  return !this.selectedProcessStatus;
+}
   closeDetailDialog() {
     this.showDetailDialog = false;
     this.selectedTransaction = null;
   }
 
   filterByTransactionType(data: SwiftMessage[], type: string): SwiftMessage[] {
-  console.log('🔍 Filtrage pour type:', type);
-  
-  switch (type) {
-    case 'recus':
-      // ============================================================
-      // ONGLET "MESSAGES REÇUS" - Affiche tout ce qui est ENTRANT
-      // ============================================================
-      return data.filter(tx => {
-        // 1. PACS008/PACS009 en attente de validation (PDNG)
-        const isPaymentPending = (tx.messageType === 'PACS008' || tx.messageType === 'PACS009') 
-                                  && (tx.status === 'PDNG' || tx.status === 'EN_ATTENTE');
+    switch (type) {
+      case 'recus':
+        return data.filter(tx => {
+          // Transactions PACS008/009 en attente (EN_ATTENTE ou PDNG)
+          const isPaymentPending = (tx.messageType === 'PACS008' || tx.messageType === 'PACS009') 
+                                    && (tx.status === 'EN_ATTENTE' || tx.status === 'PDNG');
+          
+          // CAMT056 reçus (demandes d'annulation)
+          const isCamt056Received = tx.messageType === 'CAMT056' && tx.direction === 'IN';
+          
+          // PACS002 reçus
+          const isPacs002Received = tx.messageType === 'PACS002' && tx.direction === 'IN';
+          
+          // CAMT029 reçus
+          const isCamt029Received = tx.messageType === 'CAMT029' && tx.direction === 'IN';
+          
+          return isPaymentPending || isCamt056Received || isPacs002Received || isCamt029Received;
+        });
         
-        // 2. CAMT056 reçus (demandes d'annulation entrantes)
-        const isCamt056Received = tx.messageType === 'CAMT056' && tx.direction === 'IN';
+      case 'emis':
+        return data.filter(tx => tx.direction === 'OUT' || tx.status === 'ENVOYE');
         
-        // 3. PACS002 reçus (réponses aux paiements)
-        const isPacs002Received = tx.messageType === 'PACS002' && tx.direction === 'IN';
+      case 'traitees':
+        return data.filter(tx => {
+          const isPayment = tx.messageType === 'PACS008' || tx.messageType === 'PACS009';
+          const isProcessed = tx.status === 'ACCEPTE' || tx.status === 'REJETE';
+          return isPayment && isProcessed;
+        });
         
-        // 4. CAMT029 reçus (réponses aux annulations)
-        const isCamt029Received = tx.messageType === 'CAMT029' && tx.direction === 'IN';
-        
-        return isPaymentPending || isCamt056Received || isPacs002Received || isCamt029Received;
-      });
-
-    case 'emis':
-      // ============================================================
-      // ONGLET "MESSAGES ÉMIS" - Tout ce qui est SORTANT
-      // ============================================================
-      return data.filter(tx =>
-        tx.direction === 'OUT' || tx.status === 'ENVOYE'
-      );
-
-    case 'traitees':
-      // ============================================================
-      // ONGLET "TRANSACTIONS TRAITÉES" - Paiements avec décision
-      // ============================================================
-      return data.filter(tx => {
-        const isPayment = tx.messageType === 'PACS008' || tx.messageType === 'PACS009';
-        const isProcessed = tx.status === 'ACCEPTE' || tx.status === 'REJETE';
-        return isPayment && isProcessed;
-      });
-
-    default:
-      return data;
+      default:
+        return data;
+    }
   }
-}
+  
   applySearchFilter(transactions: SwiftMessage[]): SwiftMessage[] {
     if (!this.searchQuery.trim()) return transactions;
     const q = this.searchQuery.toLowerCase();
@@ -394,28 +408,29 @@ export class AgentTransactionsComponent implements OnInit, OnDestroy {
   get hasActiveFilters(): boolean {
     return !!this.searchQuery || !!this.selectedType || !!this.selectedStatusFilter || this.selectedPeriod !== 'all';
   }
+  
   get pacsTransactions(): SwiftMessage[] {
-  return this.transactions.filter(tx => 
-    tx.messageType === 'PACS008' || tx.messageType === 'PACS009' || tx.messageType === 'PACS002'
-  );
-}
-
-get camtTransactions(): SwiftMessage[] {
-  return this.transactions.filter(tx => 
-    tx.messageType === 'CAMT056' || tx.messageType === 'CAMT029'
-  );
-}
-
-get displayedTransactions(): SwiftMessage[] {
-  return this.activeTab === 'pacs' ? this.pacsTransactions : this.camtTransactions;
-}
-
-
-  needsAgentAction(status: string): boolean {
-    return status === 'PDNG' || status === 'EN_ATTENTE';
+    return this.transactions.filter(tx => 
+      tx.messageType === 'PACS008' || tx.messageType === 'PACS009' || tx.messageType === 'PACS002'
+    );
   }
 
-  // ==================== VÉRIFIER SI UN CAMT.056 REQUIERT UNE RÉPONSE ====================
+  get camtTransactions(): SwiftMessage[] {
+    return this.transactions.filter(tx => 
+      tx.messageType === 'CAMT056' || tx.messageType === 'CAMT029'
+    );
+  }
+
+  get displayedTransactions(): SwiftMessage[] {
+    return this.activeTab === 'pacs' ? this.pacsTransactions : this.camtTransactions;
+  }
+
+needsAgentAction(status: string): boolean {
+  // Statuts qui nécessitent une action agent
+  const pendingStatuses = ['EN_ATTENTE', 'PDNG', 'ENVOYE', 'PENDING'];
+  return pendingStatuses.includes(status);
+}
+
   needsResponseToCamt056(tx: SwiftMessage): boolean {
     return tx.messageType === 'CAMT056' && 
            tx.direction === 'IN' && 
@@ -423,17 +438,29 @@ get displayedTransactions(): SwiftMessage[] {
            tx.status !== 'REPONDU';
   }
 
-viewRelatedMessage(id: number) {
-  this.router.navigate(['/agent/transactions', id]);
-}
-
-  openProcessDialog(tx: SwiftMessage): void {
-    this.currentTransaction = tx;
-    this.selectedProcessStatus = '';
-    this.rejectionReasonText = '';
-    this.showProcessDialog = true;
+  viewRelatedMessage(id: number) {
+    this.router.navigate(['/agent/transactions', id]);
   }
 
+openProcessDialog(tx: SwiftMessage): void {
+  this.currentTransaction = tx;
+  this.selectedProcessStatus = '';
+  this.rejectionReasonText = '';
+  
+  // Si alerte GRAVE, on force le statut à RJCT
+  if (tx.alerte === 'GRAVE') {
+    this.selectedProcessStatus = 'RJCT';
+    this.messageService.add({
+      severity: 'warn',
+      summary: '⚠️ Alerte critique',
+      detail: 'Cette transaction a une alerte GRAVE. Seul le rejet est autorisé.',
+      life: 5000
+    });
+  }
+  
+  this.showProcessDialog = true;
+}
+  
   closeProcessDialog(): void {
     this.showProcessDialog = false;
     this.currentTransaction = null;
@@ -501,7 +528,6 @@ viewRelatedMessage(id: number) {
     });
   }
 
-  // ==================== NOUVEAU : Répondre à une demande d'annulation CAMT.056 ====================
   openRespondToCancellationDialog(camt056: SwiftMessage): void {
     this.respondToCamt056 = camt056;
     this.selectedResponseStatus = '';
@@ -526,7 +552,6 @@ viewRelatedMessage(id: number) {
       return;
     }
     
-    // Pour RJCR, le motif est obligatoire
     if (this.selectedResponseStatus === 'RJCR' && !this.responseReasonText.trim()) {
       this.messageService.add({ 
         severity: 'warn', 
@@ -571,43 +596,44 @@ viewRelatedMessage(id: number) {
     window.URL.revokeObjectURL(url);
   }
 
-  getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' {
-    switch (status) {
-      case 'PDNG':
-      case 'ANNULATION_EN_ATTENTE':
-        return 'warn';
-      case 'ACCEPTE':
-      case 'ACCP':
-        return 'success';
-      case 'REJETE':
-      case 'RJCT':
-        return 'danger';
-      case 'ANNULEE':
-        return 'secondary';
-      case 'ENVOYE':
-      case 'RECEIVED':
-        return 'info';
-      default:
-        return 'secondary';
-    }
+getStatusSeverity(status: string): 'success' | 'secondary' | 'info' | 'warn' | 'danger' {
+  switch (status) {
+    case 'EN_ATTENTE':
+    case 'ANNULATION_EN_ATTENTE':
+      return 'warn';
+    case 'ACCEPTE':
+    case 'ACCP':
+      return 'success';
+    case 'REJETE':
+    case 'RJCT':
+      return 'danger';
+    case 'ANNULEE':
+      return 'secondary';
+    case 'ENVOYE':
+    case 'RECEIVED':
+      return 'info';
+    default:
+      return 'secondary';
   }
+}
 
   getStatusLabel(status: string): string {
-    switch (status) {
-      case 'PDNG': return 'PDNG - En attente';
-      case 'ACCEPTE': return 'ACCP - Accepté';
-      case 'REJETE': return 'RJCT - Rejeté';
-      case 'ANNULATION_EN_ATTENTE': return 'Annulation en attente';
-      case 'ANNULEE': return 'Annulée';
-      case 'ENVOYE': return 'Envoyé';
-      case 'RECEIVED': return 'Reçu';
-      default: return status || '-';
-    }
+  switch (status) {
+    case 'EN_ATTENTE': return 'En attente';
+    case 'ACCEPTE': return 'ACCP - Accepté';
+    case 'REJETE': return 'RJCT - Rejeté';
+    case 'ANNULATION_EN_ATTENTE': return 'Annulation en attente';
+    case 'ANNULEE': return 'Annulée';
+    case 'ENVOYE': return 'Envoyé';
+    case 'RECEIVED': return 'Reçu';
+    default: return status || '-';
   }
+}
 
   getStatusTooltip(status: string): string {
     switch (status) {
       case 'PDNG': return 'Transaction en attente de décision agent';
+      case 'EN_ATTENTE': return 'Transaction en attente de décision agent';
       case 'ACCEPTE': return 'Transaction acceptée';
       case 'REJETE': return 'Transaction rejetée';
       case 'ANNULATION_EN_ATTENTE': return 'Demande CAMT.056 en cours';
@@ -653,61 +679,56 @@ viewRelatedMessage(id: number) {
     const found = this.cancelReasonOptions.find(r => r.value === code);
     return found ? found.label : '';
   }
-  // À ajouter après la méthode exportCsv()
 
-exportToPdf(): void {
-  // Importer jsPDF (à installer d'abord)
-  // npm install jspdf jspdf-autotable --save
-  import('jspdf').then(({ default: jsPDF }) => {
-    import('jspdf-autotable').then(() => {
-      const doc = new jsPDF({ orientation: 'landscape' });
-      
-      // En-tête
-      doc.setFontSize(14);
-      doc.setTextColor(37, 99, 235);
-      doc.text(this.pageTitle, 14, 15);
-      
-      doc.setFontSize(9);
-      doc.setTextColor(100, 116, 139);
-      doc.text(`Exporté le ${new Date().toLocaleString()}`, 14, 25);
-      
-      // Données du tableau
-      const tableData = this.transactions.map(tx => [
-        tx.messageType,
-        tx.msgId,
-        tx.uetr?.substring(0, 12) + '...',
-        `${tx.amount} ${tx.currency}`,
-        this.getDebtorDisplay(tx).substring(0, 25),
-        this.getCreditorDisplay(tx).substring(0, 25),
-        this.getStatusLabel(tx.status),
-        new Date(tx.receivedAt).toLocaleDateString()
-      ]);
-      
-      (doc as any).autoTable({
-        head: [['Type', 'MsgId', 'UETR', 'Montant', 'Débiteur', 'Créditeur', 'Statut', 'Date']],
-        body: tableData,
-        startY: 35,
-        theme: 'striped',
-        headStyles: { fillColor: [37, 99, 235], textColor: 255, fontSize: 9 },
-        bodyStyles: { fontSize: 8 },
-        columnStyles: {
-          0: { cellWidth: 25 },
-          1: { cellWidth: 35 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 25 },
-          4: { cellWidth: 40 },
-          5: { cellWidth: 40 },
-          6: { cellWidth: 25 },
-          7: { cellWidth: 25 }
-        }
+  exportToPdf(): void {
+    import('jspdf').then(({ default: jsPDF }) => {
+      import('jspdf-autotable').then(() => {
+        const doc = new jsPDF({ orientation: 'landscape' });
+        
+        doc.setFontSize(14);
+        doc.setTextColor(37, 99, 235);
+        doc.text(this.pageTitle, 14, 15);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Exporté le ${new Date().toLocaleString()}`, 14, 25);
+        
+        const tableData = this.transactions.map(tx => [
+          tx.messageType,
+          tx.msgId,
+          tx.uetr?.substring(0, 12) + '...',
+          `${tx.amount} ${tx.currency}`,
+          this.getDebtorDisplay(tx).substring(0, 25),
+          this.getCreditorDisplay(tx).substring(0, 25),
+          this.getStatusLabel(tx.status),
+          new Date(tx.receivedAt).toLocaleDateString()
+        ]);
+        
+        (doc as any).autoTable({
+          head: [['Type', 'MsgId', 'UETR', 'Montant', 'Débiteur', 'Créditeur', 'Statut', 'Date']],
+          body: tableData,
+          startY: 35,
+          theme: 'striped',
+          headStyles: { fillColor: [37, 99, 235], textColor: 255, fontSize: 9 },
+          bodyStyles: { fontSize: 8 },
+          columnStyles: {
+            0: { cellWidth: 25 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 30 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 40 },
+            5: { cellWidth: 40 },
+            6: { cellWidth: 25 },
+            7: { cellWidth: 25 }
+          }
+        });
+        
+        doc.save(`${this.pageTitle.replace(/ /g, '_')}_${Date.now()}.pdf`);
       });
-      
-      doc.save(`${this.pageTitle.replace(/ /g, '_')}_${Date.now()}.pdf`);
+    }).catch(() => {
+      this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de générer le PDF' });
     });
-  }).catch(() => {
-    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de générer le PDF' });
-  });
-}
+  }
 
   exportCsv(): void {
     const rows = this.transactions.map(tx => ({

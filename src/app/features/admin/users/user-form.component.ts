@@ -84,7 +84,6 @@ export class UserFormComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Initialisation par défaut
     this.ibanLocked = false;
     this.originalIban = '';
 
@@ -152,31 +151,43 @@ export class UserFormComponent implements OnInit {
   }
 
   /**
-   * Gère la saisie de l'IBAN avec verrouillage automatique à 34 caractères
+   * Valide le format IBAN (format international standard)
+   * - 2 lettres au début
+   * - 2 chiffres
+   * - Entre 10 et 30 caractères alphanumériques
+   * Soit un total entre 14 et 34 caractères
+   */
+  private isValidIbanFormat(iban: string): boolean {
+    if (!iban) return false;
+    const cleanIban = iban.replace(/\s/g, '').toUpperCase();
+    // Format IBAN : 2 lettres + 2 chiffres + 10 à 30 alphanumériques
+    const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}$/;
+    return ibanRegex.test(cleanIban);
+  }
+
+  /**
+   * Gère la saisie de l'IBAN avec verrouillage automatique
    */
   onIbanInput(): void {
     if (this.isEdit) return;
 
-    // Nettoyer : supprimer espaces, mettre en majuscules
     let cleanIban = this.formData.iban.replace(/\s/g, '').toUpperCase();
 
-    // Limiter à 34 caractères
+    // Limiter à 34 caractères (max IBAN mondial)
     if (cleanIban.length > 34) {
       cleanIban = cleanIban.substring(0, 34);
     }
 
     this.formData.iban = cleanIban;
 
-    // Vérifier si on a atteint 34 caractères
-    if (cleanIban.length === 34) {
-      // Format IBAN valide ?
-      const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}$/;
-      if (ibanRegex.test(cleanIban)) {
-        // Verrouillage automatique et silencieux
+    // Vérifier si l'IBAN a une longueur plausible (min 14, max 34)
+    if (cleanIban.length >= 14 && cleanIban.length <= 34) {
+      if (this.isValidIbanFormat(cleanIban)) {
         this.ibanLocked = true;
         delete this.fieldErrors['iban'];
       } else {
-        this.fieldErrors['iban'] = 'Format IBAN invalide';
+        this.ibanLocked = false;
+        this.fieldErrors['iban'] = 'Format IBAN invalide (ex: TN5910006035183598478831)';
       }
     } else {
       this.ibanLocked = false;
@@ -248,8 +259,9 @@ export class UserFormComponent implements OnInit {
     if (this.formData.role === 'CLIENT' && !this.isEdit && !this.ibanLocked) {
       if (!this.formData.iban?.trim()) {
         this.fieldErrors['iban'] = 'L\'IBAN est requis';
-      } else if (this.formData.iban.length !== 34) {
-        this.fieldErrors['iban'] = `L'IBAN doit contenir exactement 34 caractères (${this.formData.iban.length}/34)`;
+      } else if (!this.isValidIbanFormat(this.formData.iban)) {
+        const length = this.formData.iban.replace(/\s/g, '').length;
+        this.fieldErrors['iban'] = `IBAN invalide (${length} caractères). Format: 2 lettres + 2 chiffres + 10 à 30 caractères`;
       }
     }
 
@@ -283,7 +295,7 @@ export class UserFormComponent implements OnInit {
     const cleanIban = this.formData.iban?.replace(/\s/g, '').toUpperCase() || null;
 
     if (this.isEdit) {
-      // Mode modification (sans IBAN ni mot de passe)
+      // Mode modification
       const updateData: any = {
         username: this.formData.username,
         email: this.formData.email,
@@ -317,7 +329,7 @@ export class UserFormComponent implements OnInit {
         }
       });
     } else {
-      // Mode création (sans mot de passe - généré par backend)
+      // Mode création
       const payload: any = {
         username: this.formData.username,
         email: this.formData.email,

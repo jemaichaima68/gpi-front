@@ -1,9 +1,11 @@
+// dashboard.component.ts (version corrigée sans getCapital)
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TransferService, ClientDashboardDto, RecentTransactionDto } from '../../services/transfer.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { CountryService } from '../../services/country.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -31,36 +33,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   activeTransfer: RecentTransactionDto | null = null;
 
-  // Mapping des pays (garde tel quel)
-  private readonly countryMapping: Record<string, { city: string; flag: string; name: string }> = {
-    'FR': { city: 'Paris', flag: '🇫🇷', name: 'France' },
-    'US': { city: 'New York', flag: '🇺🇸', name: 'États-Unis' },
-    'GB': { city: 'Londres', flag: '🇬🇧', name: 'Royaume-Uni' },
-    'DE': { city: 'Berlin', flag: '🇩🇪', name: 'Allemagne' },
-    'IT': { city: 'Rome', flag: '🇮🇹', name: 'Italie' },
-    'ES': { city: 'Madrid', flag: '🇪🇸', name: 'Espagne' },
-    'CH': { city: 'Zurich', flag: '🇨🇭', name: 'Suisse' },
-    'BE': { city: 'Bruxelles', flag: '🇧🇪', name: 'Belgique' },
-    'LU': { city: 'Luxembourg', flag: '🇱🇺', name: 'Luxembourg' },
-    'NL': { city: 'Amsterdam', flag: '🇳🇱', name: 'Pays-Bas' },
-    'PT': { city: 'Lisbonne', flag: '🇵🇹', name: 'Portugal' },
-    'CA': { city: 'Toronto', flag: '🇨🇦', name: 'Canada' },
-    'AE': { city: 'Dubaï', flag: '🇦🇪', name: 'Émirats Arabes Unis' },
-    'CN': { city: 'Shanghai', flag: '🇨🇳', name: 'Chine' },
-    'JP': { city: 'Tokyo', flag: '🇯🇵', name: 'Japon' },
-    'SG': { city: 'Singapour', flag: '🇸🇬', name: 'Singapour' },
-    'AU': { city: 'Sydney', flag: '🇦🇺', name: 'Australie' },
-    'MA': { city: 'Casablanca', flag: '🇲🇦', name: 'Maroc' },
-    'TN': { city: 'Tunis', flag: '🇹🇳', name: 'Tunisie' },
-    'DZ': { city: 'Alger', flag: '🇩🇿', name: 'Algérie' },
-    'SN': { city: 'Dakar', flag: '🇸🇳', name: 'Sénégal' },
-    'CI': { city: 'Abidjan', flag: '🇨🇮', name: 'Côte d\'Ivoire' },
-    'CM': { city: 'Douala', flag: '🇨🇲', name: 'Cameroun' },
-    'ML': { city: 'Bamako', flag: '🇲🇱', name: 'Mali' },
-    'NE': { city: 'Niamey', flag: '🇳🇪', name: 'Niger' },
-    'BF': { city: 'Ouagadougou', flag: '🇧🇫', name: 'Burkina Faso' },
-    'TG': { city: 'Lomé', flag: '🇹🇬', name: 'Togo' },
-    'BJ': { city: 'Cotonou', flag: '🇧🇯', name: 'Bénin' }
+  // Dictionnaire des capitales par pays
+  private readonly capitals: Record<string, string> = {
+    'FR': 'Paris', 'US': 'New York', 'GB': 'Londres', 'DE': 'Berlin',
+    'IT': 'Rome', 'ES': 'Madrid', 'CH': 'Zurich', 'BE': 'Bruxelles',
+    'LU': 'Luxembourg', 'NL': 'Amsterdam', 'PT': 'Lisbonne', 'CA': 'Toronto',
+    'AE': 'Dubaï', 'CN': 'Shanghai', 'JP': 'Tokyo', 'SG': 'Singapour',
+    'AU': 'Sydney', 'MA': 'Casablanca', 'TN': 'Tunis', 'DZ': 'Alger',
+    'SN': 'Dakar', 'CI': 'Abidjan', 'CM': 'Douala', 'ML': 'Bamako',
+    'NE': 'Niamey', 'BF': 'Ouagadougou', 'TG': 'Lomé', 'BJ': 'Cotonou',
+    'IN': 'Mumbai', 'BR': 'São Paulo', 'MX': 'Mexico', 'RU': 'Moscou',
+    'TR': 'Istanbul', 'ZA': 'Johannesburg', 'NG': 'Lagos', 'EG': 'Le Caire',
+    'SA': 'Riyad', 'SE': 'Stockholm', 'NO': 'Oslo', 'DK': 'Copenhague', 'PL': 'Varsovie'
   };
 
   private readonly statusPosition: Record<string, number> = {
@@ -75,7 +59,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private service: TransferService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private countryService: CountryService
   ) {}
 
   ngOnInit(): void {
@@ -162,8 +147,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  // ==================== MÉTHODES POUR LA CARTE GPS ====================
+  // ==================== MÉTHODES PAYS ====================
   
+  getCountryName(countryCode: string): string {
+    return this.countryService.getCountryName(countryCode);
+  }
+
+  getCountryFlag(countryCode: string): string {
+    return this.countryService.getCountryFlag(countryCode);
+  }
+
+  getCountryWithFlag(countryCode: string): string {
+    return this.countryService.getCountryWithFlag(countryCode);
+  }
+
+  // Version locale de getCapital sans dépendre du service
+  private getCapitalFromCode(countryCode: string): string {
+    const upperCode = countryCode?.toUpperCase()?.substring(0, 2) || '';
+    return this.capitals[upperCode] || this.getCountryName(upperCode);
+  }
+
   getSenderCountry(transaction: RecentTransactionDto | null): string {
     if (!transaction) return 'FR';
     const country = transaction.debtorCountry;
@@ -182,46 +185,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return 'FR';
   }
 
-  getSenderCity(transaction: RecentTransactionDto | null): string {
-    const country = this.getSenderCountry(transaction);
-    const mapping = this.countryMapping[country];
-    return mapping?.city || this.getSenderCountryName(transaction);
-  }
-
-  getReceiverCity(transaction: RecentTransactionDto | null): string {
-    const country = this.getReceiverCountry(transaction);
-    const mapping = this.countryMapping[country];
-    return mapping?.city || this.getReceiverCountryName(transaction);
-  }
-
-  getSenderFlag(transaction: RecentTransactionDto | null): string {
-    const country = this.getSenderCountry(transaction);
-    const mapping = this.countryMapping[country];
-    return mapping?.flag || '🏦';
-  }
-
-  getReceiverFlag(transaction: RecentTransactionDto | null): string {
-    const country = this.getReceiverCountry(transaction);
-    const mapping = this.countryMapping[country];
-    return mapping?.flag || '🏦';
-  }
-
   getSenderCountryName(transaction: RecentTransactionDto | null): string {
     const country = this.getSenderCountry(transaction);
-    const mapping = this.countryMapping[country];
-    return mapping?.name || 'Banque émettrice';
+    return this.countryService.getCountryName(country);
   }
 
   getReceiverCountryName(transaction: RecentTransactionDto | null): string {
     const country = this.getReceiverCountry(transaction);
-    const mapping = this.countryMapping[country];
-    return mapping?.name || 'Banque bénéficiaire';
+    return this.countryService.getCountryName(country);
+  }
+
+  getSenderFlag(transaction: RecentTransactionDto | null): string {
+    const country = this.getSenderCountry(transaction);
+    return this.countryService.getCountryFlag(country);
+  }
+
+  getReceiverFlag(transaction: RecentTransactionDto | null): string {
+    const country = this.getReceiverCountry(transaction);
+    return this.countryService.getCountryFlag(country);
+  }
+
+  getSenderCity(transaction: RecentTransactionDto | null): string {
+    const country = this.getSenderCountry(transaction);
+    return this.getCapitalFromCode(country);
+  }
+
+  getReceiverCity(transaction: RecentTransactionDto | null): string {
+    const country = this.getReceiverCountry(transaction);
+    return this.getCapitalFromCode(country);
   }
 
   getFlagFromCountry(countryCode: string): string {
-    return this.countryMapping[countryCode]?.flag || '🏦';
+    return this.countryService.getCountryFlag(countryCode);
   }
 
+  // ==================== MÉTHODES GPS ====================
+  
   getPointPosition(status?: string): string {
     if (!status) return 'position-1';
     const position = this.statusPosition[status] ?? 1;
@@ -249,19 +248,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  // ==================== MÉTHODES SIMPLIFIÉES ====================
+  // ==================== MÉTHODES STATUT ====================
   
   getStatusLabel(status: string, agentValidated?: boolean): string {
     if (status === 'REJETE') {
       return 'Rejetée';
     }
     if (status === 'ACCEPTE' || status === 'ACSC') {
-      return ' Acceptée';
+      return 'Acceptée';
     }
     if (agentValidated === true && (status === 'EN_ATTENTE' || status === 'PDNG')) {
-      return ' En attente de validation';
+      return 'En attente de validation';
     }
-    return ' En attente';
+    return 'En attente';
   }
 
   getStatusClass(status: string): string {
@@ -292,7 +291,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // ==================== NAVIGATION ====================
   
-  // ⭐ MODIFIÉ : Redirige directement vers tracking avec l'UETR
   goToDetails(transfer: RecentTransactionDto) {
     if (transfer.uetr) {
       this.router.navigate(['/client/tracking'], { queryParams: { uetr: transfer.uetr } });

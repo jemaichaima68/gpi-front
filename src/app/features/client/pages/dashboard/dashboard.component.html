@@ -1,9 +1,9 @@
+<!-- src/app/modules/client/components/dashboard/dashboard.component.html -->
 <div class="dashboard-container">
   
   <!-- ==================== EN-TÊTE AVEC MESSAGE DE BIENVENUE ==================== -->
   <div class="welcome-section">
     <div class="welcome-card">
-      <div class="welcome-icon">🙏</div>
       <div class="welcome-content">
         <h1 class="welcome-title">Bonjour, {{ userName || 'Client' }}</h1>
         <p class="welcome-message">
@@ -12,7 +12,6 @@
           en temps réel, simplement et en toute transparence.
         </p>
         <div class="welcome-badge">
-          <span class="badge-icon">✨</span>
           <span>Plateforme de suivi SWIFT certifiée</span>
         </div>
       </div>
@@ -23,7 +22,6 @@
   <div class="gps-card" *ngIf="activeTransfer">
     <div class="gps-header">
       <div class="gps-title">
-        <span class="gps-icon">🗺️</span>
         <h2>Parcours de votre transfert</h2>
       </div>
       <div class="gps-status" [class]="getPositionClass(activeTransfer.status)">
@@ -52,8 +50,7 @@
       <div class="map-journey">
         <div class="journey-line"></div>
         <div class="journey-point" [class]="getPointPosition(activeTransfer.status)">
-          <div class="pulse-ring"></div>
-          <span class="point-icon">📍</span>
+          <span class="point-icon"></span>
         </div>
         <div class="journey-stops">
           <div class="stop" [class.active]="isStepCompleted('VALIDATION')">
@@ -78,19 +75,18 @@
     </div>
 
     <!-- Message de rejet -->
-    <div class="rejection-message" *ngIf="activeTransfer.status === 'REJETE'" style="margin-top: 16px; padding: 12px; background: #fee2e2; border-radius: 12px; color: #991b1b;">
-      <strong> Motif du rejet :</strong> {{ getRejectionReason(activeTransfer) }}
+    <div class="rejection-message" *ngIf="activeTransfer.status === 'REJETE'">
+      <strong>Motif du rejet :</strong> {{ getRejectionReason(activeTransfer) }}
     </div>
   </div>
 
   <!-- Message si aucun transfert -->
   <div class="gps-card" *ngIf="!activeTransfer && !isLoading">
     <div class="empty-gps">
-      <div class="empty-gps-icon">🗺️</div>
       <h3>Aucun transfert en cours</h3>
       <p>Vos transferts apparaîtront ici une fois reçus.</p>
       <button class="track-btn" (click)="goToTracking()">
-        📍 Suivre un transfert avec UETR
+        Suivre un transfert avec UETR
       </button>
     </div>
   </div>
@@ -98,7 +94,7 @@
   <!-- ==================== LISTE DES TRANSFERTS SIMPLIFIÉE ==================== -->
   <div class="transfers-section">
     <div class="section-header">
-      <h2>📦 Vos transferts récents</h2>
+      <h2>Vos transferts récents</h2>
       <button class="view-all-btn" routerLink="/client/history">
         Voir tout <span class="arrow">→</span>
       </button>
@@ -122,10 +118,6 @@
         (click)="goToDetails(transfer)">
         
         <div class="card-header">
-          <div class="card-icon">
-            <span *ngIf="transfer.status === 'ACCEPTE' || transfer.status === 'ACSC'">✅</span>
-            <span *ngIf="transfer.status === 'EN_ATTENTE' || transfer.status === 'PDNG'">⏳</span>
-          </div>
           <div class="card-info">
             <div class="transfer-status" [class]="getStatusClass(transfer.status)">
               {{ getStatusLabel(transfer.status, transfer.agentValidated) }}
@@ -148,14 +140,14 @@
             <span class="detail-label">Pays bénéficiaire :</span>
             <span class="detail-value">
               <span class="country-flag">{{ getFlagFromCountry(transfer.creditorCountry || '') }}</span>
-              {{ getReceiverCountryName(transfer) || '-' }}
+              {{ getReceiverCountryName(transfer) }}
             </span>
           </div>
           <div class="transfer-detail">
             <span class="detail-label">Pays émetteur :</span>
             <span class="detail-value">
               <span class="country-flag">{{ getFlagFromCountry(transfer.debtorCountry || '') }}</span>
-              {{ getSenderCountryName(transfer) || '-' }}
+              {{ getSenderCountryName(transfer) }}
             </span>
           </div>
           <div class="transfer-detail">
@@ -185,13 +177,13 @@
         </div>
 
         <!-- Message de rejet -->
-        <div class="rejection-detail" *ngIf="transfer.status === 'REJETE'" style="margin-top: 12px; padding: 8px 12px; background: #fee2e2; border-radius: 8px; color: #991b1b; font-size: 12px;">
+        <div class="rejection-detail" *ngIf="transfer.status === 'REJETE'">
           <strong>Motif :</strong> {{ getRejectionReason(transfer) }}
         </div>
 
         <div class="card-footer">
           <button class="track-btn" (click)="$event.stopPropagation(); goToTracking(transfer.uetr)">
-            <span>📍</span> Suivre
+            Suivre
           </button>
         </div>
       </div>
@@ -199,11 +191,10 @@
 
     <!-- État vide -->
     <div *ngIf="!isLoading && dashboard.recentTransactions.length === 0" class="empty-state">
-      <div class="empty-icon">📭</div>
       <h3>Aucun transfert pour le moment</h3>
       <p>Vos transferts apparaîtront ici dès qu'ils seront reçus.</p>
       <button class="help-btn" (click)="goToTracking()">
-        🔍 Suivre un transfert avec UETR
+        Suivre un transfert avec UETR
       </button>
     </div>
   </div>
@@ -211,7 +202,6 @@
   <!-- ==================== ACTION RAPIDE ==================== -->
   <div class="search-section">
     <div class="search-card">
-      <div class="search-icon">🔍</div>
       <div class="search-content">
         <h3>Suivre un transfert</h3>
         <p>Besoin de suivre un autre transfert ? Entrez son UETR ci-dessous.</p>
@@ -222,7 +212,7 @@
             placeholder="Ex: 12345678-1234-1234-1234-123456789abc"
             class="search-input">
           <button (click)="goToTracking()" class="search-btn">
-            🔍 Rechercher
+            Rechercher
           </button>
         </div>
       </div>

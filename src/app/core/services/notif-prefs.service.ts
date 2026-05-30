@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
 
 export interface NotifPrefs {
@@ -12,8 +11,7 @@ export interface NotifPrefs {
 @Injectable({ providedIn: 'root' })
 export class NotifPrefsService {
 
-  private readonly API      = 'http://localhost:8081/api/admin/profile';
-  private readonly STORAGE  = 'admin_prefs';
+  private readonly STORAGE_KEY = 'admin_notif_prefs';
 
   private prefs: NotifPrefs = {
     onUserAdd:      true,
@@ -22,47 +20,47 @@ export class NotifPrefsService {
     onSystemAlert:  true,
   };
 
-  constructor(private http: HttpClient) {
+  constructor() {
     this.load();
   }
 
-  /** Called once at startup — loads prefs from backend (or localStorage fallback) */
+  /**
+   * Charge les préférences depuis localStorage
+   */
   load(): void {
-    this.http.get<any>(this.API).subscribe({
-      next: (dto) => {
+    const saved = localStorage.getItem(this.STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
         this.prefs = {
-          onUserAdd:      dto.notifUserAdd      ?? true,
-          onUserDelete:   dto.notifUserDelete   ?? true,
-          onStatusChange: dto.notifStatusChange ?? true,
-          onSystemAlert:  dto.notifSystemAlert  ?? true,
+          onUserAdd:      parsed.onUserAdd ?? true,
+          onUserDelete:   parsed.onUserDelete ?? true,
+          onStatusChange: parsed.onStatusChange ?? true,
+          onSystemAlert:  parsed.onSystemAlert ?? true,
         };
-      },
-      error: () => {
-        // Fallback: read from localStorage
-        const saved = localStorage.getItem(this.STORAGE);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (parsed.notifPrefs) {
-              this.prefs = { ...this.prefs, ...parsed.notifPrefs };
-            }
-          } catch { /* ignore */ }
-        }
+      } catch (e) {
+        console.warn('Erreur chargement préférences:', e);
       }
-    });
+    }
   }
 
-  /** Update prefs in memory after saving from profile page */
-  update(prefs: NotifPrefs): void {
+  /**
+   * Sauvegarde les préférences dans localStorage
+   */
+  save(prefs: NotifPrefs): void {
     this.prefs = { ...prefs };
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.prefs));
+  }
+
+  /**
+   * Met à jour les préférences (alias de save)
+   */
+  update(prefs: NotifPrefs): void {
+    this.save(prefs);
   }
 
   // ── Conditional toast helpers ──────────────────────────────
 
-  /**
-   * Shows a toast only if the matching pref is ON.
-   * Use this instead of messageService.add() everywhere in the app.
-   */
   notifyUserAdd(messageService: MessageService, detail: string): void {
     if (this.prefs.onUserAdd) {
       messageService.add({ severity: 'success', summary: 'Utilisateur créé', detail, life: 4000 });
@@ -92,7 +90,7 @@ export class NotifPrefsService {
     }
   }
 
-  // ── Getters (for debugging / display) ─────────────────────
+  // ── Getters ────────────────────────────────────────────────
   getPrefs(): NotifPrefs { return { ...this.prefs }; }
   canNotifyUserAdd():      boolean { return this.prefs.onUserAdd; }
   canNotifyUserDelete():   boolean { return this.prefs.onUserDelete; }
